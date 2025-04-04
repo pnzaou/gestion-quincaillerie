@@ -41,8 +41,15 @@ export const POST = async (req) => {
 
     } catch (error) {
         console.error("Erreur lors de la création d'une catégorie: ", error)
+
+        let errorMessage = "Erreur! Veuillez réessayer."
+
+        if (error.code === 11000) {
+            errorMessage = "Cette catégorie existe déjà."
+        }
+
         return NextResponse.json({
-            message: "Erreur! Veuillez réessayer.",
+            message: errorMessage,
             success: false,
             error: true
         }, { status: 500 }
