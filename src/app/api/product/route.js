@@ -1,8 +1,9 @@
 import dbConnection from "@/lib/db"
+import { withAuth } from "@/lib/withAuth"
 import Product from "@/models/Product.model"
 import { NextResponse } from "next/server"
 
-export const POST = async (req) => {
+export const POST = withAuth(async (req) => {
     try {
         await dbConnection()
 
@@ -87,9 +88,9 @@ export const POST = async (req) => {
             error: true
         }, { status: 500 })
     }
-}
+})
 
-export const GET = async () => {
+export const GET = withAuth(async (req) => {
     try {
         await dbConnection()
 
@@ -113,4 +114,4 @@ export const GET = async () => {
             error: true
         }, { status: 500 })
     }
-}
+})

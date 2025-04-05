@@ -1,9 +1,10 @@
 import dbConnection from "@/lib/db"
+import { withAuth } from "@/lib/withAuth"
 import Category from "@/models/Category.model"
 import mongoose from "mongoose"
 import { NextResponse } from "next/server"
 
-export const GET = async (req, {params}) => {
+export const GET = withAuth(async (req, {params}) => {
     try {
         await dbConnection()
 
@@ -40,9 +41,9 @@ export const GET = async (req, {params}) => {
             error: true
         }, { status: 500 })
     }
-}
+})
 
-export const PUT = async (req, {params}) => {
+export const PUT = withAuth(async (req, {params}) => {
     try {
         await dbConnection()
 
@@ -90,9 +91,9 @@ export const PUT = async (req, {params}) => {
             error: true
         }, { status: 500 })
     }
-}
+})
 
-export const DELETE = async (req, { params }) => {
+export const DELETE = withAuth(async (req, { params }) => {
     try {
         await dbConnection()
         const { id } = await params;
@@ -126,4 +127,4 @@ export const DELETE = async (req, { params }) => {
             error: true
         }, { status: 500 })
     }
-}
+})
