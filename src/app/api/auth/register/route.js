@@ -2,8 +2,9 @@ import dbConnection from "@/lib/db"
 import User from "@/models/User.model"
 import { NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
+import { withAuthAndRole } from "@/lib/withAuthAndRole"
 
-export const POST = async (req) => {
+export const POST = withAuthAndRole(async (req) => {
     try {
         await dbConnection()
 
@@ -51,4 +52,4 @@ export const POST = async (req) => {
             error: true
         }, { status: 500 })
     }
-}
+})

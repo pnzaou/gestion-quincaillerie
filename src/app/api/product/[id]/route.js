@@ -31,7 +31,7 @@ export const GET = withAuth(async (req, {params}) => {
             data: prod,
             success: true,
             error: false
-        },{ status: 200 })
+        },{ status: 200, headers: { "Cache-Control": "no-store" } })
 
     } catch (error) {
         console.error("Erreur lors de la récupération du produit: ", error)

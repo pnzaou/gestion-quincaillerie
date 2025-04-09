@@ -2,21 +2,19 @@ import { getServerSession } from "next-auth"
 import authOptions from "./auth"
 import { NextResponse } from "next/server"
 
-export const withAuth = (handler) => {
+export const withAuthAndRole = (handler) => {
     return async (...args) => {
         const [req, context] = args
 
         const session = await getServerSession(authOptions)
 
-        if(!session) {
+        if(!session || session.user.role !== "admin") {
             return NextResponse.json(
                 {
                     message: "Accès refusé !",
                     success: false,
                     error: true
-                },
-                { status: 401 }
-            )
+            },{ status: 401 })
         }
 
         if(args.length === 1) {

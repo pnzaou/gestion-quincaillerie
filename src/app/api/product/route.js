@@ -103,8 +103,7 @@ export const GET = withAuth(async (req) => {
                 success: true,
                 error: false
             },
-            { status: 200, headers: { "Cache-Control": "no-store" } }
-        )
+            { status: 200, headers: { "Cache-Control": "no-store" } })
         
     } catch (error) {
         console.error("Erreur lors de la récupération des produits: ", error)
