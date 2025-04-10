@@ -11,7 +11,7 @@ export const GET = withAuthAndRole(async (req) => {
         
         await dbConnection()
 
-        const user = await User.find({_id: { $ne: session.user.id }})
+        const user = await User.find({_id: { $ne: session.user.id }}, { password: 0 })
         
         return NextResponse.json(
             { 

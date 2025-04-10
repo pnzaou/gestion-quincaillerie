@@ -27,7 +27,7 @@ export const GET = withAuth( async (req) => {
         }
 
         const token = jwt.sign(
-            { userId: id, email },
+            { userId: id, userEmail: email },
             process.env.JWT_SECRET,
             { expiresIn: "15min" }
         )

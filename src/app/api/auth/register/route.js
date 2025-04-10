@@ -10,12 +10,20 @@ export const POST = withAuthAndRole(async (req) => {
 
         const { nom, prenom, email, password, role } = await req.json()
 
-        if(!nom || !prenom || !email || !password) {
+        if(!nom || !prenom || !email || !password || !role) {
             return NextResponse.json({
-                message: "Veuillez renseigner le nom, le prénom, l'email et le mot de passe de l'utilisateur.",
+                message: "Tous les champs sont obligatoires.",
                 success: false,
                 error: true
             }, { status: 400 })
+        }
+
+        if(role !== "admin" && role !== "gerant" && role!== "comptable") {
+            return NextResponse.json({
+                message: "rôle invalide.",
+                success: false,
+                error: true
+            }, { status: 400 }) 
         }
 
         const existingUser = await User.findOne({ email })
