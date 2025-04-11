@@ -74,7 +74,6 @@ export const GET = withAuth( async (req) => {
     }
 })
 
-
 export const PATCH = withAuth( async (req) => {
     try {
         await dbConnection()
@@ -171,6 +170,11 @@ export const PATCH = withAuth( async (req) => {
 
         dbToken.used = true
         await dbToken.save()
+        await PasswordResetToken.updateMany({
+            token: { $ne: token },
+            userId: payload.userId,
+            used: false
+        }, { $set: { used: true } })
 
         return NextResponse.json({
             message: "Mot de passe modifié avec succès.",

@@ -5,7 +5,9 @@ import { withAuth } from "@/lib/withAuth";
 import PasswordResetToken from "@/models/PasswordResetToken.model";
 import User from "@/models/User.model";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 import { NextResponse } from "next/server";
+import bcrypt from "bcryptjs"
 
 export const POST = withAuth(async (req) => {
     try {
@@ -75,3 +77,98 @@ export const POST = withAuth(async (req) => {
         }, { status: 500 })
     }
 })
+
+export const PATCH = async (req) => {
+    try {
+        const { token, password, confirmPassword } = await req.json()
+
+        if(!token) {
+            console.error("Impossible de récupérer le token.")
+            return NextResponse.json({
+                message: "Veuillez fournir un token.",
+                success: false,
+                error: true
+            }, { status: 400 })
+        }
+
+        if(!password || !confirmPassword) {
+            return NextResponse.json({
+                message: "Tous les champs sont obligatoires.",
+                success: false,
+                error: true
+            }, { status: 400 })
+        }
+
+        if(password !== confirmPassword) {
+            return NextResponse.json({
+                message: "Les deux mots de passe sont différents.",
+                success: false,
+                error: true
+            }, { status: 400 })
+        }
+
+        const dbToken = await PasswordResetToken.findOne({ token })
+        if(!dbToken || dbToken.used || dbToken.expiresAt < Date.now()) {
+            return NextResponse.json({
+                message: "Lien de réinitialisation invalide ou expiré.",
+                success: false,
+                error: true
+            }, { status: 400 })
+        }
+
+        let payload
+        try {
+            payload = jwt.verify(token, process.env.JWT_SECRET) 
+        } catch (error) {
+            return NextResponse.json({
+                message: "Token invalide.",
+                success: false,
+                error: true
+            }, { status: 400 }) 
+        }
+
+        if(!mongoose.Types.ObjectId.isValid(payload.userId)) {
+            return NextResponse.json({
+                message: "Token invalide.",
+                success: false,
+                error: true
+            }, { status: 400 })
+        }
+
+        const user = await User.findById(payload.userId)
+        if(!user) {
+            return NextResponse.json({
+                message: "Aucun utilisateur ne correspond à cet ID.",
+                success: false,
+                error: true
+            }, { status: 400 }) 
+        }
+        const salt = await bcrypt.genSalt(10)
+        const hashedPassword = await bcrypt.hash(password, salt)
+
+        user.password = hashedPassword
+        await user.save()  
+        
+        dbToken.used = true
+        await dbToken.save()
+        await PasswordResetToken.updateMany({
+            token: { $ne: token },
+            userId: payload.userId,
+            used: false
+        }, { $set: { used: true } })
+
+        return NextResponse.json({
+            message: "Mot de passe modifié avec succès.",
+            success: true,
+            error: false
+        }, { status: 200 })
+
+    } catch (error) {
+        console.error("Erreur lors de la modifications du mot de passe de l'utilisateur: ", error)
+        return NextResponse.json({
+            message: "Erreur! Veuillez réessayer.",
+            success: false,
+            error: true
+        }, { status: 500 })
+    }
+}
