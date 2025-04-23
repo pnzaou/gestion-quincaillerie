@@ -1,6 +1,6 @@
 import authOptions from "@/lib/auth";
 import dbConnection from "@/lib/db";
-import { withAuthAndRole } from "@/lib/withAuthAndRole";
+import { withAuthAndRole } from "@/utils/withAuthAndRole";
 import User from "@/models/User.model";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";

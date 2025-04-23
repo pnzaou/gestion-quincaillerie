@@ -1,5 +1,5 @@
 import dbConnection from "@/lib/db"
-import { withAuth } from "@/lib/withAuth"
+import { withAuth } from "@/utils/withAuth"
 import Category from "@/models/Category.model"
 import mongoose from "mongoose"
 import { NextResponse } from "next/server"

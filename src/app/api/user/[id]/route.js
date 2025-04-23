@@ -1,5 +1,5 @@
 import dbConnection from "@/lib/db"
-import { withAuthAndRole } from "@/lib/withAuthAndRole"
+import { withAuthAndRole } from "@/utils/withAuthAndRole"
 import User from "@/models/User.model"
 import mongoose from "mongoose"
 import { NextResponse } from "next/server"

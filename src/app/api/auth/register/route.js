@@ -2,7 +2,7 @@ import dbConnection from "@/lib/db"
 import User from "@/models/User.model"
 import { NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
-import { withAuthAndRole } from "@/lib/withAuthAndRole"
+import { withAuthAndRole } from "@/utils/withAuthAndRole"
 
 export const POST = withAuthAndRole(async (req) => {
     try {

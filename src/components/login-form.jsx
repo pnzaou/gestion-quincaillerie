@@ -16,15 +16,17 @@ import { useForm } from "react-hook-form"
 import { signIn } from "next-auth/react";
 import toast from "react-hot-toast"
 import { useRouter } from "next/navigation"
+import { useState } from "react"
 
 export function LoginForm({className, ...props}) {
-
+  const [isLoading, setIsLoading] = useState(false)
   const { handleSubmit, register, formState: { errors } } = useForm()
   const router = useRouter()
   const mdpRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/
   const emailRegex = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/
 
   const onSubmit = async (data) => {
+    setIsLoading(true)
     try {
       const res = await signIn("credentials",{
         email: data.email,
@@ -33,16 +35,19 @@ export function LoginForm({className, ...props}) {
       })
 
       if(res.ok) {
+        setIsLoading(false)
         router.push("/")
         toast.success("Connexion réussie !", {
           position: "top-center"
         })
       } else {
+        setIsLoading(false)
         toast.error("Email ou mot de passe incorrect.", {
           position: "top-center"
         })
       }
     } catch (error) {
+      setIsLoading(false)
       toast.error("Une erreur est survenue. Veuillez réessayer.", {
         position: "top-center"
       });
@@ -107,7 +112,13 @@ export function LoginForm({className, ...props}) {
               </div>
               <div className="flex flex-col gap-3">
                 <Button type="submit" className="w-full">
-                  Se connecter
+                  {isLoading 
+                  ? (
+                    <>
+                    <span className="w-4 h-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></span> connexion en cours...
+                    </>
+                  ) 
+                  : "Se connecter"}
                 </Button>
               </div>
             </div>

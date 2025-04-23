@@ -1,7 +1,7 @@
 import ComfirmResetPassword from "@/components/email/Comfirm-reset-password";
 import dbConnection from "@/lib/db";
 import { resend } from "@/lib/resend";
-import { withAuth } from "@/lib/withAuth";
+import { withAuth } from "@/utils/withAuth";
 import PasswordResetToken from "@/models/PasswordResetToken.model";
 import User from "@/models/User.model";
 import jwt from "jsonwebtoken";

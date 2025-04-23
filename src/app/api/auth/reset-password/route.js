@@ -1,6 +1,6 @@
 import authOptions from "@/lib/auth"
 import dbConnection from "@/lib/db"
-import { withAuth } from "@/lib/withAuth"
+import { withAuth } from "@/utils/withAuth"
 import User from "@/models/User.model"
 import mongoose from "mongoose"
 import { getServerSession } from "next-auth"

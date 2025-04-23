@@ -1,5 +1,5 @@
 import { getServerSession } from "next-auth"
-import authOptions from "./auth"
+import authOptions from "@/lib/auth"
 import { NextResponse } from "next/server"
 
 export const withAuth = (handler) => {
@@ -7,6 +7,7 @@ export const withAuth = (handler) => {
         const [req, context] = args
 
         const session = await getServerSession(authOptions)
+
 
         if(!session) {
             return NextResponse.json(

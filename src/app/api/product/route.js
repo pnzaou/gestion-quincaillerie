@@ -1,5 +1,5 @@
 import dbConnection from "@/lib/db"
-import { withAuth } from "@/lib/withAuth"
+import { withAuth } from "@/utils/withAuth"
 import Product from "@/models/Product.model"
 import { NextResponse } from "next/server"
 
@@ -7,28 +7,30 @@ export const POST = withAuth(async (req) => {
     try {
         await dbConnection()
 
-        const { nom, prix, Qte, fournisseur, description, category_id } = await req.json()
+        const { nom, prixAchat, prixVente, Qte, QteAlerte, image, reference, description, dateExpiration, category_id, supplier_id } = await req.json()
 
-        if(!nom || !prix || !Qte || !category_id) {
+        if(!nom || prixAchat === undefined || prixVente === undefined || Qte === undefined || QteAlerte === undefined || !category_id) {
             return NextResponse.json({
-                message: "Veuillez renseigner le nom, le prix, la quantité et la catégorie du produit.",
+                message: "Veuillez renseigner les champs obligatoires.",
                 success: false,
                 error: true
             }, { status: 400 })
         }
 
-        const parsedPrix = Number(prix)
+        const parsedAchat = Number(prixAchat)
+        const parsedVente = Number(prixVente)
         const parsedQte = Number(Qte)
+        const parsedQteAlerte = Number(QteAlerte)
 
-        if (isNaN(parsedPrix) || parsedPrix <= 0) {
+        if (isNaN(parsedAchat) || parsedAchat <= 0 || isNaN(parsedVente) || parsedVente <= 0) {
             return NextResponse.json({
-                message: "Le prix doit être un nombre positif.",
+                message: "Les prix de vente et d'achat doit être un nombre positif.",
                 success: false,
                 error: true
             }, { status: 400 })
         }
 
-        if (isNaN(parsedQte) || parsedQte < 0) {
+        if (isNaN(parsedQte) || parsedQte < 0 || isNaN(parsedQteAlerte) || parsedQteAlerte < 0) {
             return NextResponse.json({
                 message: "La quantité doit être un nombre entier positif ou nul.",
                 success: false,
@@ -36,9 +38,17 @@ export const POST = withAuth(async (req) => {
             }, { status: 400 })
         }
 
-        if (!mongoose.Types.ObjectId.isValid(category_id)) {
+        if (category_id && !mongoose.Types.ObjectId.isValid(category_id)) {
             return NextResponse.json({
                 message: "L'ID de la catégorie est invalide.",
+                success: false,
+                error: true
+            }, { status: 400 })
+        }
+
+        if (supplier_id && !mongoose.Types.ObjectId.isValid(supplier_id)) {
+            return NextResponse.json({
+                message: "L'ID du fournisseur est invalide.",
                 success: false,
                 error: true
             }, { status: 400 })
@@ -55,15 +65,34 @@ export const POST = withAuth(async (req) => {
                 { status: 400 }
             );
         }
-
-        const rep = await Product.create({
+        const data = {
             nom,
-            prix: parsedPrix,
+            prixAchat: parsedAchat,
+            prixVente: parsedVente,
             Qte: parsedQte,
-            fournisseur,
+            QteAlerte: parsedQteAlerte,
+            reference,
             description,
-            category_id
-        })
+            dateExpiration,
+            category_id,
+            supplier_id
+        }
+
+        if(image) {
+            try {
+                const rep = await cloudinary.uploader.upload(image, {folder: "quincaillerie"})
+                data.image = rep.secure_url 
+            } catch (uploadErr) {
+                console.error("Erreur Cloudinary: ", uploadErr)
+                return NextResponse.json({
+                    message: "Erreur lors de l'upload de l'image.",
+                    success: false,
+                    error: true
+                }, { status: 500 });
+            }
+        }
+
+        const rep = await Product.create(data)
 
         return NextResponse.json({
             message: "Produit ajouté avec succès.",
