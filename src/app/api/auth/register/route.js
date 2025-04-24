@@ -3,6 +3,8 @@ import User from "@/models/User.model"
 import { NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 import { withAuthAndRole } from "@/utils/withAuthAndRole"
+import { resend } from "@/lib/resend"
+import AccountCreatedSuccessfully from "@/components/email/Acount-created-successfully"
 
 export const POST = withAuthAndRole(async (req) => {
     try {
@@ -44,6 +46,26 @@ export const POST = withAuthAndRole(async (req) => {
             password: hashedPassword,
             role
         })
+
+        const loginLink = `${process.env.NEXT_PUBLIC_APP_URL}/login`
+
+        const { data, error } = await resend.emails.send({
+            from: "Support Quincallerie <onboarding@resend.dev>",
+            to: "perrinemmanuelnzaou@gmail.com",
+            subject: "Bienvenue sur Quincallerie",
+            react: <AccountCreatedSuccessfully defaultPassword={password} loginLink={loginLink} userFullName={prenom}/>
+        })
+
+        if(error) {
+            console.error("Erreur lors de l'envoie du mail de création de compte à l'utilisateur: ", error)
+            return NextResponse.json({
+                message: "Le mail n'a pas pu être envoyé.",
+                success: false,
+                error: true
+            }, { status: 500 })
+        }
+
+        console.log("Email envoyé avec succès: ", data)
 
         return NextResponse.json({
             message: "Utilisateur créé avec succès.",
