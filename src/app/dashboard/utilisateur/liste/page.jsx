@@ -2,15 +2,17 @@ import UserTable from "@/components/dashbord/User-table";
 import { preparingServerSideRequest } from "@/utils/preparingServerSideRequest";
 
 
-const Page = async () => {
+const Page = async ({ searchParams }) => {
     const { cookie, host, protocol } = await preparingServerSideRequest()
-    const rep = await fetch(`${protocol}://${host}/api/user`,{
-        method:'GET',
-        headers:{
-            'Cookie':cookie
-        }
+
+    const { page, search } = await searchParams
+    const page1 = page || 1
+    const search1 = search || ""
+
+    const rep = await fetch(`${protocol}://${host}/api/user?page=${page1}&limit=1&search=${search1}`,{
+        headers:{ 'Cookie':cookie }
     })
-    const data = await rep.json()
+    const { data, totalPages, currentPage } = await rep.json()
     
     return (
         <div className="flow-root">
@@ -20,7 +22,21 @@ const Page = async () => {
                     Gestion des utilisateurs
                 </p>
             </div>
-            <UserTable initialUsers={data.data} />
+
+             {/* Champ de recherche */}
+             <form className="mb-4 flex flex-col gap-2 md:flex-row md:items-center" action="">
+                <input
+                    name="search"
+                    defaultValue={search}
+                    placeholder="Rechercher par nom ou prénom"
+                    className="w-full md:w-1/3 px-4 py-2 border rounded-md"
+                />
+                <button className="bg-blue-600 text-white px-4 py-2 rounded-md">
+                    Rechercher
+                </button>
+            </form>
+
+            <UserTable initialUsers={data} totalPages={totalPages} currentPage={currentPage} search={search1}/>
         </div>
     );
 }

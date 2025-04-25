@@ -8,15 +8,39 @@ import { NextResponse } from "next/server";
 export const GET = withAuthAndRole(async (req) => {
     try {
         const session = await getServerSession(authOptions)
-        
         await dbConnection()
 
-        const user = await User.find({_id: { $ne: session.user.id }}, { password: 0 })
+        const { searchParams } = new URL(req.url)
+        console.log(searchParams)
+        const page = parseInt(searchParams.get("page") || "1")
+        const limit = parseInt(searchParams.get("limit") || "5")
+        const search = searchParams.get("search") || ""
+        const skip = (page - 1) * limit
+
+        const query = search
+        ? {
+            _id: { $ne: session.user.id },
+            $or: [
+                { nom: { $regex: search, $options: "i" } },
+                { prenom: { $regex: search, $options: "i" } }
+            ]
+        }
+        : { _id: { $ne: session.user.id } };
+
+        const [users, total] = await Promise.all([
+            User.find(query, { password: 0 })
+            .skip(skip)
+            .limit(limit),
+           User.countDocuments(query)
+        ])
         
         return NextResponse.json(
             { 
-                message: user.length === 0? "Aucun utilisateur enregistré." : "Utilisateurs récupérés avec succès",
-                data: user,
+                message: users.length === 0? "Aucun utilisateur trouvé." : "Utilisateurs récupérés avec succès",
+                data: users,
+                total,
+                currentPage: page,
+                totalPages: Math.ceil(total / limit),
                 success: true,
                 error: false
             },
