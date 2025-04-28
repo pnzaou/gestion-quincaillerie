@@ -9,7 +9,7 @@ const Page = async ({ searchParams }) => {
     const page1 = page || 1
     const search1 = search || ""
 
-    const rep = await fetch(`${protocol}://${host}/api/user?page=${page1}&limit=1&search=${search1}`,{
+    const rep = await fetch(`${protocol}://${host}/api/user?page=${page1}&limit=5&search=${search1}`,{
         headers:{ 'Cookie':cookie }
     })
     const { data, totalPages, currentPage } = await rep.json()
@@ -23,20 +23,12 @@ const Page = async ({ searchParams }) => {
                 </p>
             </div>
 
-             {/* Champ de recherche */}
-             <form className="mb-4 flex flex-col gap-2 md:flex-row md:items-center" action="">
-                <input
-                    name="search"
-                    defaultValue={search}
-                    placeholder="Rechercher par nom ou prénom"
-                    className="w-full md:w-1/3 px-4 py-2 border rounded-md"
-                />
-                <button className="bg-blue-600 text-white px-4 py-2 rounded-md">
-                    Rechercher
-                </button>
-            </form>
-
-            <UserTable initialUsers={data} totalPages={totalPages} currentPage={currentPage} search={search1}/>
+            <UserTable
+              initialUsers={data}
+              initialTotalPages={totalPages} 
+              currentPage={currentPage} 
+              search={search1}
+            />
         </div>
     );
 }

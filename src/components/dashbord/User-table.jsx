@@ -2,45 +2,59 @@
 
 import { DeleteUser, UpdateUser, UserStatus } from "@/components/dashbord/button-user";
 import { useEffect, useState, useRef } from "react";
-import { useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
-import Link from "next/link";
-import { getPaginationRange } from "@/lib/pagination";
 import Pagination from "./Pagination";
 
-const UserTable = ({initialUsers, totalPages, currentPage, search}) => {
+const UserTable = ({initialUsers, initialTotalPages, currentPage, search}) => {
     const [users, setUsers] = useState(initialUsers)
+    const [searchTerm, setSearchTerm] = useState(search)
+    const [debouncedSearch, setDebouncedSearch] = useState(search);
+    const [page, setPage] = useState(currentPage)
+    const [totalPages, setTotalPages] = useState(initialTotalPages)
     const [deletingUserId, setDeletingUserId] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
-    const searchParams = useSearchParams()
-    const hasMounted = useRef(false)
-
-    const page = parseInt(currentPage)
+    const isFirstRun = useRef(false)
 
     useEffect(() => {
-        if (!hasMounted.current) {
-            hasMounted.current = true;
+        const handler = setTimeout(() => {
+          setDebouncedSearch(searchTerm);
+        }, 500);
+        return () => clearTimeout(handler);
+    }, [searchTerm]);
+
+    useEffect(() => {
+        if (!isFirstRun.current) {
+            isFirstRun.current = true;
             return;
         }
 
-        const pageParam = searchParams.get("page") || "1";
-        const searchParam = searchParams.get("search") || "";
+        if(debouncedSearch.length > 0 && debouncedSearch.length < 3) {
+            return;
+        }
+
+        const activeSearch = debouncedSearch
 
         setIsLoading(true)
-        fetch(`/api/user?page=${pageParam}&limit=1&search=${searchParam}`)
+        fetch(`/api/user?page=${page}&limit=5&search=${activeSearch}`)
           .then(response => response.json())
-          .then(({ data }) => {
-            console.log(data)
+          .then(({ data, totalPages: tp, currentPage: cp }) => {
             setUsers(data)
+            setTotalPages(tp)
+            setPage(cp)
         })
          .catch(error => {
             console.error(error)
             toast.error("Une erreur s'est produite! Veuillez réessayer.")
-        }).finally(() => {
-            setIsLoading(false)
-        })
+        }).finally(() => setIsLoading(false))
         
-    }, [searchParams])
+    }, [page, debouncedSearch])
+
+    const handleSearchChange = e => {
+        setSearchTerm(e.target.value)
+        if (page !== 1) {
+            setPage(1)
+        }
+    }
     
     const handleDelete = async (id) => {
         setDeletingUserId(id)
@@ -67,6 +81,18 @@ const UserTable = ({initialUsers, totalPages, currentPage, search}) => {
 
     return (
         <>
+            {/* Barre de recherche client-side */}
+            <div className="mb-4 flex flex-col md:flex-row md:items-center gap-2">
+                <input
+                type="text"
+                value={searchTerm}
+                onChange={handleSearchChange}
+                placeholder="Rechercher par nom ou prénom (min. 3 caractères)"
+                className="w-full md:w-1/3 px-4 py-2 border rounded-md"
+                />
+            </div>
+
+            {/* Loader */}
             {isLoading && (
                 <div className="flex justify-center py-4 space-x-2">
                     <div
@@ -164,9 +190,9 @@ const UserTable = ({initialUsers, totalPages, currentPage, search}) => {
 
             {/* PAGINATION */}
             <Pagination
-            page={page}
-            totalPages={totalPages}
-            search={search}
+              page={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
             />
         </>
     );

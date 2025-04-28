@@ -11,7 +11,6 @@ export const GET = withAuthAndRole(async (req) => {
         await dbConnection()
 
         const { searchParams } = new URL(req.url)
-        console.log(searchParams)
         const page = parseInt(searchParams.get("page") || "1")
         const limit = parseInt(searchParams.get("limit") || "5")
         const search = searchParams.get("search") || ""

@@ -1,13 +1,10 @@
-"use client"
+"use client";
 
-import Link from "next/link";
-
-
-const Pagination = ({page, totalPages, search}) => {
+const Pagination = ({ page, totalPages, onPageChange }) => {
 
     function getPaginationRange(current, total) {
-        if (total <= 1) return [1]
-        
+        if (total <= 1) return [1];
+      
         const delta = 2;
         const range = [];
         const rangeWithDots = [];
@@ -36,33 +33,28 @@ const Pagination = ({page, totalPages, search}) => {
 
     return (
         <div className="mt-6 flex justify-center gap-2 flex-wrap">
-            {getPaginationRange(page, totalPages).map((item, index) => {
-                if(item === "...") {
-                return (
-                    <span key={index} className="px-3 py-1 text-gray-500">
-                        ...
-                    </span>
-                    );
-                }
-
-                const href = `?page=${item}${search ? `&search=${search}` : ""}`;
-
-                return (
-                    <Link
-                    key={index}
-                    href={href}
-                    className={`px-3 py-1 border rounded-md ${
-                        page === item ? "bg-blue-600 text-white" : "bg-white text-gray-800"
-                        }`}
-                    >
-                    {item}
-                    </Link>
-                );
-            })}
+        {getPaginationRange(page, totalPages).map((item, idx) => {
+            if (item === "...") {
+            return (
+                <span key={idx} className="px-3 py-1 text-gray-500">
+                …
+                </span>
+            );
+            }
+            return (
+            <button
+                key={idx}
+                onClick={() => onPageChange(item)}
+                className={`px-3 py-1 border rounded-md ${
+                page === item ? "bg-blue-600 text-white" : "bg-white text-gray-800"
+                }`}
+            >
+                {item}
+            </button>
+            );
+        })}
         </div>
     );
-}
+};
 
 export default Pagination;
-
-
