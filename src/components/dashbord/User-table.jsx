@@ -4,6 +4,8 @@ import { DeleteUser, UpdateUser, UserStatus } from "@/components/dashbord/button
 import { useEffect, useState, useRef } from "react";
 import toast from "react-hot-toast";
 import Pagination from "./Pagination";
+import Link from "next/link";
+import { UserPlusIcon } from "@heroicons/react/24/outline"
 
 const UserTable = ({initialUsers, initialTotalPages, currentPage, search}) => {
     const [users, setUsers] = useState(initialUsers)
@@ -81,15 +83,27 @@ const UserTable = ({initialUsers, initialTotalPages, currentPage, search}) => {
 
     return (
         <>
-            {/* Barre de recherche client-side */}
-            <div className="mb-4 flex flex-col md:flex-row md:items-center gap-2">
-                <input
-                type="text"
-                value={searchTerm}
-                onChange={handleSearchChange}
-                placeholder="Rechercher par nom ou prénom (min. 3 caractères)"
-                className="w-full md:w-1/3 px-4 py-2 border rounded-md"
-                />
+            {/* Barre de recherche et bouton ajouter */}
+            <div className="flex justify-between items-center">
+                <div className="mb-4 flex flex-col md:flex-row md:items-center gap-2 flex-1/2">
+                    <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={handleSearchChange}
+                    placeholder="Rechercher par nom ou prénom (min. 3 caractères)"
+                    className="w-full md:w-1/2 px-4 py-2 border rounded-md"
+                    />
+                </div>
+                <div className="mb-4 ml-4 md:ml-0">
+                    <Link href="/dashboard/utilisateur/creer">
+                        <button className="hidden md:block bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 hover:cursor-pointer">
+                            Ajouter un utilisateur
+                        </button>
+                        <button className="md:hidden rounded-md border p-2 flex items-center justify-center gap-1 bg-blue-500 text-white hover:bg-blue-600 hover:cursor-pointer">
+                            <UserPlusIcon className="w-5" />
+                        </button>
+                    </Link>
+                </div>
             </div>
 
             {/* Loader */}

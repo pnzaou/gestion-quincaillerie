@@ -27,31 +27,42 @@ export function LoginForm({className, ...props}) {
 
   const onSubmit = async (data) => {
     setIsLoading(true)
-    try {
-      const res = await signIn("credentials",{
-        email: data.email,
-        password: data.password,
-        redirect: false
-      })
+    const res = await signIn("credentials",{
+      email: data.email,
+      password: data.password,
+      redirect: false
+    })
 
-      if(res.ok) {
-        setIsLoading(false)
-        router.push("/")
-        toast.success("Connexion réussie !", {
-          position: "top-center"
-        })
-      } else {
-        setIsLoading(false)
-        toast.error("Email ou mot de passe incorrect.", {
-          position: "top-center"
-        })
-      }
-    } catch (error) {
-      setIsLoading(false)
-      toast.error("Une erreur est survenue. Veuillez réessayer.", {
+    setIsLoading(false)
+    if(res.ok) {
+      toast.success("Connexion réussie !", {
         position: "top-center"
-      });
-    console.error(error);
+      })
+      router.push("/")
+      return;
+    } 
+
+    switch(res.error) {
+      case "Compte suspendu":
+        toast.error("Votre compte a été suspendu!", {
+          position: "top-center"
+        })
+        break;
+      case "Utilisateur introuvable":
+        toast.error("Email ou mot de passe incorrect", {
+          position: "top-center"
+        })
+        break;
+      case "Mot de passe incorrect":
+        toast.error("Email ou mot de passe incorrect", {
+          position: "top-center"
+        })
+        break;
+      default:
+        toast.error("Erreur de connexion. Veuillez réessayer.", {
+          position: "top-center"
+        })
+        break;
     }
   }
 
@@ -111,7 +122,7 @@ export function LoginForm({className, ...props}) {
                 </span>}
               </div>
               <div className="flex flex-col gap-3">
-                <Button type="submit" className="w-full">
+                <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading 
                   ? (
                     <>

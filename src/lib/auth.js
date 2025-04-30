@@ -20,12 +20,16 @@ const authOptions = {
                 const user = await User.findOne({ email })
 
                 if(!user) {
-                    return null
+                    throw new Error("Utilisateur introuvable");
+                }
+
+                if(user.status !== "actif") {
+                    throw new Error("Compte suspendu");
                 }
 
                 const checkedPassword = await bcrypt.compare(password, user.password)
                 if(!checkedPassword) {
-                    return null
+                    throw new Error("Mot de passe incorrect");
                 }
 
                 return { //retourner les données qui seront stocker dans la session et le token
