@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import Pagination from "./Pagination";
 import Link from "next/link";
 import { UserPlusIcon } from "@heroicons/react/24/outline"
+import SearchLoader from "./Search-loader";
 
 const UserTable = ({initialUsers, initialTotalPages, currentPage, search}) => {
     const [users, setUsers] = useState(initialUsers)
@@ -108,20 +109,7 @@ const UserTable = ({initialUsers, initialTotalPages, currentPage, search}) => {
 
             {/* Loader */}
             {isLoading && (
-                <div className="flex justify-center py-4 space-x-2">
-                    <div
-                    className="w-2.5 h-2.5 bg-blue-400 rounded-full animate-bounce"
-                    style={{ animationDelay: "0s" }}
-                    />
-                    <div
-                    className="w-2.5 h-2.5 bg-blue-400 rounded-full animate-bounce"
-                    style={{ animationDelay: "0.2s" }}
-                    />
-                    <div
-                    className="w-2.5 h-2.5 bg-blue-400 rounded-full animate-bounce"
-                    style={{ animationDelay: "0.4s" }}
-                    />
-                </div>
+                <SearchLoader/>
             )}
             
             <div className={isLoading ? "opacity-50 pointer-events-none" : ""}>

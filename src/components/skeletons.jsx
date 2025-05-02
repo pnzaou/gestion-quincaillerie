@@ -217,6 +217,7 @@ export function InvoicesTableSkeleton() {
   );
 }
 
+// Skeleton pour les lignes de la table des utilisateurs
 export function UserRowSkeleton() {
   return (
     <tr className="w-full border-b border-gray-300 last-of-type:border-none animate-pulse [&:first-child>td:first-child]:rounded-tl-lg [&:first-child>td:last-child]:rounded-tr-lg [&:last-child>td:first-child]:rounded-bl-lg [&:last-child>td:last-child]:rounded-br-lg">
@@ -251,6 +252,7 @@ export function UserRowSkeleton() {
   )
 }
 
+//Seleton pour les lignes de la table des utilisateurs sur mobile
 export function UserMobileSkeleton() {
   return (
     <div className="mb-2 w-full rounded-md bg-white p-4 animate-pulse">
@@ -276,6 +278,7 @@ export function UserMobileSkeleton() {
   )
 }
 
+// Skeleton pour la table des utilisateurs
 export function UserTableSkeleton() {
   return (
     <div className="mt-6 flow-root">
@@ -315,6 +318,99 @@ export function UserTableSkeleton() {
               <UserRowSkeleton />
               <UserRowSkeleton />
               <UserRowSkeleton />
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Skeleton pour les lignes de la table des catégories
+export function CategoryRowSkeleton() {
+  return (
+    <tr className="w-full border-b border-gray-300 last-of-type:border-none animate-pulse [&:first-child>td:first-child]:rounded-tl-lg [&:first-child>td:last-child]:rounded-tr-lg [&:last-child>td:first-child]:rounded-bl-lg [&:last-child>td:last-child]:rounded-br-lg">
+      {/* Nom */}
+      <td className="whitespace-nowrap px-3 py-3">
+        <div className="h-6 w-32 rounded bg-gray-300"></div>
+      </td>
+      {/* Description */}
+      <td className="whitespace-nowrap px-3 py-3">
+        <div className="h-6 w-48 rounded bg-gray-300"></div>
+      </td>
+      {/* Actions */}
+      <td className="whitespace-nowrap py-3 pl-6 pr-3">
+        <div className="flex justify-end gap-2">
+          <div className="h-[38px] w-[38px] rounded bg-gray-300"></div>
+          <div className="h-[38px] w-[38px] rounded bg-gray-300"></div>
+          <div className="h-[38px] w-[38px] rounded bg-gray-300"></div>
+        </div>
+      </td>
+    </tr>
+  );
+}
+
+// Skeleton pour les lignes de la table des catégories sur mobile
+export function CategoryMobileSkeleton() {
+  return (
+    <div className="mb-2 w-full rounded-md bg-white p-4 animate-pulse">
+      {/* Header: Nom */}
+      <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+        <div className="h-6 w-32 rounded bg-gray-100" /> {/* Nom */}
+      </div>
+
+      {/* Corps: Description */}
+      <div className="pt-4">
+        <div className="h-6 w-48 rounded bg-gray-100" /> {/* Description */}
+      </div>
+
+      {/* Actions */}
+      <div className="mt-4 flex justify-end gap-2">
+        <div className="h-10 w-10 rounded bg-gray-100" />
+        <div className="h-10 w-10 rounded bg-gray-100" />
+        <div className="h-10 w-10 rounded bg-gray-100" />
+      </div>
+    </div>
+  );
+}
+
+// Skeleton pour la table des catégories
+export function CategoryTableSkeleton() {
+  return (
+    <div className="mt-6 flow-root">
+      <div
+        className={`${shimmer} relative animate-pulse mb-6 h-8 w-36 overflow-hidden rounded-md bg-gray-300`}
+      />
+      <div className="inline-block min-w-full align-middle">
+        <div className="rounded-lg bg-gray-50 p-2 md:pt-0">
+          {/* Mobile Version */}
+          <div className="md:hidden space-y-2">
+            <CategoryMobileSkeleton />
+            <CategoryMobileSkeleton />
+            <CategoryMobileSkeleton />
+            <CategoryMobileSkeleton />
+            <CategoryMobileSkeleton />
+            <CategoryMobileSkeleton />
+          </div>
+
+          {/* Desktop Table Version */}
+          <table className="hidden min-w-full text-gray-900 md:table">
+            <thead className="text-left text-sm font-normal">
+              <tr>
+                <th className="px-4 py-5 font-medium sm:pl-6">Nom</th>
+                <th className="px-3 py-5 font-medium">Description</th>
+                <th className="py-5 pl-6 pr-3 text-right">
+                  <span className="sr-only">Actions</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white">
+              <CategoryRowSkeleton />
+              <CategoryRowSkeleton />
+              <CategoryRowSkeleton />
+              <CategoryRowSkeleton />
+              <CategoryRowSkeleton />
+              <CategoryRowSkeleton />
             </tbody>
           </table>
         </div>

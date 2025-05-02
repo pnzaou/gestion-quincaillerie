@@ -1,21 +1,32 @@
 "use client"
 
-import { PencilIcon, TrashIcon } from "@heroicons/react/24/outline"
+import { EyeIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/outline"
 import clsx from "clsx"
 import Link from "next/link"
 
-export function UpdateUser({ id }) {
+export function DetailsCategory({ id }) {
     return (
       <Link
-        href={`/dashboard/utilisateur/${id}/modification`}
+        href={`/dashboard/categorie/${id}/détails`}
+        className="rounded-md border p-2 hover:bg-gray-100"
+      >
+        <EyeIcon className="w-5" />
+      </Link>
+    )
+}
+
+export function UpdateCategory({ id }) {
+    return (
+      <Link
+        href={`/dashboard/categorie/${id}/modification`}
         className="rounded-md border p-2 hover:bg-gray-100"
       >
         <PencilIcon className="w-5" />
       </Link>
     )
-  }
+}
   
-  export function DeleteUser({ id, deleteUser, isLoading }) {
+  export function DeleteCategory({ id, deleteCat, isLoading }) {
     return (
       <button
         type="button" 
@@ -23,7 +34,7 @@ export function UpdateUser({ id }) {
           "rounded-md border p-2 flex items-center justify-center gap-1 hover:cursor-pointer",
           { "opacity-50 cursor-not-allowed": isLoading }
         )}
-        onClick={() => deleteUser(id)}
+        onClick={() => deleteCat(id)}
         disabled={isLoading}
       >
         {isLoading ? (
@@ -53,20 +64,4 @@ export function UpdateUser({ id }) {
     )
   }
   
-  
-  export function UserStatus({ status }) {
-    return (
-      <span
-        className={clsx(
-          'inline-flex items-center rounded-full px-2 py-1 text-xs',
-          {
-            'bg-green-500 text-white': status === 'actif',
-            'bg-red-500 text-white': status === 'suspendu',
-          },
-        )}
-      >
-        {status === 'actif' ? 'Actif' : 'Suspendu'}
-      </span>
-    )
-  }
   

@@ -1,10 +1,11 @@
 import dbConnection from "@/lib/db"
-import { withAuth } from "@/utils/withAuth"
 import Category from "@/models/Category.model"
 import mongoose from "mongoose"
 import { NextResponse } from "next/server"
+import Product from "@/models/Product.model"
+import { withAuthAndRole } from "@/utils/withAuthAndRole"
 
-export const GET = withAuth(async (req, {params}) => {
+export const GET = withAuthAndRole(async (req, {params}) => {
     try {
         await dbConnection()
 
@@ -43,7 +44,7 @@ export const GET = withAuth(async (req, {params}) => {
     }
 })
 
-export const PUT = withAuth(async (req, {params}) => {
+export const PUT = withAuthAndRole(async (req, {params}) => {
     try {
         await dbConnection()
 
@@ -93,8 +94,12 @@ export const PUT = withAuth(async (req, {params}) => {
     }
 })
 
-export const DELETE = withAuth(async (req, { params }) => {
+export const DELETE = withAuthAndRole(async (req, { params }) => {
+    let session
     try {
+        session = await mongoose.startSession();
+        session.startTransaction();
+
         await dbConnection()
         const { id } = await params;
 
@@ -105,7 +110,8 @@ export const DELETE = withAuth(async (req, { params }) => {
             );
         }
 
-        const deletedCategory = await Category.findByIdAndDelete(id)
+        const deletedCategory = await Category.findByIdAndDelete(id, { session });
+
 
         if (!deletedCategory) {
             return NextResponse.json(
@@ -114,12 +120,21 @@ export const DELETE = withAuth(async (req, { params }) => {
             );
         }
 
+        await Product.deleteMany({ category_id: id }, { session });
+
+        await session.commitTransaction();
+        session.endSession();
+
         return NextResponse.json(
             { message: "Catégorie supprimée avec succès.", success: true, error: false },
             { status: 200 }
         )
 
     } catch (error) {
+        if(session){
+            await session.abortTransaction();
+            session.endSession();
+        }
         console.error("Erreur lors de la suppression de la catégorie: ", error)
         return NextResponse.json({
             message: "Erreur! Veuillez réessayer.",

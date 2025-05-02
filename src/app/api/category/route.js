@@ -62,12 +62,30 @@ export const GET = withAuth(async (req) => {
     try {
         await dbConnection()
 
-        const rep = await Category.find()
+        const { searchParams } = new URL(req.url)
+        const page = parseInt(searchParams.get("page") || "1")
+        const limit = parseInt(searchParams.get("limit") || "5")
+        const search = searchParams.get("search") || ""
+        const skip = (page - 1) * limit
+
+        const query = search
+        ? { nom: { $regex: search, $options: "i" } }
+        : {}
+
+        const [categories, total] = await Promise.all([
+            Category.find(query)
+            .skip(skip)
+            .limit(limit),
+            Category.countDocuments(query)
+        ])
 
         return NextResponse.json(
             { 
-                message: rep.length === 0? "Aucune catégorie enregistrée." : "Catégories récupérées avec succès.",
-                data: rep,
+                message: categories.length === 0? "Aucune catégorie enregistrée." : "Catégories récupérées avec succès.",
+                data: categories,
+                total,
+                currentPage: page,
+                totalPages: Math.ceil(total / limit),
                 success: true,
                 error: false
             },
@@ -79,8 +97,6 @@ export const GET = withAuth(async (req) => {
             message: "Erreur! Veuillez réessayer.",
             success: false,
             error: true
-        },
-        { status: 500 }
-        )
+        },{ status: 500 })
     }
 })
