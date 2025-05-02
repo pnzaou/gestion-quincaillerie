@@ -1,26 +1,38 @@
 "use client"
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Input } from "../ui/input";
-import { Textarea } from "../ui/textarea";
-import { Button } from "../ui/button";
+import { Input } from "../../ui/input";
+import { Textarea } from "../../ui/textarea";
+import { Button } from "../../ui/button";
 import { cn } from "@/lib/utils";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
 import { useRouter } from "next/navigation";
-import { Label } from "../ui/label";
+import { Label } from "../../ui/label";
 import toast from "react-hot-toast";
 
-const AjoutCatForm = ({className, ...props}) => {
+const AjoutCatForm = ({className, initialData = null, ...props}) => {
     const [isLoading, setIsLoading] = useState(false)
     const { register, handleSubmit, formState: { errors }, setValue } = useForm()
     const router = useRouter()
 
+    const isEdit = Boolean(initialData)
+
+    useEffect(() => {
+        if (isEdit) {
+            setValue("nom", initialData.nom || "");
+            setValue("description", initialData.description || "");
+        }
+    }, [initialData, setValue, isEdit])
+
     const onSubmit = async (data) => {
         try {
             setIsLoading(true)
-            const response = await fetch("/api/category", {
-                method: "POST",
+            const url = isEdit ? `/api/category/${initialData._id}` : "/api/category";
+            const method = isEdit ? "PUT" : "POST";
+
+            const response = await fetch(url, {
+                method,
                 headers: {
                     "Content-Type": "application/json",
                 },
@@ -29,19 +41,16 @@ const AjoutCatForm = ({className, ...props}) => {
             const rep = await response.json()
 
             if (response.ok) {
-                setIsLoading(false)
-                setValue("nom", "")
-                setValue("description", "")
                 router.push("/dashboard/categorie/liste")
                 toast.success(rep.message);
             } else {
-                setIsLoading(false)
                 toast.error(rep.message);
             }
         } catch (error) {
-            setIsLoading(false)
             toast.error("Erreur lors de l'ajout de l'utilisateur. Veuillez réessayer.");
             console.error(error);
+        } finally {
+            setIsLoading(false)
         }
     }
 
@@ -50,7 +59,7 @@ const AjoutCatForm = ({className, ...props}) => {
         ( <div className={cn("flex flex-col gap-6", className)} {...props}>
             <Card>
                 <CardHeader>
-                    <CardTitle>Ajouter une catégorie</CardTitle>
+                    <CardTitle>{isEdit ? "Modifier la catégorie" : "Ajouter une catégorie"}</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleSubmit(onSubmit)}>
@@ -88,10 +97,12 @@ const AjoutCatForm = ({className, ...props}) => {
                             {isLoading 
                             ? (
                                 <>
-                                <span className="w-4 h-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></span> Enregistrement en cours...
+                                    <span className="w-4 h-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></span> {isEdit ? "Mise à jour..." : "Enregistrement..."}
                                 </>
                             ) 
-                            : "Enregistrer"}
+                            : (
+                                isEdit ? "Mettre à jour" : "Enregistrer"
+                            )}
                             </Button>
                         </div>
                     </form>

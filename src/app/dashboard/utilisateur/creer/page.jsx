@@ -1,4 +1,5 @@
-import AjoutUserForm from "@/components/dashbord/Ajout-user-form";
+import AjoutUserForm from "@/components/dashbord/forms/Ajout-user-form";
+
 
 const Page = () => {
     return (

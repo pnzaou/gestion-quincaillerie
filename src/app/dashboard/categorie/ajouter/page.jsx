@@ -1,4 +1,4 @@
-import AjoutCatForm from "@/components/dashbord/Ajout-cat-form";
+import AjoutCatForm from "@/components/dashbord/forms/Ajout-cat-form";
 
 const Page = () => {
     return (
