@@ -74,6 +74,7 @@ export const GET = withAuth(async (req) => {
 
         const [categories, total] = await Promise.all([
             Category.find(query)
+            .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit),
             Category.countDocuments(query)

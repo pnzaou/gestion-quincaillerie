@@ -167,23 +167,23 @@ const CategoryTable = ({initialCat, initialTotalPages, currentPage, search}) => 
                             </tr>
                             </thead>
                             <tbody className="bg-white">
-                            {categories.map((cat) => (
-                                <tr key={cat._id} className="border-b last:border-none text-sm">
-                                <td className="whitespace-nowrap py-4 pl-6 pr-3">{cat.nom}</td>
-                                <td className="whitespace-nowrap px-3 py-4">{cat.description}</td>
-                                <td className="whitespace-nowrap py-4 pl-6 pr-3 text-right">
-                                    <div className="flex justify-end gap-2">
-                                        <DetailsCategory id={cat._id}/>
-                                        <UpdateCategory id={cat._id}/>
-                                        <DeleteCategory
-                                          id={cat._id}
-                                          deleteCat={handleDeleteClick}
-                                          isLoading={deletingCatId === cat._id}
-                                        />
-                                    </div>
-                                </td>
-                                </tr>
-                            ))}
+                                {categories.map((cat) => (
+                                    <tr key={cat._id} className="border-b last:border-none text-sm">
+                                    <td className="whitespace-nowrap py-4 pl-6 pr-3">{cat.nom}</td>
+                                    <td className="whitespace-nowrap px-3 py-4">{cat.description}</td>
+                                    <td className="whitespace-nowrap py-4 pl-6 pr-3 text-right">
+                                        <div className="flex justify-end gap-2">
+                                            <DetailsCategory id={cat._id}/>
+                                            <UpdateCategory id={cat._id}/>
+                                            <DeleteCategory
+                                            id={cat._id}
+                                            deleteCat={handleDeleteClick}
+                                            isLoading={deletingCatId === cat._id}
+                                            />
+                                        </div>
+                                    </td>
+                                    </tr>
+                                ))}
                             </tbody>
                         </table>
                     </div>
