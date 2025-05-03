@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
 import { useRouter } from "next/navigation";
 import { Label } from "../../ui/label";
 import toast from "react-hot-toast";
+import EIBCat from "../ExelImportButtons/EIBCat";
 
 const AjoutCatForm = ({className, initialData = null, ...props}) => {
     const [isLoading, setIsLoading] = useState(false)
@@ -57,6 +58,7 @@ const AjoutCatForm = ({className, initialData = null, ...props}) => {
     
     return (
         ( <div className={cn("flex flex-col gap-6", className)} {...props}>
+            <EIBCat/>
             <Card>
                 <CardHeader>
                     <CardTitle>{isEdit ? "Modifier la catégorie" : "Ajouter une catégorie"}</CardTitle>

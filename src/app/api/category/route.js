@@ -1,9 +1,9 @@
 import dbConnection from "@/lib/db"
-import { withAuth } from "@/utils/withAuth"
 import Category from "@/models/Category.model"
 import { NextResponse } from "next/server"
+import { withAuthAndRole } from "@/utils/withAuthAndRole"
 
-export const POST = withAuth(async (req) => {
+export const POST = withAuthAndRole(async (req) => {
     try {
         await dbConnection()
 
@@ -58,7 +58,7 @@ export const POST = withAuth(async (req) => {
     }
 })
 
-export const GET = withAuth(async (req) => {
+export const GET = withAuthAndRole(async (req) => {
     try {
         await dbConnection()
 
