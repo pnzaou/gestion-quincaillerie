@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
 import { useForm, Controller } from "react-hook-form";
@@ -11,18 +11,33 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
-const AjoutUserForm = ({className, ...props}) => {
+const AjoutUserForm = ({className, initialData = null, ...props}) => {
     const [isLoading, setIsLoading] = useState(false)
-    const { register, handleSubmit, control, formState: { errors }, setValue } = useForm()
+    const { register, handleSubmit, control, watch, formState: { errors }, setValue } = useForm()
     const router = useRouter()
     const mdpRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/
     const emailRegex = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/
 
+    const isEdit = Boolean(initialData)
+
+    useEffect(() => {
+        if (isEdit) {
+            setValue("nom", initialData.nom || "");
+            setValue("prenom", initialData.prenom || "");
+            setValue("email", initialData.email || "");
+            setValue("role", initialData.role || "");
+        }
+    }, [initialData, isEdit, setValue])
+
     const onSubmit = async (data) => {
         try {
             setIsLoading(true)
-            const response = await fetch("/api/auth/register", {
-                method: "POST",
+
+            const url = isEdit ? `/api/user/${initialData._id}` : "/api/auth/register"
+            const method = isEdit ? "PUT" : "POST"
+
+            const response = await fetch(url, {
+                method,
                 headers: {
                     "Content-Type": "application/json",
                 },
@@ -31,22 +46,16 @@ const AjoutUserForm = ({className, ...props}) => {
             const rep = await response.json()
             
             if (response.ok) {
-                setIsLoading(false)
-                setValue("nom", "")
-                setValue("prenom", "")
-                setValue("email", "")
-                setValue("password", "")
-                setValue("role", "")
+                toast.success(rep.message || `Utilisateur ${ isEdit ? "modifié" : "enregistré" } avec succès.`);
                 router.push("/dashboard/utilisateur/liste")
-                toast.success(rep.message);
             } else {
-                setIsLoading(false)
-                toast.error(rep.message);
+                toast.error(rep.message || "Erreur. Veuillez réessayer.");
             }
         } catch (error) {
-            setIsLoading(false)
-            toast.error("Erreur lors de l'ajout de l'utilisateur. Veuillez réessayer.");
+            toast.error("Erreur. Veuillez réessayer.");
             console.error(error);
+        } finally {
+            setIsLoading(false)
         }
     }
 
@@ -54,7 +63,7 @@ const AjoutUserForm = ({className, ...props}) => {
        ( <div className={cn("flex flex-col gap-6", className)} {...props}>
             <Card>
                 <CardHeader>
-                    <CardTitle>Ajouter un utilisateur</CardTitle>
+                    <CardTitle>{isEdit ? "Modifier l'utilisateur'" : "Ajouter un utilisateur"}</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleSubmit(onSubmit)}>
@@ -120,9 +129,9 @@ const AjoutUserForm = ({className, ...props}) => {
                                 <Input 
                                 id="password" 
                                 type="password" 
-                                required
+                                required={!isEdit}
                                 {...register("password", {
-                                required: true,
+                                required: !isEdit,
                                 pattern: mdpRegex,
                                 min: 8
                                 })}
@@ -139,6 +148,7 @@ const AjoutUserForm = ({className, ...props}) => {
                                 <Controller
                                     name="role"
                                     control={control}
+                                    defaultValue={initialData?.role || ""}
                                     rules={{ required: true }}
                                     render={({ field }) => (
                                         <Select onValueChange={field.onChange} value={field.value}>
@@ -164,10 +174,12 @@ const AjoutUserForm = ({className, ...props}) => {
                             {isLoading 
                             ? (
                                 <>
-                                <span className="w-4 h-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></span> Enregistrement en cours...
+                                    <span className="w-4 h-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></span> {isEdit ? "Mise à jour..." : "Enregistrement..."}
                                 </>
                             ) 
-                            : "Enregistrer"}
+                            : (
+                                isEdit ? "Mettre à jour" : "Enregistrer"
+                            )}
                             </Button>
                         </div>
                     </form>

@@ -58,7 +58,7 @@ const AjoutCatForm = ({className, initialData = null, ...props}) => {
     
     return (
         ( <div className={cn("flex flex-col gap-6", className)} {...props}>
-            <EIBCat/>
+            {!isEdit && <EIBCat/>}
             <Card>
                 <CardHeader>
                     <CardTitle>{isEdit ? "Modifier la catégorie" : "Ajouter une catégorie"}</CardTitle>
