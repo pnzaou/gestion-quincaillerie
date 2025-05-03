@@ -8,6 +8,8 @@ import DeleteCatPopup from "./Delete-cat-popup";
 import toast from "react-hot-toast";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import SearchLoader from "./Search-loader";
+import ExcelExportButton from "./ExcelExportButton";
+import { Button } from "../ui/button";
 
 const CategoryTable = ({initialCat, initialTotalPages, currentPage, search}) => {
 
@@ -100,7 +102,7 @@ const CategoryTable = ({initialCat, initialTotalPages, currentPage, search}) => 
 
     return (
         <>
-            {/* Barre de recherche et bouton ajouter */}
+            {/* Barre de recherche, bouton exporter et bouton ajouter */}
             <div className="flex justify-between items-center">
                 <div className="mb-4 flex flex-col md:flex-row md:items-center gap-2 flex-1/2">
                     <input
@@ -111,11 +113,14 @@ const CategoryTable = ({initialCat, initialTotalPages, currentPage, search}) => 
                     className="w-full md:w-1/2 px-4 py-2 border rounded-md"
                     />
                 </div>
+                <div className="hidden mb-4 mr-4 md:block">
+                    <ExcelExportButton initUrl={"/api/category/export-excel"}/>
+                </div>
                 <div className="mb-4 ml-4 md:ml-0">
                     <Link href="/dashboard/categorie/ajouter">
-                        <button className="hidden md:block bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 hover:cursor-pointer">
+                        <Button className="hidden md:block bg-[#0084D1] text-white px-4 py-2 rounded hover:bg-[#0042d1] hover:cursor-pointer">
                             Ajouter une catégorie
-                        </button>
+                        </Button>
                         <button className="md:hidden rounded-md border p-2 flex items-center justify-center gap-1 bg-blue-500 text-white hover:bg-blue-600 hover:cursor-pointer">
                             <PlusIcon className="w-5" />
                         </button>
