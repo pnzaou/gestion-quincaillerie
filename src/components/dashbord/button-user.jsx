@@ -7,7 +7,7 @@ import Link from "next/link"
 export function UpdateUser({ id }) {
     return (
       <Link
-        href={`/dashboard/utilisateur/${id}/modification`}
+        href={`/dashboard/utilisateur/liste/${id}/modification`}
         className="rounded-md border p-2 hover:bg-gray-100"
       >
         <PencilIcon className="w-5" />

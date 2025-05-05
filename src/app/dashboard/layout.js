@@ -1,3 +1,4 @@
+import DynamicBreadcrumb from "@/components/dashbord/Dynamic-breadcrumb";
 import SideBar from "@/components/dashbord/Sidebar";
 import authOptions from "@/lib/auth";
 import { getServerSession } from "next-auth";
@@ -15,7 +16,12 @@ export default async function Layout({ children }) {
         <SideBar />
       </div>
       {/* <div className="flex-grow p-6 md:overflow-y-auto md:p-12">{children}</div> */}
-      <div className="flex-grow p-6 md:overflow-y-auto md:p-12">{children}</div>
+      <div className="flex-grow p-6 md:overflow-y-auto md:p-12">
+        <div className="mb-2">
+          <DynamicBreadcrumb/>
+        </div>
+        {children}
+      </div>
     </div>
   );
 }
