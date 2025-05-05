@@ -10,6 +10,7 @@ import { Button } from "../../ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import Required from "@/components/Required";
 
 const AjoutUserForm = ({className, initialData = null, ...props}) => {
     const [isLoading, setIsLoading] = useState(false)
@@ -69,7 +70,7 @@ const AjoutUserForm = ({className, initialData = null, ...props}) => {
                     <form onSubmit={handleSubmit(onSubmit)}>
                         <div className="flex gap-2 mb-4">
                             <div className="grid gap-3 flex-1/2">
-                                <Label htmlFor="email">Nom</Label>
+                                <Label htmlFor="email">Nom<Required/></Label>
                                 <Input 
                                 id="nom"
                                 type="nom"
@@ -86,7 +87,7 @@ const AjoutUserForm = ({className, initialData = null, ...props}) => {
                             </div>
                             <div className="grid gap-3 flex-1/2">
                                 <div className="flex items-center">
-                                <Label htmlFor="password">Prénom</Label>
+                                <Label htmlFor="password">Prénom<Required/></Label>
                                 </div>
                                 <Input 
                                 id="prenom" 
@@ -105,7 +106,7 @@ const AjoutUserForm = ({className, initialData = null, ...props}) => {
                         </div>
                         <div className="flex gap-2 mb-4">
                             <div className="grid gap-3 flex-1/2">
-                                <Label htmlFor="email">E-mail</Label>
+                                <Label htmlFor="email">E-mail<Required/></Label>
                                 <Input 
                                 id="email"
                                 type="email"
@@ -124,7 +125,7 @@ const AjoutUserForm = ({className, initialData = null, ...props}) => {
                             </div>
                             <div className="grid gap-3 flex-1/2">
                                 <div className="flex items-center">
-                                <Label htmlFor="password">Mot de passe</Label>
+                                <Label htmlFor="password">Mot de passe<Required/></Label>
                                 </div>
                                 <Input 
                                 id="password" 
@@ -144,7 +145,7 @@ const AjoutUserForm = ({className, initialData = null, ...props}) => {
                             </div>
                         </div>
                         <div className="grid gap-3 mb-4">
-                                <Label htmlFor="email">Rôle</Label>
+                                <Label htmlFor="email">Rôle<Required/></Label>
                                 <Controller
                                     name="role"
                                     control={control}

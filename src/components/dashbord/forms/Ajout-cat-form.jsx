@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import { Label } from "../../ui/label";
 import toast from "react-hot-toast";
 import EIBCat from "../ExelImportButtons/EIBCat";
+import Required from "@/components/Required";
 
 const AjoutCatForm = ({className, initialData = null, ...props}) => {
     const [isLoading, setIsLoading] = useState(false)
@@ -67,7 +68,7 @@ const AjoutCatForm = ({className, initialData = null, ...props}) => {
                     <form onSubmit={handleSubmit(onSubmit)}>
                         <div className="flex gap-2 mb-4">
                             <div className="grid gap-3 flex-1/2">
-                                <Label htmlFor="email">Nom</Label>
+                                <Label htmlFor="email">Nom<Required/></Label>
                                 <Input 
                                 id="nom"
                                 type="text"

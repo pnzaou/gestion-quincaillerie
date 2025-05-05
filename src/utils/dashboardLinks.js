@@ -23,13 +23,13 @@ export const links = [
       ],
     },
     {
-      name: "Produits",
-      href: "/dashboard/produit",
+      name: "Articles",
+      href: "/dashboard/article",
       icon: ListBulletIcon,
       roles: ["admin"],
       subLinks: [
-        { name: "Ajouter", href: "/dashboard/produit/ajouter" },
-        { name: "Stock", href: "/dashboard/produit/stock" },
+        { name: "Ajouter", href: "/dashboard/article/ajouter" },
+        { name: "Stock", href: "/dashboard/article/stock" },
       ],
     },
     {
