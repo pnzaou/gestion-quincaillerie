@@ -7,9 +7,9 @@ export const POST = withAuth(async (req) => {
     try {
         await dbConnection()
 
-        const { nom, prixAchat, prixVente, Qte, QteAlerte, image, reference, description, dateExpiration, category_id, supplier_id } = await req.json()
+        const { nom, prixAchatEnGros, prixVenteEnGros, prixAchatDetail, prixVenteDetail, QteInitial, QteStock, QteAlerte, image, reference, description, dateExpiration, category_id, supplier_id } = await req.json()
 
-        if(!nom || prixAchat === undefined || prixVente === undefined || Qte === undefined || QteAlerte === undefined || !category_id) {
+        if(!nom || prixAchatEnGros === undefined || prixVenteEnGros === undefined || QteInitial === undefined || QteStock === undefined || QteAlerte === undefined || !category_id) {
             return NextResponse.json({
                 message: "Veuillez renseigner les champs obligatoires.",
                 success: false,
@@ -17,25 +17,46 @@ export const POST = withAuth(async (req) => {
             }, { status: 400 })
         }
 
-        const parsedAchat = Number(prixAchat)
-        const parsedVente = Number(prixVente)
-        const parsedQte = Number(Qte)
+        const parsedAchatEnGros = Number(prixAchatEnGros)
+        const parsedVenteEnGros = Number(prixVenteEnGros)
+        const parsedAchatDetail = prixAchatDetail ? Number(prixAchatDetail) : undefined
+        const parsedVenteDetail = prixVenteDetail ? Number(prixVenteDetail) : undefined
+        const parsedQteInitial = Number(QteInitial)
+        const parsedQteStock = QteStock !== undefined ? Number(QteStock) : parsedQteInitial
         const parsedQteAlerte = Number(QteAlerte)
 
-        if (isNaN(parsedAchat) || parsedAchat <= 0 || isNaN(parsedVente) || parsedVente <= 0) {
+        if (
+            isNaN(parsedAchatEnGros) || parsedAchatEnGros <= 0 ||
+            isNaN(parsedVenteEnGros) || parsedVenteEnGros <= 0
+        ) {
             return NextResponse.json({
-                message: "Les prix de vente et d'achat doit être un nombre positif.",
+                message: "Les prix d'achat et de vente en gros doivent être des nombres positifs.",
                 success: false,
                 error: true
-            }, { status: 400 })
+            }, { status: 400 });
         }
 
-        if (isNaN(parsedQte) || parsedQte < 0 || isNaN(parsedQteAlerte) || parsedQteAlerte < 0) {
+        if (
+            (prixAchatDetail && (isNaN(parsedAchatDetail) || parsedAchatDetail <= 0)) ||
+            (prixVenteDetail && (isNaN(parsedVenteDetail) || parsedVenteDetail <= 0))
+        ) {
             return NextResponse.json({
-                message: "La quantité doit être un nombre entier positif ou nul.",
+                message: "Les prix de détail doivent être des nombres positifs.",
                 success: false,
                 error: true
-            }, { status: 400 })
+            }, { status: 400 });
+        }
+
+        if (
+            isNaN(parsedQteInitial) || parsedQteInitial < 0 ||
+            isNaN(parsedQteStock) || parsedQteStock < 0 ||
+            isNaN(parsedQteAlerte) || parsedQteAlerte < 0
+        ) {
+            return NextResponse.json({
+                message: "Les quantités doivent être des nombres entiers positifs ou nuls.",
+                success: false,
+                error: true
+            }, { status: 400 });
         }
 
         if (category_id && !mongoose.Types.ObjectId.isValid(category_id)) {
@@ -54,6 +75,14 @@ export const POST = withAuth(async (req) => {
             }, { status: 400 })
         }
 
+        if (dateExpiration && isNaN(Date.parse(dateExpiration))) {
+            return NextResponse.json({
+                message: "La date d'expiration est invalide.",
+                success: false,
+                error: true
+            }, { status: 400 });
+        }
+
         const existingProduct = await Product.findOne({nom})
         if(existingProduct) {
             return NextResponse.json(
@@ -67,9 +96,12 @@ export const POST = withAuth(async (req) => {
         }
         const data = {
             nom,
-            prixAchat: parsedAchat,
-            prixVente: parsedVente,
-            Qte: parsedQte,
+            prixAchatEnGros: parsedAchatEnGros,
+            prixVenteEnGros: parsedVenteEnGros,
+            prixAchatDetail: parsedAchatDetail,
+            prixVenteDetail: parsedVenteDetail,
+            QteInitial: parsedQteInitial,
+            QteStock: parsedQteStock,
             QteAlerte: parsedQteAlerte,
             reference,
             description,
