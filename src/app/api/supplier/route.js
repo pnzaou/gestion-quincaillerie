@@ -95,3 +95,47 @@ export const POST = withAuthAndRole( async (req) => {
         )
     }
 } )
+
+export const GET = withAuthAndRole( async (req) => {
+    try {
+        await dbConnection()
+
+        const { searchParams } = new URL(req.url)
+        const page = parseInt(searchParams.get("page") || "1")
+        const limit = parseInt(searchParams.get("limit") || "5")
+        const search = searchParams.get("search") || ""
+        const skip = (page - 1) * limit
+
+        const query = search
+        ? { nom: { $regex: search, $options: "i" } }
+        : {}
+
+        const [fournisseurs, total] = await Promise.all([
+            Supplier.find(query)
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit),
+            Supplier.countDocuments(query)
+        ])
+
+        return NextResponse.json(
+            { 
+                message: fournisseurs.length === 0? "Aucun fournisseur enregistré." : "Fournisseurs récupérés avec succès.",
+                data: fournisseurs,
+                total,
+                currentPage: page,
+                totalPages: Math.ceil(total / limit),
+                success: true,
+                error: false
+            },
+            { status: 200, headers: { "Cache-Control": "no-store" } }
+        )
+    } catch (error) {
+        console.error("Erreur lors de la récupération des fournisseurs: ", error)
+        return NextResponse.json({
+            message: "Erreur! Veuillez réessayer.",
+            success: false,
+            error: true
+        },{ status: 500 })
+    }
+})

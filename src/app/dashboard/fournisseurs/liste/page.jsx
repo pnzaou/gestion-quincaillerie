@@ -1,3 +1,4 @@
+import SupplierTable from "@/components/dashbord/Supplier-table";
 import { preparingServerSideRequest } from "@/utils/preparingServerSideRequest";
 
 
@@ -9,12 +10,11 @@ const Page = async ({ searchParams }) => {
     const page1 = page || 1
     const search1 = search || ""
 
-    const rep = await fetch(`${protocol}://${host}/api/categories?page=${page1}&limit=5&search=${search1}`, {
+    const rep = await fetch(`${protocol}://${host}/api/supplier?page=${page1}&limit=5&search=${search1}`, {
         headers: {"Cookie": cookie}
     })
 
-    const { categories, total, totalPages } = await rep.json()
-
+    const { data, totalPages, currentPage } = await rep.json()
     return (
         <div className="flow-root">
             <div className="mb-6">
@@ -24,6 +24,12 @@ const Page = async ({ searchParams }) => {
                 </p>
             </div>
             
+            <SupplierTable
+              initialSup={data}
+              currentPage={currentPage}
+              initialTotalPages={totalPages}
+              search={search1}
+            />   
         </div>
     );
 }

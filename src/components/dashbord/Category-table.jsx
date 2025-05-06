@@ -121,9 +121,9 @@ const CategoryTable = ({initialCat, initialTotalPages, currentPage, search}) => 
                         <Button className="hidden md:block bg-[#0084D1] text-white px-4 py-2 rounded hover:bg-[#0042d1] hover:cursor-pointer">
                             Ajouter une catégorie
                         </Button>
-                        <button className="md:hidden rounded-md border p-2 flex items-center justify-center gap-1 bg-blue-500 text-white hover:bg-blue-600 hover:cursor-pointer">
+                        <Button className="md:hidden rounded-md border p-2 flex items-center justify-center gap-1 bg-blue-500 text-white hover:bg-blue-600 hover:cursor-pointer">
                             <PlusIcon className="w-5" />
-                        </button>
+                        </Button>
                     </Link>
                 </div>
             </div>
