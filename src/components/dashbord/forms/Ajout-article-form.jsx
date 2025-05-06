@@ -35,7 +35,7 @@ const AjoutArticleForm = ({className, cats, initialData = null, ...props}) => {
         (<div className={cn("flex flex-col gap-6", className)} {...props}>
              <Card>
                 <CardHeader>
-                    <CardTitle>{isEdit ? "Modifier l'article" : "Ajouter d'un article"}</CardTitle>
+                    <CardTitle>{isEdit ? "Modifier l'article" : "Ajouter un article"}</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleSubmit(onSubmit)} encType="multipart/f">

@@ -9,7 +9,7 @@ export const POST = withAuthAndRole(async (req) => {
 
         const { nom, description } = await req.json()
 
-        if(!nom) {
+        if(!nom.trim()) {
             return NextResponse.json(
                 {
                     message: "Veuillez renseigner le nom de la catégorie.",

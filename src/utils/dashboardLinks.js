@@ -30,6 +30,7 @@ export const links = [
       subLinks: [
         { name: "Ajouter", href: "/dashboard/article/ajouter" },
         { name: "Stock", href: "/dashboard/article/stock" },
+        { name: "Commander", href: "/dashboard/article/commander" },
       ],
     },
     {
@@ -47,11 +48,14 @@ export const links = [
       subLinks: [],
     },
     {
-      name: "Commandes",
-      href: "/dashboard/commande",
+      name: "Fournisseurs",
+      href: "/dashboard/fournisseurs",
       icon: "",
       roles: ["admin", "comptable"],
-      subLinks: [],
+      subLinks: [
+        { name: "Ajouter", href: "/dashboard/fournisseurs/ajouter" },
+        { name: "Liste", href: "/dashboard/fournisseurs/liste" },
+      ],
     },
     {
       name: "Utilisateurs",
