@@ -2,6 +2,8 @@ import dbConnection from "@/lib/db"
 import { withAuth } from "@/utils/withAuth"
 import Product from "@/models/Product.model"
 import { NextResponse } from "next/server"
+import mongoose from "mongoose"
+import cloudinary from "@/lib/cloudinary"
 
 export const POST = withAuth(async (req) => {
     try {

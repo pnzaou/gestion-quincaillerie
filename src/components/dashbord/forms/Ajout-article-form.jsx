@@ -11,8 +11,10 @@ import FormCombox from "../Form-combox";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import Required from "@/components/Required";
+import toast from "react-hot-toast";
+import { toBase64 } from "@/utils/convImgToBase64";
 
-const AjoutArticleForm = ({className, cats, initialData = null, ...props}) => {
+const AjoutArticleForm = ({className, cats, fours, initialData = null, ...props}) => {
     const [step, setStep] = useState(1)
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
@@ -20,8 +22,36 @@ const AjoutArticleForm = ({className, cats, initialData = null, ...props}) => {
 
     const isEdit = Boolean(initialData)
 
-    const onSubmit = async (data) => {
-        
+    const onSubmit = async (formData) => {
+        setIsLoading(true)
+        try {
+            const data = {...formData}
+
+            if(formData.image?.[0]){
+                data.image = await toBase64(formData.image[0]);
+            }
+
+            const rep = await fetch('/api/product', {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(data),
+            })
+
+            const res = await rep.json()
+            if (rep.ok) {
+                // router.push("")
+                toast.success(res.message);
+            } else {
+                toast.error(res.message);
+            }
+        } catch (error) {
+            toast.error("Erreur lors de l'ajout de l'article. Veuillez réessayer.");
+            console.error(error);
+        } finally {
+            setIsLoading(false);
+        }
     }
 
     const nextStep = async () => {
@@ -105,7 +135,7 @@ const AjoutArticleForm = ({className, cats, initialData = null, ...props}) => {
                                                 <FormCombox
                                                     value={field.value}
                                                     onChange={field.onChange}
-                                                    options={[]} // JE DOIS RENSEIGNER LES FOURNISSEURS
+                                                    options={fours.map((four) => ({ value: four._id, label: four.nom }))}
                                                     placeholder="Sélectionner un fournisseur"
                                                 />
                                             )}
@@ -175,7 +205,15 @@ const AjoutArticleForm = ({className, cats, initialData = null, ...props}) => {
                                 </Button>
                             ) : (
                                 <Button type="submit" disabled={isLoading} className="bg-[#0084D1] hover:bg-[#0042d1] hover:cursor-pointer">
-                                    {isLoading ? "Enregistrement..." : "Enregistrer"}
+                                {isLoading 
+                                ? (
+                                    <>
+                                        <span className="w-4 h-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></span> Enregistrement...
+                                    </>
+                                ) 
+                                : (
+                                    "Enregistrer"
+                                )}
                                 </Button>
                             )}
                         </div>

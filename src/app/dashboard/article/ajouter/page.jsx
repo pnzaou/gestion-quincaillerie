@@ -1,17 +1,21 @@
 import AjoutArticleForm from "@/components/dashbord/forms/Ajout-article-form";
 import dbConnection from "@/lib/db";
 import Category from "@/models/Category.model";
+import Supplier from "@/models/Supplier.model";
 
 const Page = async () => {
     await dbConnection()
-    const catsFromDb = await Category.find({});
+
+    const [catsFromDb, foursFromDb] = await Promise.all([Category.find({},{nom: 1}), Supplier.find({},{nom: 1})])
 
     const cats = catsFromDb.map(cat => ({
         _id: cat._id.toString(),
-        nom: cat.nom,
-        description: cat.description,
-        createdAt: cat.createdAt?.toISOString() || null,
-        updatedAt: cat.updatedAt?.toISOString() || null,
+        nom: cat.nom
+    }))
+
+    const fours = foursFromDb.map(four => ({
+        _id: four._id.toString(),
+        nom: four.nom
     }))
     
     return (
@@ -24,7 +28,7 @@ const Page = async () => {
             </div>
             <div className="flex w-full items-center justify-center p-6 md:p-2">
                 <div className="w-full max-w-lg">
-                    <AjoutArticleForm cats={cats}/>
+                    <AjoutArticleForm cats={cats} fours={fours}/>
                 </div>
             </div>
         </div>
