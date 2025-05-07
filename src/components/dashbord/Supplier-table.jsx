@@ -6,6 +6,8 @@ import SearchLoader from "./Search-loader";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { Button } from "../ui/button";
+import { DeleteSupplier, DetailsSupplier, UpdateSupplier } from "./button-supplier";
+import toast from "react-hot-toast";
 
 const SupplierTable = ({initialSup, initialTotalPages, currentPage, search}) => {
     const [suppliers, setSuppliers] = useState(initialSup)
@@ -13,6 +15,7 @@ const SupplierTable = ({initialSup, initialTotalPages, currentPage, search}) => 
     const [page, setPage] = useState(currentPage)
     const [searchTerm, setSearchTerm] = useState(search)
     const [isLoading, setIsLoading] = useState(false)
+    const [deletingSupplierId, setDeletingSupplierId] = useState(null)
     const [debouncedSearch, setDebouncedSearch] = useState(search);
     const isFirstRun = useRef(false)
 
@@ -53,6 +56,29 @@ const SupplierTable = ({initialSup, initialTotalPages, currentPage, search}) => 
         setSearchTerm(e.target.value)
         if (page !== 1) {
             setPage(1)
+        }
+    }
+
+    const handleDeleteClick = async (id) => {
+        setDeletingSupplierId(id);
+        try {
+            const response = await fetch(`/api/supplier/${id}`, {
+                method: "DELETE",
+            })
+
+            const data = await response.json()
+
+            if(response.ok) {
+                toast.success(data.message)
+                setSuppliers(prev => prev.filter(sup => sup._id!== id))
+            } else {
+                toast.error(data.message)
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error("Une erreur s'est produite! Veuillez réessayer.")
+        } finally {
+            setDeletingSupplierId(null);
         }
     }
 
@@ -109,13 +135,12 @@ const SupplierTable = ({initialSup, initialTotalPages, currentPage, search}) => 
                             <p className="text-sm text-gray-700">Email: {sup.email}</p>
                             </div>
                             <div className="flex justify-end gap-2 mt-4">
-                            {/* <DetailsSupplier id={sup._id} />
                             <UpdateSupplier id={sup._id} />
                             <DeleteSupplier
                                 id={sup._id}
                                 deleteSupplier={handleDeleteClick}
                                 isLoading={deletingSupplierId === sup._id}
-                            /> */}
+                            />
                             </div>
                         </div>
                         ))}
@@ -143,13 +168,12 @@ const SupplierTable = ({initialSup, initialTotalPages, currentPage, search}) => 
                                     <td className="whitespace-nowrap px-3 py-4">{sup.email}</td>
                                     <td className="whitespace-nowrap py-4 pl-6 pr-3 text-right">
                                         <div className="flex justify-end gap-2">
-                                        {/* <DetailsSupplier id={sup._id} />
                                         <UpdateSupplier id={sup._id} />
                                         <DeleteSupplier
                                             id={sup._id}
                                             deleteSupplier={handleDeleteClick}
                                             isLoading={deletingSupplierId === sup._id}
-                                        /> */}
+                                        />
                                         </div>
                                     </td>
                                 </tr>

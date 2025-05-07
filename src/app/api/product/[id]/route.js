@@ -138,7 +138,7 @@ export const DELETE = withAuth(async (req, {params}) => {
         }, { status: 200 })
 
     } catch (error) {
-        console.error("Erreur lors de la suppression du produit: ", error)
+        console.error("Erreur lors de la suppression de l'article: ", error)
         return NextResponse.json({
             message: "Erreur! Veuillez réessayer.",
             success: false,
