@@ -2,12 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import toast from "react-hot-toast";
 import BoutonImp from "./BoutonImp";
+import toast from "react-hot-toast";
 
-const EIBCat = () => {
+const EIBArt = () => {
     const router = useRouter()
-    const [isLoading, setIsLoading] = useState(false)
+    const [isLoading, setIsLoading] = useState(false) 
 
     const handleChange = async (e) => {
         const file = e.target.files[0];
@@ -19,7 +19,7 @@ const EIBCat = () => {
         try {
             setIsLoading(true)
 
-            const res = await fetch("/api/category/import-excel", {
+            const res = await fetch("/api/product/import-excel", {
                 method: "POST",
                 body: formData,
             })
@@ -32,7 +32,7 @@ const EIBCat = () => {
             }
 
             toast.success(data.message || "Importation réussie.", {duration: 6000})
-            router.push("/dashboard/categorie/liste")
+            router.push("/dashboard/article/stock")
 
         } catch (error) {
             console.error("Erreur lors de l'importation :", error)
@@ -49,4 +49,4 @@ const EIBCat = () => {
     );
 }
 
-export default EIBCat;
+export default EIBArt;

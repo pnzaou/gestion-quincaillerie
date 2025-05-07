@@ -1,9 +1,9 @@
 import dbConnection from "@/lib/db"
+import Product from "@/models/Product.model"
+import { mapRowData, productAliasMapping } from "@/utils/mapping"
 import { withAuthAndRole } from "@/utils/withAuthAndRole"
-import * as XLSX from "xlsx"
 import { NextResponse } from "next/server"
-import { catAliasMapping, mapRowData } from "@/utils/mapping"
-import Category from "@/models/Category.model"
+import * as XLSX from "xlsx"
 
 export const POST = withAuthAndRole(async (req) => {
     try {
@@ -34,30 +34,49 @@ export const POST = withAuthAndRole(async (req) => {
         const doublons = []
 
         for (const rawRow of rawRows) {
-            const mapped = mapRowData(rawRow, catAliasMapping)
+            const mapped = mapRowData(rawRow, productAliasMapping)
             const nom = mapped.nom?.trim()
+            const prixAchatEnGros = mapped.prixAchatEnGros
+            const prixVenteEnGros = mapped.prixVenteEnGros
+            const prixAchatDetail = mapped.prixAchatDetail || 0
+            const prixVenteDetail = mapped.prixVenteDetail || 0
+            const QteInitial = mapped.QteInitial || 0
+            const QteStock = mapped.QteStock || 0
+            const QteAlerte = mapped.QteAlerte || 0
+            const reference = mapped.reference?.trim() || ""
             const description = mapped.description?.trim() || ""
 
-            if (!nom) continue
+            if (!nom || prixAchatEnGros === undefined || prixVenteEnGros === undefined || QteInitial === undefined || QteStock === undefined || QteAlerte === undefined) continue
 
-            const existingCat = await Category.findOne({ nom })
-            if (existingCat) {
+            const existingProd = await Product.findOne({ nom })
+            if (existingProd) {
                 doublons.push(nom)
                 continue
             }
 
-            const newCat = await Category.create({ nom, description })
-            inserted.push(newCat)
+            const newProd = await Product.create({ 
+                nom,
+                prixAchatEnGros,
+                prixVenteEnGros,
+                prixAchatDetail,
+                prixVenteDetail,
+                QteInitial,
+                QteStock,
+                QteAlerte,
+                reference,
+                description 
+            })
+            inserted.push(newProd)
         }
 
         let message = ""
 
         if (inserted.length === 0 && doublons.length > 0) {
-            message = "Aucune catégorie ajoutée : elles existent déjà toutes."
+            message = "Aucun article ajouté : ils existent déjà tous."
         } else if (inserted.length > 0 && doublons.length > 0) {
-            message = `${inserted.length} catégorie(s) ajoutée(s). ${doublons.length} déjà existante(s) ignorée(s).`
+            message = `${inserted.length} article(s) ajouté(s). ${doublons.length} déjà existant(s) ignoré(s).`
         } else if (inserted.length > 0 && doublons.length === 0) {
-            message = "Toutes les catégories ont été ajoutées avec succès."
+            message = "Tous les articles ont été ajoutés avec succès."
         } else {
             message = "Aucune donnée valide trouvée dans le fichier."
         }
@@ -66,12 +85,12 @@ export const POST = withAuthAndRole(async (req) => {
             message,
             success: true,
             error: false,
-            créées: inserted.length,
+            créés: inserted.length,
             doublons
         }, { status: 201 })
 
     } catch (error) {
-        console.error("Erreur lors de l'importation des catégories: ", error)
+        console.error("Erreur lors de l'importation des articles: ", error)
 
         return NextResponse.json({
             message: "Erreur! Veuillez réessayer.",

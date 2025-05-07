@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import Required from "@/components/Required";
 import toast from "react-hot-toast";
 import { toBase64 } from "@/utils/convImgToBase64";
+import EIBArt from "../ExelImportButtons/EIBArt";
 
 const AjoutArticleForm = ({className, cats, fours, initialData = null, ...props}) => {
     const [step, setStep] = useState(1)
@@ -63,6 +64,7 @@ const AjoutArticleForm = ({className, cats, fours, initialData = null, ...props}
 
     return (
         (<div className={cn("flex flex-col gap-6", className)} {...props}>
+            {!isEdit && <EIBArt/>}
              <Card>
                 <CardHeader>
                     <CardTitle>{isEdit ? "Modifier l'article" : "Ajouter un article"}</CardTitle>
