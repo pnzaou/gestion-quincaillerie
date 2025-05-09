@@ -59,7 +59,7 @@ export const PUT = withAuthAndRole(async (req, {params}) => {
 
         const { nom, description } = await req.json()
 
-        if (!nom && !description) {
+        if (!nom.trim() && !description.trim()) {
             return NextResponse.json(
               { message: "Aucune donnée fournie pour la mise à jour.", success: false, error: true },
               { status: 400 }

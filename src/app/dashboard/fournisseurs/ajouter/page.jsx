@@ -1,5 +1,4 @@
 import AjoutSupplierForm from '@/components/dashbord/forms/Ajout-supplier-form';
-import React from 'react';
 
 const Page = () => {
     return (

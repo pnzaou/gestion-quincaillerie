@@ -44,11 +44,12 @@ const AjoutSupplierForm = ({className, initialData = null, ...props}) => {
 
             if (response.ok) {
                 toast.success(rep.message);
+                router.push("/dashboard/fournisseurs/liste")
             } else {
                 toast.error(rep.message);
             }
         } catch (error) {
-            toast.error("Erreur lors de l'ajout de l'utilisateur. Veuillez réessayer.");
+            toast.error(`Erreur lors de ${isEdit ? "la modification" : "l'ajout"} de l'utilisateur. Veuillez réessayer.`);
             console.error(error);
         } finally {
             setIsLoading(false)

@@ -7,7 +7,7 @@ import Link from "next/link"
 export function DetailsSupplier({ id }) {
     return (
       <Link
-        href={`/dashboard/categorie/liste/${id}/détails`}
+        href={`/dashboard/`}
         className="rounded-md border p-2 hover:bg-gray-100"
       >
         <EyeIcon className="w-5" />
@@ -18,7 +18,7 @@ export function DetailsSupplier({ id }) {
 export function UpdateSupplier({ id }) {
     return (
       <Link
-        href={`/dashboard/categorie/liste/${id}/modification`}
+        href={`/dashboard/fournisseurs/liste/${id}`}
         className="rounded-md border p-2 hover:bg-gray-100"
       >
         <PencilIcon className="w-5" />
