@@ -12,7 +12,7 @@ const NotFound = () => {
             <div className="mt-6">
               <Link
                 href="/dashboard"
-                className="inline-flex items-center rounded-md bg-[#0084D1] hover:bg-[#0042d1] px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-[#0042d1] focus:ring-offset-2"
+                className="inline-flex items-center rounded-md bg-[#0084D1] hover:bg-[#0042d1] px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors"
                 prefetch={false}
               >
                 Retour au dashboard

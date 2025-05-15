@@ -2,14 +2,14 @@ import AjoutSupplierForm from "@/components/dashbord/forms/Ajout-supplier-form";
 import dbConnection from "@/lib/db";
 import Supplier from "@/models/Supplier.model";
 import mongoose from "mongoose";
-import { redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 
 const Page = async ({ params }) => {
     const { id } = await params
     await dbConnection()
 
     if(!id || !mongoose.Types.ObjectId.isValid(id)) {
-        redirect("/dashboard/fournisseurs/liste")
+        notFound()
         return;
     }
 
@@ -17,7 +17,7 @@ const Page = async ({ params }) => {
     const initialData = {...data, _id: data._id.toString()}
 
     if (!data) {
-        redirect("/dashboard/fournisseurs/liste")
+        notFound()
         return;
     }
 
