@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { DeleteCategory, DetailsCategory, UpdateCategory } from "./button-category";
+import { DeleteCategory, DeleteCategory2, DetailsCategory, UpdateCategory } from "./button-category";
 import Pagination from "./Pagination";
 import DeleteCatPopup from "./Delete-cat-popup";
 import toast from "react-hot-toast";
@@ -20,9 +20,8 @@ const CategoryTable = ({initialCat, initialTotalPages, currentPage, search}) => 
     const [isLoading, setIsLoading] = useState(false)
     const [debouncedSearch, setDebouncedSearch] = useState(search);
     const [deletingCatId, setDeletingCatId] = useState(null);
-    const [showConfirmModal, setShowConfirmModal] = useState(false);
-    const [selectedCatId, setSelectedCatId] = useState(null);
     const isFirstRun = useRef(false)
+    const [deleteLoading, setDeleteLoading] = useState(false)
 
     useEffect(() => {
         const handler = setTimeout(() => {
@@ -64,13 +63,8 @@ const CategoryTable = ({initialCat, initialTotalPages, currentPage, search}) => 
         }
     }
 
-    const handleDeleteClick = (id) => {
-        setSelectedCatId(id);
-        setShowConfirmModal(true);
-    }
-
     const handleDelete = async (id) => {
-        setDeletingCatId(id)
+        setDeleteLoading(true)
         try {
             const response = await fetch(`/api/category/${id}`, {
                 method: "DELETE",
@@ -89,16 +83,9 @@ const CategoryTable = ({initialCat, initialTotalPages, currentPage, search}) => 
             toast.error("Une erreur s'est produite ! Veuillez réessayer.")
         } finally {
             setDeletingCatId(null)
+            setDeleteLoading(false)
         }
     }
-
-    const confirmDelete = () => {
-        if (selectedCatId) {
-            handleDelete(selectedCatId);
-            setShowConfirmModal(false);
-            setSelectedCatId(null);
-        }
-    };
 
     return (
         <>
@@ -150,10 +137,12 @@ const CategoryTable = ({initialCat, initialTotalPages, currentPage, search}) => 
                                     <div className="flex justify-end gap-2 mt-4">
                                         <DetailsCategory id={cat._id}/>
                                         <UpdateCategory id={cat._id}/>
-                                        <DeleteCategory
+                                        <DeleteCategory2
                                           id={cat._id}
-                                          deleteCat={handleDeleteClick}
+                                          setDeleteId={setDeletingCatId}
+                                          deleteCat={handleDelete}
                                           isLoading={deletingCatId === cat._id}
+                                          deleteLoading={deleteLoading}
                                         />
                                     </div>
                                 </div>
@@ -180,10 +169,12 @@ const CategoryTable = ({initialCat, initialTotalPages, currentPage, search}) => 
                                         <div className="flex justify-end gap-2">
                                             <DetailsCategory id={cat._id}/>
                                             <UpdateCategory id={cat._id}/>
-                                            <DeleteCategory
-                                            id={cat._id}
-                                            deleteCat={handleDeleteClick}
-                                            isLoading={deletingCatId === cat._id}
+                                            <DeleteCategory2
+                                              id={cat._id}
+                                              setDeleteId={setDeletingCatId}
+                                              deleteCat={handleDelete}
+                                              isLoading={deletingCatId === cat._id}
+                                              deleteLoading={deleteLoading}
                                             />
                                         </div>
                                     </td>
@@ -201,15 +192,6 @@ const CategoryTable = ({initialCat, initialTotalPages, currentPage, search}) => 
             totalPages={totalPages}
             onPageChange={setPage}
            />
-
-           {/* Confirmation Modal */}
-           {showConfirmModal && (
-               <DeleteCatPopup
-                confirmDelete={confirmDelete}
-                setSelectedCatId={setDeletingCatId}
-                setShowConfirmModal={setShowConfirmModal}  
-               />
-           )}
         </>
     );
 }
