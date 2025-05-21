@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { DeleteCategory, DeleteCategory2, DetailsCategory, UpdateCategory } from "./button-category";
+import { DeleteCategory, DetailsCategory, UpdateCategory } from "./button-category";
 import Pagination from "./Pagination";
 import DeleteCatPopup from "./Delete-cat-popup";
 import toast from "react-hot-toast";
@@ -16,12 +16,15 @@ const CategoryTable = ({initialCat, initialTotalPages, currentPage, search}) => 
     const [categories, setCategories] = useState(initialCat)
     const [totalPages, setTotalPages] = useState(initialTotalPages)
     const [page, setPage] = useState(currentPage)
+
     const [searchTerm, setSearchTerm] = useState(search)
-    const [isLoading, setIsLoading] = useState(false)
     const [debouncedSearch, setDebouncedSearch] = useState(search);
-    const [deletingCatId, setDeletingCatId] = useState(null);
+    const [isLoading, setIsLoading] = useState(false)
+
+    const [deleting, setDeleting] = useState({ id: null, loading: false });
+    const [modalCatToDelete, setModalCatToDelete] = useState(null)
+    
     const isFirstRun = useRef(false)
-    const [deleteLoading, setDeleteLoading] = useState(false)
 
     useEffect(() => {
         const handler = setTimeout(() => {
@@ -64,17 +67,15 @@ const CategoryTable = ({initialCat, initialTotalPages, currentPage, search}) => 
     }
 
     const handleDelete = async (id) => {
-        setDeleteLoading(true)
+        setDeleting({ id, loading: true })
         try {
-            const response = await fetch(`/api/category/${id}`, {
-                method: "DELETE",
-            });
-
+            const response = await fetch(`/api/category/${id}`, { method: "DELETE" })
             const data = await response.json();
 
             if(response.ok) {
                 toast.success(data.message)
                 setCategories(prev => prev.filter(cat => cat._id !== id))
+                setModalCatToDelete(null)
             } else {
                 toast.error(data.message)
             }
@@ -82,8 +83,7 @@ const CategoryTable = ({initialCat, initialTotalPages, currentPage, search}) => 
             console.error(error);
             toast.error("Une erreur s'est produite ! Veuillez réessayer.")
         } finally {
-            setDeletingCatId(null)
-            setDeleteLoading(false)
+            setDeleting({ id: null, loading: false })
         }
     }
 
@@ -137,12 +137,12 @@ const CategoryTable = ({initialCat, initialTotalPages, currentPage, search}) => 
                                     <div className="flex justify-end gap-2 mt-4">
                                         <DetailsCategory id={cat._id}/>
                                         <UpdateCategory id={cat._id}/>
-                                        <DeleteCategory2
+                                        <DeleteCategory
                                           id={cat._id}
-                                          setDeleteId={setDeletingCatId}
-                                          deleteCat={handleDelete}
-                                          isLoading={deletingCatId === cat._id}
-                                          deleteLoading={deleteLoading}
+                                          open={modalCatToDelete === cat._id}
+                                          onOpenChange={setModalCatToDelete}
+                                          onConfirm={handleDelete}
+                                          loading={deleting.id === cat._id && deleting.loading}
                                         />
                                     </div>
                                 </div>
@@ -169,12 +169,12 @@ const CategoryTable = ({initialCat, initialTotalPages, currentPage, search}) => 
                                         <div className="flex justify-end gap-2">
                                             <DetailsCategory id={cat._id}/>
                                             <UpdateCategory id={cat._id}/>
-                                            <DeleteCategory2
+                                            <DeleteCategory
                                               id={cat._id}
-                                              setDeleteId={setDeletingCatId}
-                                              deleteCat={handleDelete}
-                                              isLoading={deletingCatId === cat._id}
-                                              deleteLoading={deleteLoading}
+                                              open={modalCatToDelete === cat._id}
+                                              onOpenChange={setModalCatToDelete}
+                                              onConfirm={handleDelete}
+                                              loading={deleting.id === cat._id && deleting.loading}
                                             />
                                         </div>
                                     </td>
