@@ -157,19 +157,39 @@ export const GET = withAuth(async (req) => {
     try {
         await dbConnection()
 
-        const rep = await Product.find()
+        const { searchParams } = new URL(req.url)
+        const page = parseInt(searchParams.get("page") || "1")
+        const limit = parseInt(searchParams.get("limit") || "5")
+        const search = searchParams.get("search") || ""
+        const skip = (page - 1) * limit
+
+        const query = search
+        ? { nom: { $regex: search, $options: "i" } }
+        : {}
+
+        const [articles, total] = await Promise.all([
+            Product.find(query)
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit),
+            Product.countDocuments(query)
+        ])
 
         return NextResponse.json(
             { 
-                message: rep.length === 0? "Aucun produit enregistré." : "produits récupérés avec succès.",
-                data: rep,
+                message: articles.length === 0? "Aucun article enregistré." : "articles récupérés avec succès.",
+                data: articles,
+                total,
+                currentPage: page,
+                totalPages: Math.ceil(total / limit),
                 success: true,
                 error: false
             },
-            { status: 200, headers: { "Cache-Control": "no-store" } })
+            { status: 200, headers: { "Cache-Control": "no-store" } }
+        )
         
     } catch (error) {
-        console.error("Erreur lors de la récupération des produits: ", error)
+        console.error("Erreur lors de la récupération des articles: ", error)
         return NextResponse.json({
             message: "Erreur! Veuillez réessayer.",
             success: false,
@@ -177,3 +197,4 @@ export const GET = withAuth(async (req) => {
         }, { status: 500 })
     }
 })
+
