@@ -8,8 +8,7 @@ import { PlusIcon } from "@heroicons/react/24/outline";
 import Link  from "next/link";
 import { Button } from "../ui/button";
 import toast from "react-hot-toast";
-import { Select, SelectContent, SelectItem, SelectTrigger } from "../ui/select";
-import { SelectValue } from "../ui/select";
+import PageSizeSelect from "./Page-size-select";
 
 const ArticlesTable = ({initialArt, initialTotalPages, currentPage, search}) => {
 
@@ -19,7 +18,7 @@ const ArticlesTable = ({initialArt, initialTotalPages, currentPage, search}) => 
 
     const [searchTerm, setSearchTerm] = useState(search)
     const [debouncedSearch, setDebouncedSearch] = useState(search);
-    const [limit, setLimit] = useState(1);
+    const [limit, setLimit] = useState(10);
     const [isLoading, setIsLoading] = useState(false);
 
     const isFirstRun = useRef(false);
@@ -78,26 +77,7 @@ const ArticlesTable = ({initialArt, initialTotalPages, currentPage, search}) => 
               />
           </div>
           <div className="hidden mb-4 mr-4 md:block">
-            <Select
-              value={String(limit)}
-              onValueChange={(val) => {
-                setLimit(Number(val));
-                setPage(1);
-              }}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue>
-                  {limit ? `Articles par page : ${limit}` : "Articles par page"}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1">1</SelectItem>
-                <SelectItem value="2">2</SelectItem>
-                <SelectItem value="3">3</SelectItem>
-                <SelectItem value="4">4</SelectItem>
-                <SelectItem value="5">5</SelectItem>
-              </SelectContent>
-            </Select>
+            <PageSizeSelect limit={limit} setLimit={setLimit} setPage={setPage} />
           </div>
           <div className="mb-4 ml-4 md:ml-0">
               <Link href="/dashboard/article/ajouter">
@@ -221,12 +201,22 @@ const ArticlesTable = ({initialArt, initialTotalPages, currentPage, search}) => 
           </div>
         </div>
 
-        {/* Pagination */}
-        <Pagination
-          page={page}
-          totalPages={totalPages}
-          onPageChange={setPage}
-        />
+        {/*SizeChange, CatChange et Pagination */}
+        <div className="flex flex-col items-center md:flex-row">
+          <div className="mt-6 flex-1/3 order-2 md:order-1">
+            <PageSizeSelect limit={limit} setLimit={setLimit} setPage={setPage} />
+          </div>
+          <div className="flex-1/3 order-1 md:order-2">
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+            />
+          </div>
+          <div className="flex-1/3 order-3">
+            test
+          </div>
+        </div>
       </>
     );
 }
