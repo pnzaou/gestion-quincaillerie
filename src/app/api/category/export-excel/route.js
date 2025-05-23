@@ -37,7 +37,7 @@ export const GET = withAuthAndRole(async () => {
             }
         })
     } catch (error) {
-        console.error("Erreur export Excel:", error)
+        console.error("Erreur lors de l'exportation des catégories en Excel:", error)
         return NextResponse.json({
             message: "Erreur serveur.",
             success: false,

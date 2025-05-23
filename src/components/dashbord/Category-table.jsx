@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { DeleteCategory, DetailsCategory, UpdateCategory } from "./button-category";
 import Pagination from "./Pagination";
-import DeleteCatPopup from "./Delete-cat-popup";
 import toast from "react-hot-toast";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import SearchLoader from "./Search-loader";

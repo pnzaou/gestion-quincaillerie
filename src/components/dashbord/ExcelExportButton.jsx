@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "../ui/button"
+import toast from "react-hot-toast"
 
 const ExcelExportButton = ({ initUrl }) => {
 
@@ -14,7 +15,7 @@ const ExcelExportButton = ({ initUrl }) => {
 
             if (!res.ok) {
                 const data = await res.json()
-                alert(data.message || "Erreur lors de l'exportation.")
+                toast.error(data.message || "Erreur lors de l'exportation.")
                 return
             }
 
@@ -23,13 +24,13 @@ const ExcelExportButton = ({ initUrl }) => {
 
             const link = document.createElement("a")
             link.href = url
-            link.download = "categories.xlsx"
+            link.download = "exportation.xlsx"
             document.body.appendChild(link)
             link.click()
             link.remove()
         } catch (error) {
             console.error("Erreur export:", error)
-            alert("Erreur lors de l'exportation.")
+            toast.error("Erreur lors de l'exportation.")
         } finally {
             setIsLoading(false)
         }

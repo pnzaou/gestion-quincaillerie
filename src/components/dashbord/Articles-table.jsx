@@ -1,47 +1,168 @@
 "use client"
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DeleteArticle, DetailsArticle, UpdateArticle } from "./button-article";
+import Pagination from "./Pagination";
+import SearchLoader from "./Search-loader";
+import { PlusIcon } from "@heroicons/react/24/outline";
+import Link  from "next/link";
+import { Button } from "../ui/button";
+import toast from "react-hot-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "../ui/select";
+import { SelectValue } from "../ui/select";
 
 const ArticlesTable = ({initialArt, initialTotalPages, currentPage, search}) => {
+
     const [articles, setArticles] = useState(initialArt);
     const [totalPages, setTotalPages] = useState(initialTotalPages);
     const [page, setPage] = useState(currentPage);
+
+    const [searchTerm, setSearchTerm] = useState(search)
+    const [debouncedSearch, setDebouncedSearch] = useState(search);
+    const [limit, setLimit] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
 
-    console.log(articles)
+    const isFirstRun = useRef(false);
+
+    useEffect(() => {
+      const handler = setTimeout(() => {
+        setDebouncedSearch(searchTerm);
+      }, 500);
+      return () => clearTimeout(handler);
+    }, [searchTerm]);
+
+    useEffect(() => {
+      if (!isFirstRun.current) {
+        isFirstRun.current = true;
+        return;
+      }
+
+      if (debouncedSearch.length > 0 && debouncedSearch.length < 3) {
+        return;
+      }
+
+      const activeSearch = debouncedSearch
+
+      setIsLoading(true)
+      fetch(`/api/product?page=${page}&limit=${limit}&search=${activeSearch}`)
+        .then(res => res.json())
+        .then(({data, totalPages: tp, currentPage: cp}) => {
+          setArticles(data);
+          setTotalPages(tp);
+          setPage(cp)
+        }).catch(err => {
+          console.log(err)
+          toast.error("Une erreur s'est produite! Veuillez réessayer.")
+        }).finally(() => setIsLoading(false))
+
+    },[debouncedSearch, page, limit])
+
+    const handleSearchChange = e => {
+      setSearchTerm(e.target.value);
+      if (page !== 1) {
+        setPage(1);
+      }
+    };
 
     return (
-        <div className={isLoading ? 'opacity-50 pointer-events-none' : ''}>
+      <>
+        {/* Barre de recherche, bouton exporter et bouton ajouter */}
+        <div className="flex justify-between items-center">
+          <div className="mb-4 flex flex-col md:flex-row md:items-center gap-2 flex-1/2">
+              <input
+              type="text"
+              value={searchTerm}
+              onChange={handleSearchChange}
+              placeholder="Rechercher par nom, par ref (min. 3 caractères)"
+              className="w-full md:w-1/2 px-4 py-2 border rounded-md"
+              />
+          </div>
+          <div className="hidden mb-4 mr-4 md:block">
+            <Select
+              value={String(limit)}
+              onValueChange={(val) => {
+                setLimit(Number(val));
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue>
+                  {limit ? `Articles par page : ${limit}` : "Articles par page"}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">1</SelectItem>
+                <SelectItem value="2">2</SelectItem>
+                <SelectItem value="3">3</SelectItem>
+                <SelectItem value="4">4</SelectItem>
+                <SelectItem value="5">5</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="mb-4 ml-4 md:ml-0">
+              <Link href="/dashboard/article/ajouter">
+                  <Button className="hidden md:block bg-[#0084D1] text-white px-4 py-2 rounded hover:bg-[#0042d1] hover:cursor-pointer">
+                      Ajouter un article
+                  </Button>
+                  <Button className="md:hidden rounded-md border p-2 flex items-center justify-center gap-1 bg-blue-500 text-white hover:bg-blue-600 hover:cursor-pointer">
+                      <PlusIcon className="w-5" />
+                  </Button>
+              </Link>
+          </div>
+        </div>
+
+        {/* Loader */}
+        {isLoading && (
+          <SearchLoader/>
+        )}
+
+        <div className={isLoading ? "opacity-50 pointer-events-none" : ""}>
           <div className="inline-block min-w-full align-middle">
             <div className="rounded-lg bg-gray-50 p-2 md:pt-0">
-    
               {/* Mobile */}
               <div className="md:hidden space-y-2">
                 {articles?.map((art) => (
-                  <div key={art._id} className="rounded-md bg-white p-4 shadow-sm">
+                  <div
+                    key={art._id}
+                    className="rounded-md bg-white p-4 shadow-sm"
+                  >
                     <div className="flex items-center justify-between border-b pb-4">
                       <div className="flex items-center gap-4">
-                        <img src={art.image || "/360_F_517535712_q7f9QC9X6TQxWi6xYZZbMmw5cnLMr279.jpg"} alt={art.nom} className="h-10 w-10 rounded object-cover" />
+                        <img
+                          src={
+                            art.image ||
+                            "/360_F_517535712_q7f9QC9X6TQxWi6xYZZbMmw5cnLMr279.jpg"
+                          }
+                          alt={art.nom}
+                          className="h-12 w-12 rounded object-cover"
+                        />
                         <p className="text-base font-semibold">{art.nom}</p>
                       </div>
                     </div>
                     <div className="pt-4 space-y-1">
-                      <p className="text-sm text-gray-700">Prix: {art.prixVenteDetail ? art.prixVenteDetail : art.prixVenteEnGros} xof</p>
-                      <p className="text-sm text-gray-700">Stock: {art.QteStock}</p>
-                      <p className="text-sm text-gray-700">Réf: {art.reference}</p>
+                      <p className="text-sm text-gray-700">
+                        Prix:{" "}
+                        {art.prixVenteDetail
+                          ? art.prixVenteDetail
+                          : art.prixVenteEnGros}{" "}
+                        xof
+                      </p>
+                      <p className="text-sm text-gray-700">
+                        Stock: {art.QteStock}
+                      </p>
+                      <p className="text-sm text-gray-700">
+                        Réf: {art.reference}
+                      </p>
                     </div>
                     <div className="flex justify-end gap-2 mt-4">
                       <DetailsArticle id={art._id} />
                       <UpdateArticle id={art._id} />
-                      <DeleteArticle
-                        id={art._id}
-                      />
+                      <DeleteArticle id={art._id} />
                     </div>
                   </div>
                 ))}
               </div>
-    
+
               {/* Desktop */}
               <table className="hidden min-w-full text-gray-900 md:table">
                 <thead className="text-left text-sm font-normal">
@@ -58,32 +179,56 @@ const ArticlesTable = ({initialArt, initialTotalPages, currentPage, search}) => 
                 </thead>
                 <tbody className="bg-white">
                   {articles?.map((art) => (
-                    <tr key={art._id} className="border-b last:border-none text-sm">
+                    <tr
+                      key={art._id}
+                      className="border-b last:border-none text-sm"
+                    >
                       <td className="whitespace-nowrap py-4 pl-6 pr-3">
-                        <img src={art.image || "/360_F_517535712_q7f9QC9X6TQxWi6xYZZbMmw5cnLMr279.jpg"} alt={art.nom} className="h-10 w-10 rounded object-cover" />
+                        <img
+                          src={
+                            art.image ||
+                            "/360_F_517535712_q7f9QC9X6TQxWi6xYZZbMmw5cnLMr279.jpg"
+                          }
+                          alt={art.nom}
+                          className="h-12 w-12 rounded object-cover"
+                        />
                       </td>
                       <td className="whitespace-nowrap px-3 py-4">{art.nom}</td>
-                      <td className="whitespace-nowrap px-3 py-4">{art.prixVenteDetail ? art.prixVenteDetail : art.prixVenteEnGros} xof</td>
-                      <td className="whitespace-nowrap px-3 py-4">{art.QteStock}</td>
-                      <td className="whitespace-nowrap px-3 py-4">{art.reference}</td>
+                      <td className="whitespace-nowrap px-3 py-4">
+                        {art.prixVenteDetail
+                          ? art.prixVenteDetail
+                          : art.prixVenteEnGros}{" "}
+                        xof
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4">
+                        {art.QteStock}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4">
+                        {art.reference}
+                      </td>
                       <td className="whitespace-nowrap py-4 pl-6 pr-3 text-right">
                         <div className="flex justify-end gap-2">
                           <DetailsArticle id={art._id} />
                           <UpdateArticle id={art._id} />
-                          <DeleteArticle
-                            id={art._id}
-                          />
+                          <DeleteArticle id={art._id} />
                         </div>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-    
             </div>
           </div>
         </div>
-      );
+
+        {/* Pagination */}
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+        />
+      </>
+    );
 }
 
 export default ArticlesTable;
