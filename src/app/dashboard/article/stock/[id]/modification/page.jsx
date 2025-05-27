@@ -1,10 +1,13 @@
 import AjoutArticleForm from "@/components/dashbord/forms/Ajout-article-form";
+import dbConnection from "@/lib/db";
 import Category from "@/models/Category.model";
 import Product from "@/models/Product.model";
 import Supplier from "@/models/Supplier.model";
 
 const Page = async ({ params }) => {
     const { id } = await params;
+
+    await dbConnection()
 
     const [article, catsFromDb, foursFromDb] = await Promise.all([
         Product.findById(id).lean(),

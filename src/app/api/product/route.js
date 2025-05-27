@@ -161,14 +161,26 @@ export const GET = withAuth(async (req) => {
         const page = parseInt(searchParams.get("page") || "1")
         const limit = parseInt(searchParams.get("limit") || "10")
         const search = searchParams.get("search") || ""
+        const categories = searchParams.get("categories") || ""
         const skip = (page - 1) * limit
 
-        const query = search
-        ? { $or: [
-            { nom: { $regex: search, $options: "i" } },
-            { reference: { $regex: search, $options: "i" } },
-        ] }
-        : {}
+        const selectedCategories = categories
+        ? categories.split(",").filter(Boolean).map((cat) => new mongoose.Types.ObjectId(cat))
+        : []
+
+        const query = {
+            ...(search 
+                ? {
+                   $or: [
+                       { nom: { $regex: search, $options: "i" } },
+                       { reference: { $regex: search, $options: "i" } }
+                   ]
+                } 
+                : {}),
+            ...(selectedCategories.length > 0
+                ? { category_id: { $in: selectedCategories } }
+                : {})
+        }
 
         const [articles, total] = await Promise.all([
             Product.find(query)
@@ -180,7 +192,7 @@ export const GET = withAuth(async (req) => {
 
         return NextResponse.json(
             { 
-                message: articles.length === 0? "Aucun article enregistré." : "articles récupérés avec succès.",
+                message: articles.length === 0? "Aucun article enregistré." : "Articles récupérés avec succès.",
                 data: articles,
                 total,
                 currentPage: page,

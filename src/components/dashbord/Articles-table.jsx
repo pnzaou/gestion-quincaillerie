@@ -20,6 +20,7 @@ const ArticlesTable = ({initialArt, initialTotalPages, currentPage, search}) => 
     const [searchTerm, setSearchTerm] = useState(search)
     const [debouncedSearch, setDebouncedSearch] = useState(search);
     const [limit, setLimit] = useState(10);
+    const [selected, setSelected] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
 
     const isFirstRun = useRef(false);
@@ -44,24 +45,32 @@ const ArticlesTable = ({initialArt, initialTotalPages, currentPage, search}) => 
       const activeSearch = debouncedSearch
 
       setIsLoading(true)
-      fetch(`/api/product?page=${page}&limit=${limit}&search=${activeSearch}`)
+      fetch(`/api/product?page=${page}&limit=${limit}&search=${activeSearch}&categories=${selected.join(",")}`)
         .then(res => res.json())
         .then(({data, totalPages: tp, currentPage: cp}) => {
           setArticles(data);
           setTotalPages(tp);
           setPage(cp)
         }).catch(err => {
-          console.log(err)
+          console.error(err)
           toast.error("Une erreur s'est produite! Veuillez réessayer.")
         }).finally(() => setIsLoading(false))
 
-    },[debouncedSearch, page, limit])
+    },[debouncedSearch, page, limit, selected])
 
     const handleSearchChange = e => {
       setSearchTerm(e.target.value);
       if (page !== 1) {
         setPage(1);
       }
+    };
+
+    const toggleCategory = (categoryId) => {
+      setSelected(prev =>
+        prev.includes(categoryId)
+          ? prev.filter(id => id !== categoryId)
+          : [...prev, categoryId]
+      );
     };
 
     return (
@@ -81,7 +90,7 @@ const ArticlesTable = ({initialArt, initialTotalPages, currentPage, search}) => 
             <PageSizeSelect limit={limit} setLimit={setLimit} setPage={setPage} />
           </div>
           <div className="hidden mb-4 ml-4 md:ml-0 md:block">
-              <CategoryFilter/>
+              <CategoryFilter selected={selected} toggleCategory={toggleCategory}/>
           </div>
         </div>
 
@@ -207,8 +216,8 @@ const ArticlesTable = ({initialArt, initialTotalPages, currentPage, search}) => 
               onPageChange={setPage}
             />
           </div>
-          <div className="mt-6 flex-1/3 order-3">
-            <CategoryFilter/>
+          <div className="flex justify-end mt-6 flex-1/3 order-3">
+            <CategoryFilter selected={selected} toggleCategory={toggleCategory}/>
           </div>
         </div>
       </>

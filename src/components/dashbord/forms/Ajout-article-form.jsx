@@ -29,8 +29,7 @@ const AjoutArticleForm = ({className, cats, fours, initialData = null, ...props}
     }, [initialData, setValue, isEdit])
 
     const onSubmit = async (formData) => {
-        console.log(formData)
-        
+
         if(step < 3) {
             setStep((prev) => prev + 1)
             return
@@ -103,7 +102,7 @@ const AjoutArticleForm = ({className, cats, fours, initialData = null, ...props}
                             <ArticleFormStep3 register={register} />
                         )}
 
-                        <AjoutArticleFormBtn isLoading={isLoading} prevStep={prevStep} step={step}/>
+                        <AjoutArticleFormBtn isLoading={isLoading} isEdit={isEdit} prevStep={prevStep} step={step}/>
                     </form>
                 </CardContent>
              </Card>
