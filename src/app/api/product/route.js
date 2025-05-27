@@ -112,7 +112,7 @@ export const POST = withAuth(async (req) => {
             supplier_id
         }
 
-        if(image) {
+        if(image && typeof image === "string" && image.startsWith("data:image/")) {
             try {
                 const rep = await cloudinary.uploader.upload(image, {folder: "quincaillerie"})
                 data.image = rep.secure_url 

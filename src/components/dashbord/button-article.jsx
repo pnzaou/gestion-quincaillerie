@@ -7,7 +7,7 @@ import Link from "next/link"
 export function DetailsArticle({ id }) {
     return (
       <Link
-        href={`/dashboard/categorie/liste/${id}/détails`}
+        href={`/dashboard/article/stock/${id}/détails`}
         className="rounded-md border p-2 hover:bg-gray-100"
       >
         <EyeIcon className="w-5" />
@@ -18,7 +18,7 @@ export function DetailsArticle({ id }) {
 export function UpdateArticle({ id }) {
     return (
       <Link
-        href={`/dashboard/categorie/liste/${id}/modification`}
+        href={`/dashboard/article/stock/${id}/modification`}
         className="rounded-md border p-2 hover:bg-gray-100"
       >
         <PencilIcon className="w-5" />

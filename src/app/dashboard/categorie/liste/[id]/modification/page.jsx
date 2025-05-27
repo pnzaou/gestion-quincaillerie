@@ -12,7 +12,6 @@ const Page = async ({ params }) => {
     })
     const cat = await res.json()
 
-    console.log(cat)
     return (
         <div>
             <div className="mb-6">

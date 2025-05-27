@@ -9,6 +9,7 @@ import Link  from "next/link";
 import { Button } from "../ui/button";
 import toast from "react-hot-toast";
 import PageSizeSelect from "./Page-size-select";
+import CategoryFilter from "./Category-filter";
 
 const ArticlesTable = ({initialArt, initialTotalPages, currentPage, search}) => {
 
@@ -79,15 +80,8 @@ const ArticlesTable = ({initialArt, initialTotalPages, currentPage, search}) => 
           <div className="hidden mb-4 mr-4 md:block">
             <PageSizeSelect limit={limit} setLimit={setLimit} setPage={setPage} />
           </div>
-          <div className="mb-4 ml-4 md:ml-0">
-              <Link href="/dashboard/article/ajouter">
-                  <Button className="hidden md:block bg-[#0084D1] text-white px-4 py-2 rounded hover:bg-[#0042d1] hover:cursor-pointer">
-                      Ajouter un article
-                  </Button>
-                  <Button className="md:hidden rounded-md border p-2 flex items-center justify-center gap-1 bg-blue-500 text-white hover:bg-blue-600 hover:cursor-pointer">
-                      <PlusIcon className="w-5" />
-                  </Button>
-              </Link>
+          <div className="hidden mb-4 ml-4 md:ml-0 md:block">
+              <CategoryFilter/>
           </div>
         </div>
 
@@ -213,8 +207,8 @@ const ArticlesTable = ({initialArt, initialTotalPages, currentPage, search}) => 
               onPageChange={setPage}
             />
           </div>
-          <div className="flex-1/3 order-3">
-            test
+          <div className="mt-6 flex-1/3 order-3">
+            <CategoryFilter/>
           </div>
         </div>
       </>
