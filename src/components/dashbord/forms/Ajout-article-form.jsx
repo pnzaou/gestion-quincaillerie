@@ -29,6 +29,8 @@ const AjoutArticleForm = ({className, cats, fours, initialData = null, ...props}
     }, [initialData, setValue, isEdit])
 
     const onSubmit = async (formData) => {
+        console.log(formData)
+        
         if(step < 3) {
             setStep((prev) => prev + 1)
             return
@@ -40,10 +42,6 @@ const AjoutArticleForm = ({className, cats, fours, initialData = null, ...props}
             const method = isEdit? "PUT" : "POST";
 
             const data = {...formData}
-
-            console.log(data);
-            console.log(formData.image[0])
-            console.log(formData.image?.[0])
 
             if(formData.image?.length > 0 && formData.image[0]){
                 data.image = await toBase64(formData.image[0]);

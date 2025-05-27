@@ -45,11 +45,11 @@ const AriticleFormStep1 = ({ register, errors, control, cats }) => {
         </div>
         <div className="flex gap-4">
             <div className="grid gap-3 flex-1">
-                <Label>Prix Achat (Gros)</Label>
+                <Label>Prix Achat (Détail)</Label>
                 <Input type="number" step="0.01" min="1" {...register("prixAchatDetail")} />
             </div>
             <div className="grid gap-3 flex-1">
-                <Label>Prix Vente (Gros)</Label>
+                <Label>Prix Vente (Détail)</Label>
                 <Input type="number" step="0.01" min="1" {...register("prixVenteDetail")} />
             </div>
         </div>

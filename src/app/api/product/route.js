@@ -11,7 +11,7 @@ export const POST = withAuth(async (req) => {
 
         const { nom, prixAchatEnGros, prixVenteEnGros, prixAchatDetail, prixVenteDetail, QteInitial, QteStock, QteAlerte, image, reference, description, dateExpiration, category_id, supplier_id } = await req.json()
 
-        if(!nom || prixAchatEnGros === undefined || prixVenteEnGros === undefined || QteInitial === undefined || QteStock === undefined || QteAlerte === undefined || !category_id) {
+        if(!nom || prixAchatEnGros === undefined || prixVenteEnGros === undefined || QteInitial === undefined || QteStock === undefined || QteAlerte === undefined || !category_id || !supplier_id) {
             return NextResponse.json({
                 message: "Veuillez renseigner les champs obligatoires.",
                 success: false,
