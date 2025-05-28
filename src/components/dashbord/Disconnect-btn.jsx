@@ -1,6 +1,6 @@
 "use client"
 
-import { PowerIcon } from "@heroicons/react/24/outline";
+import { ArrowRightStartOnRectangleIcon } from "@heroicons/react/24/outline";
 import { signOut } from "next-auth/react";
 
 const DisconnectBtn = () => {
@@ -18,7 +18,7 @@ const DisconnectBtn = () => {
                 redirect: true
               })}
             >
-                <PowerIcon className="w-6" />
+                <ArrowRightStartOnRectangleIcon className="w-6" />
                 <div className="hidden md:block">Se déconnecter</div>
             </button>
         </div>
