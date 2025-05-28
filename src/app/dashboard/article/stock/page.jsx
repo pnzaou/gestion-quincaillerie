@@ -1,4 +1,4 @@
-import ArticlesTable from "@/components/dashbord/Articles-table";
+import ArticlesTableAdmin from "@/components/dashbord/Articles-table-admin";
 import ExcelExportButton from "@/components/dashbord/ExcelExportButton";
 import { Button } from "@/components/ui/button";
 import { preparingServerSideRequest } from "@/utils/preparingServerSideRequest";
@@ -46,7 +46,7 @@ const Page = async ({ searchParams }) => {
           </div>
         </div>
       </div>
-      <ArticlesTable initialArt={data} currentPage={currentPage} initialTotalPages={totalPages} search={search1} />
+      <ArticlesTableAdmin initialArt={data} currentPage={currentPage} initialTotalPages={totalPages} search={search1} />
     </div>
   );
 }
