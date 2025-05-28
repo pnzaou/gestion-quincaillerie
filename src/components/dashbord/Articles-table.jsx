@@ -23,6 +23,9 @@ const ArticlesTable = ({initialArt, initialTotalPages, currentPage, search}) => 
     const [selected, setSelected] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
 
+    const [deleting, setDeleting] = useState({ id: null, loading: false });
+    const [modalProdToDelete, setModalProdToDelete] = useState(null)
+
     const isFirstRun = useRef(false);
 
     useEffect(() => {
@@ -72,6 +75,27 @@ const ArticlesTable = ({initialArt, initialTotalPages, currentPage, search}) => 
           : [...prev, categoryId]
       );
     };
+
+    const handleDelete = async (id) => {
+      setDeleting({ id, loading: true })
+      try {
+          const response = await fetch(`/api/product/${id}`, { method: "DELETE" })
+          const data = await response.json();
+
+          if(response.ok) {
+              toast.success(data.message)
+              setArticles(prev => prev.filter(art => art._id !== id))
+              setModalProdToDelete(null)
+          } else {
+              toast.error(data.message)
+          }
+      } catch (error) {
+          console.error(error);
+          toast.error("Une erreur s'est produite ! Veuillez réessayer.")
+      } finally {
+          setDeleting({ id: null, loading: false })
+      }
+    }
 
     return (
       <>
@@ -140,7 +164,13 @@ const ArticlesTable = ({initialArt, initialTotalPages, currentPage, search}) => 
                     <div className="flex justify-end gap-2 mt-4">
                       <DetailsArticle id={art._id} />
                       <UpdateArticle id={art._id} />
-                      <DeleteArticle id={art._id} />
+                      <DeleteArticle
+                        id={art._id}
+                        open={modalProdToDelete === art._id}
+                        onOpenChange={setModalProdToDelete}
+                        onConfirm={handleDelete}
+                        loading={deleting.id === art._id && deleting.loading}
+                      />
                     </div>
                   </div>
                 ))}
@@ -193,7 +223,13 @@ const ArticlesTable = ({initialArt, initialTotalPages, currentPage, search}) => 
                         <div className="flex justify-end gap-2">
                           <DetailsArticle id={art._id} />
                           <UpdateArticle id={art._id} />
-                          <DeleteArticle id={art._id} />
+                          <DeleteArticle
+                            id={art._id}
+                            open={modalProdToDelete === art._id}
+                            onOpenChange={setModalProdToDelete}
+                            onConfirm={handleDelete}
+                            loading={deleting.id === art._id && deleting.loading}
+                          />
                         </div>
                       </td>
                     </tr>
