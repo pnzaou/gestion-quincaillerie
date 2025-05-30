@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from "react"
 import toast from "react-hot-toast"
 
-export default function useArticles(initialArt, initialTotalPages, currentPage, search) {
+export default function useArticles(initialArt, initialTotalPages, currentPage, search, initLimit) {
     const [articles, setArticles] = useState(initialArt)
     const [totalPages, setTotalPages] = useState(initialTotalPages)
     const [page, setPage] = useState(currentPage)
 
     const [searchTerm, setSearchTerm] = useState(search)
     const [debouncedSearch, setDebouncedSearch] = useState(search)
-    const [limit, setLimit] = useState(10)
+    const [limit, setLimit] = useState(initLimit)
     const [selected, setSelected] = useState([])
     const [isLoading, setIsLoading] = useState(false)
 

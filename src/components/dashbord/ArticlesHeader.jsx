@@ -3,9 +3,9 @@
 import CategoryFilter from "./Category-filter";
 import PageSizeSelect from "./Page-size-select";
 
-const ArticlesHeader = ({ searchTerm, onSearchChange, limit, setLimit, setPage, selected, toggleCategory }) => {
+const ArticlesHeader = ({ searchTerm, onSearchChange, limit, setLimit, setPage, selected, toggleCategory, tabSize }) => {
     return (
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-center">
             <div className="flex flex-col md:flex-row md:items-center gap-2 flex-1/2">
             <input
                 type="text"
@@ -16,7 +16,7 @@ const ArticlesHeader = ({ searchTerm, onSearchChange, limit, setLimit, setPage, 
             />
             </div>
             <div className="hidden md:flex items-center gap-4">
-            <PageSizeSelect limit={limit} setLimit={setLimit} setPage={setPage} />
+            <PageSizeSelect limit={limit} setLimit={setLimit} setPage={setPage} tabSize={tabSize} />
             <CategoryFilter selected={selected} toggleCategory={toggleCategory} />
             </div>
         </div>

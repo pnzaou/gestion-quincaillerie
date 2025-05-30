@@ -1,6 +1,5 @@
 "use client"
 
-import { DeleteArticle, DetailsArticle, UpdateArticle } from "./button-article";
 import SearchLoader from "./Search-loader";
 import useArticles from "@/hooks/useArticles";
 import ArticlesHeader from "./ArticlesHeader";
@@ -26,7 +25,9 @@ const ArticlesTableAdmin = ({initialArt, initialTotalPages, currentPage, search}
       toggleCategory,
       totalPages,
       setModalProdToDelete
-    } = useArticles(initialArt, initialTotalPages, currentPage, search)
+    } = useArticles(initialArt, initialTotalPages, currentPage, search, 10)
+
+    const tabSize = [5, 10, 25, 50, 100]
 
     return (
       <>
@@ -39,12 +40,13 @@ const ArticlesTableAdmin = ({initialArt, initialTotalPages, currentPage, search}
           setPage={setPage}
           selected={selected}
           toggleCategory={toggleCategory}
+          tabSize={tabSize}
         />
 
         {/* Loader */}
         {isLoading && ( <SearchLoader/> )}
 
-        <div className={isLoading ? "opacity-50 pointer-events-none" : ""}>
+        <div className={`mt-4 ${isLoading ? "opacity-50 pointer-events-none" : ""}`}>
           <div className="inline-block min-w-full align-middle">
             <div className="rounded-lg bg-gray-50 p-2 md:pt-0">
               {/* Mobile */}
@@ -77,6 +79,7 @@ const ArticlesTableAdmin = ({initialArt, initialTotalPages, currentPage, search}
           totalPages={totalPages}
           selected={selected}
           toggleCategory={toggleCategory}
+          tabSize={tabSize}
         />
       </>
     );

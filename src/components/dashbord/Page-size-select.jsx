@@ -1,6 +1,6 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
-const PageSizeSelect = ({limit, setLimit, setPage}) => {
+const PageSizeSelect = ({limit, setLimit, setPage, tabSize}) => {
     return (
         <Select
             value={String(limit)}
@@ -15,7 +15,7 @@ const PageSizeSelect = ({limit, setLimit, setPage}) => {
             </SelectValue>
             </SelectTrigger>
             <SelectContent>
-            {[5, 10, 25, 50, 100].map((size) => (
+            {tabSize.map((size) => (
                 <SelectItem key={size} value={String(size)}>
                 {`Articles par page : ${size}`}
                 </SelectItem>

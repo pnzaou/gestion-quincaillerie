@@ -1,8 +1,10 @@
 import {
     AdjustmentsHorizontalIcon,
     ListBulletIcon,
-    UserGroupIcon
-  } from "@heroicons/react/24/outline"
+    UserGroupIcon,
+    BanknotesIcon
+} from "@heroicons/react/24/outline"
+import { LayoutDashboard } from "lucide-react"
 
 export const links = [
     {
@@ -15,7 +17,7 @@ export const links = [
     {
       name: "Catégories",
       href: "/dashboard/categorie",
-      icon: "",
+      icon: LayoutDashboard,
       roles: ["admin"],
       subLinks: [
         { name: "Ajouter", href: "/dashboard/categorie/ajouter" },
@@ -43,9 +45,11 @@ export const links = [
     {
       name: "Ventes",
       href: "/dashboard/vente",
-      icon: "",
+      icon: BanknotesIcon,
       roles: ["admin", "gerant"],
-      subLinks: [],
+      subLinks: [
+        { name: "Effectuer une vente", href: "/dashboard/vente/vendre" },
+      ],
     },
     {
       name: "Fournisseurs",
