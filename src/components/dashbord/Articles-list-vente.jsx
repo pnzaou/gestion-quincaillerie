@@ -65,6 +65,7 @@ const ArticlesListVente = ({ initialArt, initialTotalPages, currentPage, search 
   } = useArticles(initialArt, initialTotalPages, currentPage, search, 8);
 
   const [cart, setCart] = useState([]);
+  const [localStocks, setLocalStocks] = useState(() => Object.fromEntries(initialArt.map(a => [a._id, a.QteStock])))
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [client, setClient] = useState(null);
   const [clientOpen, setClientOpen] = useState(false);
@@ -72,6 +73,12 @@ const ArticlesListVente = ({ initialArt, initialTotalPages, currentPage, search 
   const [discount, setDiscount] = useState(0);
 
   const addToCart = (article) => {
+    const currentStock = localStocks[article._id] ?? article.QteStock;
+
+    if (currentStock <= 0) {
+      return;
+    }
+
     setCart((prev) => {
       const exists = prev.find((item) => item._id === article._id);
       if (exists) {
@@ -83,9 +90,19 @@ const ArticlesListVente = ({ initialArt, initialTotalPages, currentPage, search 
       }
       return [...prev, { ...article, quantity: 1 }];
     });
+
+    setLocalStocks((prev) => ({
+      ...prev,
+      [article._id]: prev[article._id] - 1,
+    }));
   };
 
   const removeFromCart = (articleId) => {
+    const item = cart.find((i) => i._id === articleId);
+
+    if (!item) {
+      return;
+    }
     setCart((prev) =>
       prev
         .map((item) =>
@@ -95,15 +112,21 @@ const ArticlesListVente = ({ initialArt, initialTotalPages, currentPage, search 
         )
         .filter((item) => item.quantity > 0)
     );
+
+    setLocalStocks((prev) => ({
+     ...prev,
+      [articleId]: prev[articleId] + 1,
+    }));
   };
 
-  const total =
-    cart.reduce((sum, item) => sum + (item.prixVenteEnGros || item.prixVenteDetail) * item.quantity, 0) *
-    (1 - discount / 100);
+    const total = (
+        cart.reduce((sum, item) => {
+        const prix = item.prixVenteDetail ?? item.prixVenteEnGros;
+        return sum + prix * item.quantity;
+        }, 0)
+    ) * (1 - discount / 100);
 
   const tabSize = [8, 12, 32, 64, 100];
-
-  console.log(cart)
 
   return (
     <>
@@ -213,19 +236,7 @@ const ArticlesListVente = ({ initialArt, initialTotalPages, currentPage, search 
                             </div>
                             ))}
                         </div>
-                        {/* <div className="space-y-4">
-                                <div>
-                                    <Label>Date</Label>
-                                    <Input type="date" value={date} onChange={e => setDate(e.target.value)} />
-                                </div>
-                                <div>
-                                    <Label>Remise %</Label>
-                                    <Input type="number" value={discount} onChange={e => setDiscount(Number(e.target.value))} min={0} max={100} />
-                                </div>
-                                <div className="font-semibold">Total : {total.toFixed(2)} €</div>
-                                <Button className="w-full" onClick={() => alert('Vente validée')}>Valider la vente</Button>
-                            </div> */}
-
+                        
                         <div className="space-y-4">
                             <div>
                                 <Label className="mb-3">Date de la vente</Label>
@@ -294,39 +305,62 @@ const ArticlesListVente = ({ initialArt, initialTotalPages, currentPage, search 
                     const src = article.image || DEFAULT_IMAGE;
                     return (
                         <Card key={article._id} className="p-4">
-                        <img
-                            src={src}
-                            alt={article.nom}
-                            className="w-full h-32 object-cover rounded mb-2"
-                            onError={(e) => {
-                                e.currentTarget.src = DEFAULT_IMAGE;
-                            }}
-                        />
-                        <CardTitle>{article.nom}</CardTitle>
-                        <CardContent className="flex flex-col items-start space-y-2">
-                            <div>
-                                Prix :{" "}
-                                {article.prixVenteEnGros || article.prixVenteDetail} fcfa
-                            </div>
-                            <div className="flex items-center space-x-2">
-                            <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => removeFromCart(article.id)}
-                                disabled={!inCart}
-                            >
-                                <Minus />
-                            </Button>
-                            <span>{inCart?.quantity ?? 0}</span>
-                            <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => addToCart(article)}
-                            >
-                                <Plus />
-                            </Button>
-                            </div>
-                        </CardContent>
+                            <img
+                                src={src}
+                                alt={article.nom}
+                                className="w-full h-32 object-cover rounded mb-2"
+                                onError={(e) => {
+                                    e.currentTarget.src = DEFAULT_IMAGE;
+                                }}
+                            />
+                            <CardTitle>{article.nom}</CardTitle>
+                            <CardContent className="flex flex-col space-y-3 mt-2">
+                                <div className="text-center">
+                                    <span className="text-lg text-black font-semibold">
+                                        {article.prixVenteDetail ?? article.prixVenteEnGros} FCFA
+                                    </span>
+                                </div>
+
+                                <div className="text-sm text-center">
+                                    <span
+                                    className={cn(
+                                        "ml-1 px-2 py-1 rounded-full text-xs font-semibold",
+                                        article.QteStock > 10
+                                        ? "bg-green-100 text-green-800"
+                                        : article.QteStock > 0
+                                        ? "bg-yellow-100 text-yellow-800"
+                                        : "bg-red-100 text-red-800"
+                                    )}
+                                    >
+                                        {localStocks[article._id] ?? article.QteStock} en stock
+                                    </span>
+                                </div>
+
+                                <div className="flex items-center justify-between w-full mt-2">
+                                    <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    onClick={() => removeFromCart(article._id)}
+                                    disabled={!inCart}
+                                    className="border rounded-full w-8 h-8 text-red-600 hover:bg-red-100 hover:cursor-pointer"
+                                    >
+                                        <Minus className="w-4 h-4" />
+                                    </Button>
+
+                                    <div className="text-center text-sm font-semibold px-3 py-1 border rounded bg-gray-100 min-w-[32px]">
+                                        {inCart?.quantity ?? 0}
+                                    </div>
+
+                                    <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    onClick={() => addToCart(article)}
+                                    className="border rounded-full w-8 h-8 text-green-600 hover:bg-green-100 hover:cursor-pointer"
+                                    >
+                                        <Plus className="w-4 h-4" />
+                                    </Button>
+                                </div>
+                            </CardContent>
                         </Card>
                     );
                     })}
