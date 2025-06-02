@@ -122,7 +122,7 @@ const ArticlesListVente = ({ initialArt, initialTotalPages, currentPage, search 
                       tabSize={tabSize}
                     />
                 </div>
-                <div>
+                <div className="flex gap-2">
                     {/* Choisir client */}
                     <Popover open={clientOpen} onOpenChange={setClientOpen}>
                         <PopoverTrigger asChild>
@@ -163,7 +163,7 @@ const ArticlesListVente = ({ initialArt, initialTotalPages, currentPage, search 
                                 </CommandGroup>
                                 </CommandList>
                             </Command>
-                            <Button size="sm" className="mt-2 w-full" onClick={() => alert('Ajouter client')}>
+                            <Button size="sm" className="mt-2 w-full bg-[#0084D1] rounded hover:bg-[#0042d1]" onClick={() => alert('Ajouter client')}>
                                 + Nouveau
                             </Button>
                         </PopoverContent>
