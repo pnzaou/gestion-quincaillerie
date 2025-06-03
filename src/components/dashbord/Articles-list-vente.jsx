@@ -30,11 +30,13 @@ import {
   ChevronsUpDown,
   Check,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ArticlesFooter from "./ArticlesFooter";
 import SearchLoader from "./Search-loader";
 import ArticlesHeader from "./ArticlesHeader";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "../ui/command";
+import { Badge } from "../ui/badge";
+import PaymentMethod from "./Payment-method";
 
 
 const clientsData = [
@@ -43,17 +45,15 @@ const clientsData = [
 ];
 
 const DEFAULT_IMAGE = "/360_F_517535712_q7f9QC9X6TQxWi6xYZZbMmw5cnLMr279.jpg";
+const tabSize = [8, 12, 32, 64, 100];
 
 const ArticlesListVente = ({ initialArt, initialTotalPages, currentPage, search }) => {
 
   const {
     articles,
-    deleting,
-    handleDelete,
     handleSearchChange,
     isLoading,
     limit,
-    modalProdToDelete,
     page,
     searchTerm,
     setLimit,
@@ -71,6 +71,17 @@ const ArticlesListVente = ({ initialArt, initialTotalPages, currentPage, search 
   const [clientOpen, setClientOpen] = useState(false);
   const [saleDate, setSaleDate] = useState(new Date());
   const [discount, setDiscount] = useState(0);
+  const [paiementMethode, setPaiementMethode] = useState("")
+
+  const isFirstRun = useRef(false)
+
+    useEffect(() => {
+        if (!isFirstRun.current) {
+        isFirstRun.current = true
+        return
+        }
+        setLocalStocks((prev) => Object.fromEntries(articles.map(a => [a._id, a.QteStock])))
+    }, [articles])
 
   const addToCart = (article) => {
     const currentStock = localStocks[article._id] ?? article.QteStock;
@@ -126,7 +137,9 @@ const ArticlesListVente = ({ initialArt, initialTotalPages, currentPage, search 
         }, 0)
     ) * (1 - discount / 100);
 
-  const tabSize = [8, 12, 32, 64, 100];
+    const handleSubmitSale = async (e) => {
+      
+    }
 
   return (
     <>
@@ -194,102 +207,112 @@ const ArticlesListVente = ({ initialArt, initialTotalPages, currentPage, search 
 
 
                     {/* Ouvrir panier */}
-                    <Dialog open={drawerOpen} onOpenChange={setDrawerOpen}>
+                    <Dialog open={drawerOpen} onOpenChange={setDrawerOpen} >
                         <DialogTrigger asChild>
                         <Button variant="outline" className="px-4 py-2">
                             <ShoppingCart className="mr-1 h-4 w-4" /> Panier ({cart.reduce((a, c) => a + c.quantity, 0)})
                         </Button>
                         </DialogTrigger>
-                        <DialogContent className="w-[400px]">
-                        <DialogHeader>
-                            <DialogTitle>
-                            <p className="text-lg font-bold mb-4">
-                                Récapitulatif de la vente
-                            </p>
-                            </DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-2 max-h-60 overflow-y-auto mb-4">
-                            {cart.map((item) => (
-                            <div
-                                key={item._id}
-                                className="flex justify-between items-center"
-                            >
-                                <div>
-                                {item.nom} x {item.quantity}
-                                </div>
-                                <div className="flex items-center space-x-1">
-                                <Button
-                                    size="icon"
-                                    variant="ghost"
-                                    onClick={() => removeFromCart(item._id)}
-                                >
-                                    <Minus />
-                                </Button>
-                                <Button
-                                    size="icon"
-                                    variant="ghost"
-                                    onClick={() => addToCart(item)}
-                                >
-                                    <Plus />
-                                </Button>
-                                </div>
-                            </div>
-                            ))}
-                        </div>
-                        
-                        <div className="space-y-4">
-                            <div>
-                                <Label className="mb-3">Date de la vente</Label>
-                                <div className="relative">
-                                    <Popover>
-                                    <PopoverTrigger asChild>
+                        <DialogContent className="min-w-4xl">
+                            <DialogHeader>
+                                <DialogTitle>
+                                <p className="text-lg font-bold mb-4">
+                                    Récapitulatif de la vente
+                                </p>
+                                </DialogTitle>
+                            </DialogHeader>
+                            <div className="flex gap-10">
+                                <div className="space-y-2 max-h-[298px] w-[300px] overflow-y-auto mb-4">
+                                    {cart.map((item) => (
+                                    <div
+                                        key={item._id}
+                                        className="flex justify-between items-center"
+                                    >
+                                        <div className="text-black font-semibold">
+                                            { item.nom }
+                                        </div>
+                                        <div className="flex items-center space-x-4">
                                         <Button
-                                        variant="outline"
-                                        className={cn(
-                                            "w-full justify-start pl-3 text-left font-normal",
-                                            !saleDate && "text-muted-foreground"
-                                        )}
+                                            size="icon"
+                                            variant="ghost"
+                                            onClick={() => removeFromCart(item._id)}
+                                            className="border rounded-full w-8 h-8 text-red-600 hover:bg-red-100 hover:cursor-pointer"
                                         >
-                                        {saleDate
-                                            ? format(saleDate, "d MMMM yyyy", { locale: fr })
-                                            : "Sélectionner la date"}
-                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                            <Minus />
                                         </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
-                                        <Calendar
-                                        mode="single"
-                                        selected={saleDate}
-                                        onSelect={setSaleDate}
-                                        initialFocus
+                                        <div>{ item.quantity }</div>
+                                        <Button
+                                            size="icon"
+                                            variant="ghost"
+                                            onClick={() => addToCart(item)}
+                                            className="border rounded-full w-8 h-8 text-red-600 hover:bg-red-100 hover:cursor-pointer"
+                                        >
+                                            <Plus />
+                                        </Button>
+                                        </div>
+                                    </div>
+                                    ))}
+                                </div>
+                        
+                                <div className="space-y-4">
+                                    <div>
+                                        <Label className="mb-3">Date de la vente</Label>
+                                        <div className="relative">
+                                            <Popover>
+                                            <PopoverTrigger asChild>
+                                                <Button
+                                                variant="outline"
+                                                className={cn(
+                                                    "w-full justify-start pl-3 text-left font-normal",
+                                                    !saleDate && "text-muted-foreground"
+                                                )}
+                                                >
+                                                {saleDate
+                                                    ? format(saleDate, "d MMMM yyyy", { locale: fr })
+                                                    : "Sélectionner la date"}
+                                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-auto p-0" align="start">
+                                                <Calendar
+                                                mode="single"
+                                                selected={saleDate}
+                                                onSelect={setSaleDate}
+                                                initialFocus
+                                                />
+                                            </PopoverContent>
+                                            </Popover>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <Label className="mb-3">Remise %</Label>
+                                        <Input
+                                            type="number"
+                                            value={discount}
+                                            onChange={(e) => setDiscount(Number(e.target.value))}
+                                            min={0}
+                                            step={0.00001}
+                                            max={100}
                                         />
-                                    </PopoverContent>
-                                    </Popover>
+                                    </div>
+
+                                    <div>
+                                        <Label className="mb-3">Mode de paiement</Label>
+                                        <PaymentMethod paiementMethode={paiementMethode} setPaiementMethode={setPaiementMethode}/>
+                                    </div>
+
+                                    <div className="font-semibold">
+                                        Total : {total.toFixed(2)} fcfa
+                                    </div>
+                                    <Button
+                                    className="w-full bg-[#0084D1] hover:bg-[#0042d1] hover:cursor-pointer"
+                                    onClick={() => alert("Vente validée")}
+                                    >
+                                        Valider la vente
+                                    </Button>
                                 </div>
                             </div>
-
-                            <div>
-                                <Label className="mb-3">Remise %</Label>
-                                <Input
-                                    type="number"
-                                    value={discount}
-                                    onChange={(e) => setDiscount(Number(e.target.value))}
-                                    min={0}
-                                    step={0.00001}
-                                    max={100}
-                                />
-                            </div>
-
-                            <div className="font-semibold">
-                                Total : {total.toFixed(2)} fcfa
-                            </div>
-                            <Button
-                            className="w-full bg-[#0084D1] hover:bg-[#0042d1] hover:cursor-pointer"
-                            onClick={() => alert("Vente validée")}
-                            >
-                                Valider la vente
-                            </Button>
-                        </div>
                         </DialogContent>
                     </Dialog>
                 </div>
@@ -322,9 +345,9 @@ const ArticlesListVente = ({ initialArt, initialTotalPages, currentPage, search 
                                 </div>
 
                                 <div className="text-sm text-center">
-                                    <span
+                                    <Badge
                                     className={cn(
-                                        "ml-1 px-2 py-1 rounded-full text-xs font-semibold",
+                                        "text-xs font-semibold",
                                         article.QteStock > 10
                                         ? "bg-green-100 text-green-800"
                                         : article.QteStock > 0
@@ -333,7 +356,7 @@ const ArticlesListVente = ({ initialArt, initialTotalPages, currentPage, search 
                                     )}
                                     >
                                         {localStocks[article._id] ?? article.QteStock} en stock
-                                    </span>
+                                    </Badge>
                                 </div>
 
                                 <div className="flex items-center justify-between w-full mt-2">
