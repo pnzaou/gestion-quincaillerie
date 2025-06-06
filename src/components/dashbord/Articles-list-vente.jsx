@@ -37,6 +37,7 @@ import ArticlesHeader from "./ArticlesHeader";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "../ui/command";
 import { Badge } from "../ui/badge";
 import PaymentMethod from "./Payment-method";
+import AddClientPopup from "./Add-client-popup";
 
 
 const clientsData = [
@@ -72,6 +73,12 @@ const ArticlesListVente = ({ initialArt, initialTotalPages, currentPage, search 
   const [saleDate, setSaleDate] = useState(new Date());
   const [discount, setDiscount] = useState(0);
   const [paiementMethode, setPaiementMethode] = useState("")
+  const [newClient, setNewClient] = useState({
+    nomComplet: "",
+    tel: "",
+    email: "",
+    adresse: "",
+  })
 
   const isFirstRun = useRef(false)
 
@@ -141,6 +148,8 @@ const ArticlesListVente = ({ initialArt, initialTotalPages, currentPage, search 
       
     }
 
+    console.log(newClient)
+
   return (
     <>
         <div className="p-6 space-y-4">
@@ -199,9 +208,7 @@ const ArticlesListVente = ({ initialArt, initialTotalPages, currentPage, search 
                                 </CommandGroup>
                                 </CommandList>
                             </Command>
-                            <Button size="sm" className="mt-2 w-full bg-[#0084D1] rounded hover:bg-[#0042d1]" onClick={() => alert('Ajouter client')}>
-                                + Nouveau
-                            </Button>
+                            <AddClientPopup client={newClient} setClient={setNewClient}/>
                         </PopoverContent>
                     </Popover>
 
@@ -259,28 +266,28 @@ const ArticlesListVente = ({ initialArt, initialTotalPages, currentPage, search 
                                         <Label className="mb-3">Date de la vente</Label>
                                         <div className="relative">
                                             <Popover>
-                                            <PopoverTrigger asChild>
-                                                <Button
-                                                variant="outline"
-                                                className={cn(
-                                                    "w-full justify-start pl-3 text-left font-normal",
-                                                    !saleDate && "text-muted-foreground"
-                                                )}
-                                                >
-                                                {saleDate
-                                                    ? format(saleDate, "d MMMM yyyy", { locale: fr })
-                                                    : "Sélectionner la date"}
-                                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                                </Button>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-0" align="start">
-                                                <Calendar
-                                                mode="single"
-                                                selected={saleDate}
-                                                onSelect={setSaleDate}
-                                                initialFocus
-                                                />
-                                            </PopoverContent>
+                                                <PopoverTrigger asChild>
+                                                    <Button
+                                                    variant="outline"
+                                                    className={cn(
+                                                        "w-full justify-start pl-3 text-left font-normal",
+                                                        !saleDate && "text-muted-foreground"
+                                                    )}
+                                                    >
+                                                        {saleDate
+                                                            ? format(saleDate, "d MMMM yyyy", { locale: fr })
+                                                            : "Sélectionner la date"}
+                                                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                    </Button>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-auto p-0" align="start">
+                                                    <Calendar
+                                                    mode="single"
+                                                    selected={saleDate}
+                                                    onSelect={setSaleDate}
+                                                    initialFocus
+                                                    />
+                                                </PopoverContent>
                                             </Popover>
                                         </div>
                                     </div>
