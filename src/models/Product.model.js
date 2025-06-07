@@ -12,7 +12,7 @@ const productSchema = new mongoose.Schema({
     image: {type: String, required: false},
     reference: {type: String, required: false},
     description: {type: String},
-    statut: {type: String,  enum: ["En stock", "Rupture"], default: "En stock", required: true},
+    statut: {type: String,  enum: ["En stock", "Rupture"], default: "En stock", required: false},
     dateExpiration: {type: Date, required: false},
     category_id: {type: mongoose.Schema.Types.ObjectId, ref: "Category", required: false},
     supplier_id: {type: mongoose.Schema.Types.ObjectId, ref: "Supplier", required: false},

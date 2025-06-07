@@ -12,7 +12,7 @@ const SaleSchema = new mongoose.Schema(
       }
     ],
     dateExacte: { type: Date, required: true },
-    remisse: { type: Number, required: false },
+    remise: { type: Number, required: false },
     total: { type: Number, required: true },
     paymentMethod: { type: String, enum: ["espèce", "carte de crédit", "Wave", "Orange Money", "Free Money"], required: true },
     vendeur: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },

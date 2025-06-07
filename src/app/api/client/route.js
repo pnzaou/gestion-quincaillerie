@@ -59,3 +59,26 @@ export const POST = withAuth(async (req) => {
         }, { status: 500 })
     }
 })
+
+export const GET = withAuth(async (req) => {
+    try {
+        await dbConnection()
+
+        const clients = await Client.find()
+
+        return NextResponse.json({
+            message: "Clients récupérés avec succès.",
+            success: true,
+            error: false,
+            data: clients
+        }, { status: 200 })
+    } catch (error) {
+        console.error("Erreur lors de la récupération des clients: ", error)
+
+        return NextResponse.json({
+            message: "Erreur! Veuillez réessayer.",
+            success: false,
+            error: true
+        }, { status: 500 })
+    }
+})

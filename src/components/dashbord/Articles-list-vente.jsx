@@ -25,25 +25,19 @@ import {
   Plus,
   Minus,
   ShoppingCart,
-  UserPlus,
   CalendarIcon,
-  ChevronsUpDown,
-  Check,
+  Trash,
+  Pencil,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import ArticlesFooter from "./ArticlesFooter";
 import SearchLoader from "./Search-loader";
 import ArticlesHeader from "./ArticlesHeader";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "../ui/command";
 import { Badge } from "../ui/badge";
 import PaymentMethod from "./Payment-method";
-import AddClientPopup from "./Add-client-popup";
-
-
-const clientsData = [
-  { id: "c1", name: "Client A" },
-  { id: "c2", name: "Client B" },
-];
+import SaleClientSelector from "./Sale-client-selector";
+import Required from "../Required";
+import toast from "react-hot-toast";
 
 const DEFAULT_IMAGE = "/360_F_517535712_q7f9QC9X6TQxWi6xYZZbMmw5cnLMr279.jpg";
 const tabSize = [8, 12, 32, 64, 100];
@@ -68,17 +62,19 @@ const ArticlesListVente = ({ initialArt, initialTotalPages, currentPage, search 
   const [cart, setCart] = useState([]);
   const [localStocks, setLocalStocks] = useState(() => Object.fromEntries(initialArt.map(a => [a._id, a.QteStock])))
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [client, setClient] = useState(null);
-  const [clientOpen, setClientOpen] = useState(false);
   const [saleDate, setSaleDate] = useState(new Date());
   const [discount, setDiscount] = useState(0);
   const [paiementMethode, setPaiementMethode] = useState("")
+  const [client, setClient] = useState(null);
+  const [selectClientOpen, setSelectClientOpen] = useState(false);
+  const [newClientDrawerOpen, setNewClientDrawerOpen] = useState(false);
   const [newClient, setNewClient] = useState({
     nomComplet: "",
     tel: "",
     email: "",
     adresse: "",
   })
+  const [loading, setLoading] = useState(false)
 
   const isFirstRun = useRef(false)
 
@@ -144,11 +140,63 @@ const ArticlesListVente = ({ initialArt, initialTotalPages, currentPage, search 
         }, 0)
     ) * (1 - discount / 100);
 
-    const handleSubmitSale = async (e) => {
-      
+    const handleUpdateNewClient = () => {
+        setDrawerOpen(false)
+        setSelectClientOpen(true)
+        setNewClientDrawerOpen(true)
+        setNewClient(client)
     }
 
-    console.log(newClient)
+    const handleSubmitSale = async (e) => {
+        setLoading(true)
+        try {
+            if(cart.length === 0) {
+                toast.error("Veuillez ajouter des articles au panier.")
+                return;
+            }
+            if(!paiementMethode || paiementMethode.trim() === "") {
+                toast.error("Veuillez choisir un mode de paiement.")
+                return;
+            }
+            const data = {
+                items: cart.map((item) => ({
+                    product: item._id,
+                    quantity: item.quantity,
+                    price: item.prixVenteDetail?? item.prixVenteEnGros,
+                })),
+                dateExacte: saleDate,
+                remise: discount,
+                total,
+                paymentMethod: paiementMethode,
+                client
+            }
+            const response = await fetch("/api/sale", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(data),
+            })
+            if(response.ok) {
+                toast.success("Vente créée avec succès.")
+                setCart([])
+                setClient(null)
+                setSaleDate(new Date())
+                setDiscount(0)
+                setPaiementMethode("")
+                return;
+            } else {
+                const errorData = await response.json()
+                toast.error(errorData.message)
+                return;
+            }
+        } catch (error) {
+            console.error("Erreur pendant la création de la vente :", error);
+            toast.error("Une erreur est survenue lors de la création de la vente.")
+        } finally {
+            setLoading(false)
+        }
+    }
 
   return (
     <>
@@ -169,49 +217,16 @@ const ArticlesListVente = ({ initialArt, initialTotalPages, currentPage, search 
                 </div>
                 <div className="flex gap-2">
                     {/* Choisir client */}
-                    <Popover open={clientOpen} onOpenChange={setClientOpen}>
-                        <PopoverTrigger asChild>
-                        <Button
-                            variant="outline"
-                            role="combobox"
-                            aria-expanded={clientOpen}
-                            className="justify-between"
-                        >
-                            {client?.name ?? 'Choisir client'}
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-64 p-0" align="start">
-                            <Command>
-                                <CommandInput placeholder="Rechercher un client..." className="h-9" />
-                                <CommandList>
-                                <CommandEmpty>Aucun client</CommandEmpty>
-                                <CommandGroup>
-                                    {clientsData.map(opt => (
-                                    <CommandItem
-                                        key={opt.id}
-                                        value={opt.name.toLowerCase()}
-                                        onSelect={() => {
-                                        setClient(opt);
-                                        setClientOpen(false);
-                                        }}
-                                    >
-                                        {opt.name}
-                                        <Check
-                                        className={cn(
-                                            "ml-auto h-4 w-4",
-                                            client?.id === opt.id ? "opacity-100" : "opacity-0"
-                                        )}
-                                        />
-                                    </CommandItem>
-                                    ))}
-                                </CommandGroup>
-                                </CommandList>
-                            </Command>
-                            <AddClientPopup client={newClient} setClient={setNewClient}/>
-                        </PopoverContent>
-                    </Popover>
-
+                    <SaleClientSelector
+                     selectClientOpen={selectClientOpen}
+                     setSelectClientOpen={setSelectClientOpen}
+                     client={client}
+                     setClient={setClient}
+                     newClient={newClient}
+                     setNewClient={setNewClient}
+                     newClientDrawerOpen={newClientDrawerOpen}
+                     setNewClientDrawerOpen={setNewClientDrawerOpen}
+                     />
 
                     {/* Ouvrir panier */}
                     <Dialog open={drawerOpen} onOpenChange={setDrawerOpen} >
@@ -235,7 +250,7 @@ const ArticlesListVente = ({ initialArt, initialTotalPages, currentPage, search 
                                         key={item._id}
                                         className="flex justify-between items-center"
                                     >
-                                        <div className="text-black font-semibold">
+                                        <div className="">
                                             { item.nom }
                                         </div>
                                         <div className="flex items-center space-x-4">
@@ -261,7 +276,7 @@ const ArticlesListVente = ({ initialArt, initialTotalPages, currentPage, search 
                                     ))}
                                 </div>
                         
-                                <div className="space-y-4">
+                                <div className="space-y-4  w-[250px]">
                                     <div>
                                         <Label className="mb-3">Date de la vente</Label>
                                         <div className="relative">
@@ -305,7 +320,7 @@ const ArticlesListVente = ({ initialArt, initialTotalPages, currentPage, search 
                                     </div>
 
                                     <div>
-                                        <Label className="mb-3">Mode de paiement</Label>
+                                        <Label className="mb-3">Mode de paiement <Required/></Label>
                                         <PaymentMethod paiementMethode={paiementMethode} setPaiementMethode={setPaiementMethode}/>
                                     </div>
 
@@ -313,11 +328,70 @@ const ArticlesListVente = ({ initialArt, initialTotalPages, currentPage, search 
                                         Total : {total.toFixed(2)} fcfa
                                     </div>
                                     <Button
-                                    className="w-full bg-[#0084D1] hover:bg-[#0042d1] hover:cursor-pointer"
-                                    onClick={() => alert("Vente validée")}
+                                      className="w-full bg-[#0084D1] hover:bg-[#0042d1] hover:cursor-pointer"
+                                      onClick={handleSubmitSale}
                                     >
                                         Valider la vente
                                     </Button>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div className="flex space-x-5">
+                                        <div>
+                                            <h2 className="text-black font-semibold">Infos client</h2>
+                                        </div>
+                                        {client && (
+                                            <div className="flex space-x-5">
+                                                {!client?._id && (
+                                                    <div>
+                                                    <Button
+                                                    title="Modifie les infos client."
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    onClick={handleUpdateNewClient}
+                                                    className="border rounded-full w-6 h-6 text-green-600 hover:bg-green-100 hover:cursor-pointer"
+                                                    >
+                                                        <Pencil className="w-4 h-4" />
+                                                    </Button>
+                                                </div>)}
+                                                <div>
+                                                    <Button
+                                                    title="Supprimer le client sélectionné."
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    onClick={() => setClient(null)}
+                                                    className="border rounded-full w-6 h-6 text-green-600 hover:bg-green-100 hover:cursor-pointer"
+                                                    >
+                                                        <Trash className="w-4 h-4" />
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-500 text-sm mb-1">Nom Complet:</p>
+                                        <p className={`font-semibold ${client?.nomComplet ? 'text-black' : 'text-gray-400 italic'}`}>
+                                            {client?.nomComplet || "Nom non renseignée"}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-500 text-sm mb-1">Téléphone:</p>
+                                        <p className={`font-semibold ${client?.tel ? 'text-black' : 'text-gray-400 italic'}`}>
+                                            {client?.tel || "Numéro non renseignée"}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-500 text-sm mb-1">Email:</p>
+                                        <p className={`font-semibold ${client?.email ? 'text-black' : 'text-gray-400 italic'}`}>
+                                            {client?.email || "Email non renseigné"}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-500 text-sm mb-1">Adresse:</p>
+                                        <p className={`font-semibold ${client?.adresse ? 'text-black' : 'text-gray-400 italic'}`}>
+                                            {client?.adresse || "Adresse non renseignée"}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </DialogContent>

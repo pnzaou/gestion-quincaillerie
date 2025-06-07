@@ -5,11 +5,29 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
+import Required from "../Required";
+import toast from "react-hot-toast";
 
-const AddClientPopup = ({ client, setClient }) => {
-    const [drawerOpen, setDrawerOpen] = useState(false);
+const AddClientPopup = ({ newClient, setNewClient, setClient, newClientDrawerOpen, setNewClientDrawerOpen, setSelectClientOpen }) => {
+
+    const handleAddClient = () => {
+        if (newClient.nomComplet.trim() === "" || newClient.tel.trim() === "") {
+            toast.error("Le nom et numéro du client sont obligatoires");  
+            return;
+        }
+        setClient(newClient);
+        setNewClientDrawerOpen(false);
+        setSelectClientOpen(false)
+        setNewClient({
+            nomComplet: "",
+            tel: "",
+            email: "",
+            adresse: ""
+        });
+    }
+    
     return (
-        <Dialog open={drawerOpen} onOpenChange={setDrawerOpen}>
+        <Dialog open={newClientDrawerOpen} onOpenChange={setNewClientDrawerOpen}>
             <DialogTrigger asChild>
                 <Button className="mt-4 w-full bg-[#0084D1] hover:bg-[#0042d1] hover:cursor-pointer text-white font-bold rounded-t-none rounded-b-sm">
                     + Nouveau client
@@ -26,21 +44,21 @@ const AddClientPopup = ({ client, setClient }) => {
                 <div>
                     <div className="flex gap-4 mb-4">
                         <div className="grid gap-3 flex-1/2">
-                            <Label htmlFor="nom">Nom complet</Label>
+                            <Label htmlFor="nom">Nom complet <Required/></Label>
                             <Input 
                              id="nom"
                              type="text"
-                             value={client.nomComplet}
-                             onChange={(e) => setClient((prev) => ({...prev, nomComplet: e.target.value}))}
+                             value={newClient.nomComplet}
+                             onChange={(e) => setNewClient((prev) => ({...prev, nomComplet: e.target.value}))}
                             />
                         </div>
                         <div className="grid gap-3 flex-1/2">
-                            <Label htmlFor="tel">Téléphone</Label>
+                            <Label htmlFor="tel">Téléphone <Required/></Label>
                             <Input 
                              id="tel"
                              type="tel"
-                             value={client.tel}
-                             onChange={(e) => setClient((prev) => ({...prev, tel: e.target.value}))}
+                             value={newClient.tel}
+                             onChange={(e) => setNewClient((prev) => ({...prev, tel: e.target.value}))}
                             />
                         </div>
                     </div>
@@ -50,8 +68,8 @@ const AddClientPopup = ({ client, setClient }) => {
                             <Input 
                              id="email"
                              type="email"
-                             value={client.email}
-                             onChange={(e) => setClient((prev) => ({...prev, email: e.target.value}))}
+                             value={newClient.email}
+                             onChange={(e) => setNewClient((prev) => ({...prev, email: e.target.value}))}
                             />
                         </div>
                         <div className="grid gap-3 flex-1/2">
@@ -59,13 +77,16 @@ const AddClientPopup = ({ client, setClient }) => {
                             <Input 
                              id="adresse"
                              type="text"
-                             value={client.adresse}
-                             onChange={(e) => setClient((prev) => ({...prev, adresse: e.target.value}))}
+                             value={newClient.adresse}
+                             onChange={(e) => setNewClient((prev) => ({...prev, adresse: e.target.value}))}
                             />
                         </div>
                     </div>
                     <div className="flex justify-end gap-4">
-                        <Button className="w-full bg-[#0084D1] hover:bg-[#0042d1] hover:cursor-pointer text-white font-bold rounded">
+                        <Button 
+                          className="w-full bg-[#0084D1] hover:bg-[#0042d1] hover:cursor-pointer text-white font-bold rounded"
+                          onClick={handleAddClient}
+                        >
                             Enregistrer
                         </Button>
                     </div>
