@@ -27,6 +27,8 @@ export const POST = withAuth(async (req) => {
         const parsedQteStock = QteStock !== undefined ? Number(QteStock) : parsedQteInitial
         const parsedQteAlerte = Number(QteAlerte)
 
+        const statut = (parsedQteStock > 0) ? "En stock" : "En rupture"
+
         if (
             isNaN(parsedAchatEnGros) || parsedAchatEnGros <= 0 ||
             isNaN(parsedVenteEnGros) || parsedVenteEnGros <= 0
@@ -43,7 +45,7 @@ export const POST = withAuth(async (req) => {
             (prixVenteDetail && (isNaN(parsedVenteDetail) || parsedVenteDetail <= 0))
         ) {
             return NextResponse.json({
-                message: "Les prix de détail doivent être des nombres positifs.",
+                message: "Les prix d'achat et de vente en détail doivent être des nombres positifs.",
                 success: false,
                 error: true
             }, { status: 400 });
@@ -109,7 +111,8 @@ export const POST = withAuth(async (req) => {
             description,
             dateExpiration,
             category_id,
-            supplier_id
+            supplier_id,
+            statut
         }
 
         if(image && typeof image === "string" && image.startsWith("data:image/")) {

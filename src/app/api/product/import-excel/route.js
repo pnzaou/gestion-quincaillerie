@@ -54,6 +54,8 @@ export const POST = withAuthAndRole(async (req) => {
                 continue
             }
 
+            const statut = (QteStock > 0)? "En stock" : "En rupture"
+
             const newProd = await Product.create({ 
                 nom,
                 prixAchatEnGros,
@@ -64,7 +66,8 @@ export const POST = withAuthAndRole(async (req) => {
                 QteStock,
                 QteAlerte,
                 reference,
-                description 
+                description,
+                statut
             })
             inserted.push(newProd)
         }

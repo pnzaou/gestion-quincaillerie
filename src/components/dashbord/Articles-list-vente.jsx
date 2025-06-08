@@ -147,6 +147,16 @@ const ArticlesListVente = ({ initialArt, initialTotalPages, currentPage, search 
         setNewClient(client)
     }
 
+    const handleDeleteSelectedClient = () => {
+        setClient(null)
+        setNewClient({
+            nomComplet: "",
+            tel: "",
+            email: "",
+            adresse: "",
+          })
+    }
+
     const handleSubmitSale = async (e) => {
         setLoading(true)
         try {
@@ -359,7 +369,7 @@ const ArticlesListVente = ({ initialArt, initialTotalPages, currentPage, search 
                                                     title="Supprimer le client sélectionné."
                                                     size="icon"
                                                     variant="ghost"
-                                                    onClick={() => setClient(null)}
+                                                    onClick={handleDeleteSelectedClient}
                                                     className="border rounded-full w-6 h-6 text-green-600 hover:bg-green-100 hover:cursor-pointer"
                                                     >
                                                         <Trash className="w-4 h-4" />
