@@ -28,6 +28,7 @@ import {
   CalendarIcon,
   Trash,
   Pencil,
+  UserPlus,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import ArticlesFooter from "./ArticlesFooter";
@@ -197,6 +198,7 @@ const ArticlesListVente = ({ initialArt, initialTotalPages, currentPage, search 
                 return;
             } else {
                 const errorData = await response.json()
+                console.log(errorData)
                 toast.error(errorData.message)
                 return;
             }
@@ -341,7 +343,13 @@ const ArticlesListVente = ({ initialArt, initialTotalPages, currentPage, search 
                                       className="w-full bg-[#0084D1] hover:bg-[#0042d1] hover:cursor-pointer"
                                       onClick={handleSubmitSale}
                                     >
-                                        Valider la vente
+                                        {loading? (
+                                            <>
+                                                <span className="w-4 h-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></span> Enregistrement...
+                                            </>
+                                        ) : (
+                                            "Valider la vente"
+                                        )}
                                     </Button>
                                 </div>
 
@@ -350,8 +358,8 @@ const ArticlesListVente = ({ initialArt, initialTotalPages, currentPage, search 
                                         <div>
                                             <h2 className="text-black font-semibold">Infos client</h2>
                                         </div>
-                                        {client && (
-                                            <div className="flex space-x-5">
+                                        {client? 
+                                        (<div className="flex space-x-5">
                                                 {!client?._id && (
                                                     <div>
                                                     <Button
@@ -376,7 +384,23 @@ const ArticlesListVente = ({ initialArt, initialTotalPages, currentPage, search 
                                                     </Button>
                                                 </div>
                                             </div>
-                                        )}
+                                        ) : (<div className="flex space-x-5">
+                                                <div>
+                                                    <Button
+                                                    title="Sélectionner/Ajouter un client."
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    onClick={() => {
+                                                        setDrawerOpen(false)
+                                                        setSelectClientOpen(true)
+                                                    }}
+                                                    className="border rounded-full w-6 h-6 text-green-600 hover:bg-green-100 hover:cursor-pointer"
+                                                    >
+                                                        <UserPlus className="w-4 h-4" />
+                                                    </Button>
+                                                </div>
+                                            </div>)
+                                        }
                                     </div>
                                     <div>
                                         <p className="text-gray-500 text-sm mb-1">Nom Complet:</p>

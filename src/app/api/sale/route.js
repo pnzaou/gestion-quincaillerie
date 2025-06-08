@@ -1,12 +1,14 @@
 import authOptions from "@/lib/auth"
 import dbConnection from "@/lib/db"
-import Client from "@/models/Client.model"
-import Product from "@/models/Product.model"
 import Sale from "@/models/Sale.model"
 import { withAuth } from "@/utils/withAuth"
 import mongoose from "mongoose"
 import { getServerSession } from "next-auth"
 import { NextResponse } from "next/server"
+
+import { generateReference } from "@/utils/generateReference"
+import { getOrCreateClient } from "@/utils/handleClient"
+import { validateAndUpdateProducts } from "@/utils/validateAndUpdateProducts"
 
 export const POST = withAuth(async (req) => {
     const mongoSession = await mongoose.startSession()
@@ -17,63 +19,19 @@ export const POST = withAuth(async (req) => {
         await dbConnection()
         const payload = await req.json()
 
-
         const now = new Date(payload.dateExacte || Date.now())
-        const D = String(now.getDate()).padStart(2, "0")
-        const M = String(now.getMonth() + 1).padStart(2, "0")
-        const Y = now.getFullYear()
-        const prefix = `VENTE-${Y}${M}${D}-`
 
-        const count = await Sale.countDocuments({
-            reference: { $regex: `^${prefix}\\d{3}$` }
-        }).session(mongoSession)
+        // Génération de la référence de vente
+        const reference = await generateReference(now, mongoSession)
 
-        const seq = String(count + 1).padStart(3, "0")
-        const reference = `${prefix}${seq}`
-
-        let clientId = null
-        if (payload.client) {
-            if(payload.client._id) {
-                clientId = payload.client._id
-            } else {
-                const newClient = await Client.create([
-                    {
-                        nomComplet: payload.client.nomComplet,
-                        tel: payload.client.tel,
-                        email: payload.client.email,
-                        adresse: payload.client.adresse
-                    }
-                ], { session: mongoSession })
-                clientId = newClient[0]._id
-            }
-        }
-
-        for (const item of payload.items) {
-            if (!mongoose.Types.ObjectId.isValid(item.product)) {
-                return NextResponse.json({
-                    message: "Veuillez fournir un ID de produit valide.",
-                    success: false,
-                    error: true
-                }, { status: 400 })
-            }
-            const prod = await Product.findById(item.product).session(mongoSession)
-            if (!prod) {
-                return NextResponse.json({
-                    message: "Produit non trouvé.",
-                    success: false,
-                    error: true
-                }, { status: 404 })
-            }
-            prod.quantity -= item.quantity
-            if (prod.quantity < 0) {
-                return NextResponse.json({
-                    message: "Quantité en stock insuffisante pour le produit : " + prod.nom,
-                    success: false,
-                    error: true
-                }, { status: 400 })
-            }
-            await prod.save({ session: mongoSession })
-        }
+        // Création ou récupération du client
+        const clientIdOrResponse = await getOrCreateClient(payload.client, mongoSession)
+        if (clientIdOrResponse instanceof Response) return clientIdOrResponse
+        const clientId = clientIdOrResponse
+        
+        // Vérification des produits et mise à jour du stock
+        const productValidationResponse = await validateAndUpdateProducts(payload.items, mongoSession)
+        if(productValidationResponse) return productValidationResponse
 
         const sale = await Sale.create([
             {
@@ -92,7 +50,7 @@ export const POST = withAuth(async (req) => {
         mongoSession.endSession()
 
         return NextResponse.json({
-            message: "Vente créée avec succès.",
+            message: "Vente enregistrée avec succès.",
             success: true,
             error: false,
             data: sale[0]
