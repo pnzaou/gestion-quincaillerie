@@ -10,6 +10,7 @@ import { resend } from "@/lib/resend"
 import ComfirmResetPassword from "@/components/email/Comfirm-reset-password"
 import jwt from "jsonwebtoken"
 import PasswordResetToken from "@/models/PasswordResetToken.model"
+import History from "@/models/History.model"
 
 export const GET = withAuth( async (req) => {
     try {
@@ -175,6 +176,14 @@ export const PATCH = withAuth( async (req) => {
             userId: payload.userId,
             used: false
         }, { $set: { used: true } })
+
+        await History.create({
+            user: user._id,
+            actions: "update",
+            resource: "password",
+            resourceId: user._id,
+            description: `Modification du mot de passe de l'utilisateur ${user.name}`
+        })
 
         return NextResponse.json({
             message: "Mot de passe modifié avec succès.",

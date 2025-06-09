@@ -2,6 +2,7 @@ import Credentials from "next-auth/providers/credentials";
 import dbConnection from "./db";
 import User from "@/models/User.model";
 import bcrypt from "bcryptjs"
+import History from "@/models/History.model";
 
 const authOptions = {
     providers: [ //Liste des providers (c'est dans ce tableau que l'on peut lister nos providers, google, github,... )
@@ -31,6 +32,12 @@ const authOptions = {
                 if(!checkedPassword) {
                     throw new Error("Mot de passe incorrect");
                 }
+
+                await History.create({
+                    user: user._id,
+                    actions: "login",
+                    description: `${user.prenom} ${user.nom} s'est connecté`
+                })
 
                 return { //retourner les données qui seront stocker dans la session et le token
                     id: user._id.toString(),
