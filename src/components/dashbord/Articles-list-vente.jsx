@@ -189,7 +189,7 @@ const ArticlesListVente = ({ initialArt, initialTotalPages, currentPage, search 
                 body: JSON.stringify(data),
             })
             if(response.ok) {
-                toast.success("Vente créée avec succès.")
+                toast.success("Vente enregistré avec succès.")
                 setCart([])
                 setClient(null)
                 setSaleDate(new Date())
