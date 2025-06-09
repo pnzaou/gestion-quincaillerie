@@ -76,15 +76,17 @@ export const GET = withAuth( async (req) => {
 })
 
 export const PATCH = withAuth( async (req) => {
+    const mongoSession = await mongoose.startSession()
+    mongoSession.startTransaction()
+
     try {
         await dbConnection()
 
-        const session = await getServerSession(authOptions)
-        const { id } = session.user
+        const sessionData = await getServerSession(authOptions)
+        const { id } = sessionData.user
         const { token, oldPassword, newPassword, confirmPassword } = await req.json()
 
         if(!token) {
-            console.error("Impossible de récupérer le token.")
             return NextResponse.json({
                 message: "Veuillez fournir un token.",
                 success: false,
@@ -100,7 +102,9 @@ export const PATCH = withAuth( async (req) => {
             }, { status: 400 })
         }
 
-        const dbToken = await PasswordResetToken.findOne({ token })
+        const dbToken = await PasswordResetToken
+            .findOne({ token })
+            .session(mongoSession)
         if(!dbToken || dbToken.expiresAt < Date.now() || dbToken.used) {
             return NextResponse.json({
                 message: "Lien de réinitialisation invalide ou expiré.",
@@ -121,7 +125,6 @@ export const PATCH = withAuth( async (req) => {
         }
 
         if(!id || !mongoose.Types.ObjectId.isValid(id)) {
-            console.error("Impossible de récupérer l'ID de l'utilisateur connecté ou ID invalid.")
             return NextResponse.json({
                 message: "Veuillez fournir un ID valid.",
                 success: false,
@@ -137,7 +140,9 @@ export const PATCH = withAuth( async (req) => {
             }, { status: 403 })
         }
 
-        const user = await User.findById(id)
+        const user = await User
+            .findById(id)
+           .session(mongoSession)
         if(!user) {
             return NextResponse.json({
                 message: "Aucun utilisateur ne correspond à cet ID.",
@@ -167,23 +172,30 @@ export const PATCH = withAuth( async (req) => {
         const hashedPassword = await bcrypt.hash(newPassword, salt)
 
         user.password = hashedPassword
-        await user.save()
+        await user.save({ session: mongoSession})
 
         dbToken.used = true
-        await dbToken.save()
-        await PasswordResetToken.updateMany({
-            token: { $ne: token },
-            userId: payload.userId,
-            used: false
-        }, { $set: { used: true } })
+        await dbToken.save({ session: mongoSession })
+        await PasswordResetToken.updateMany(
+            {
+                token: { $ne: token },
+                userId: payload.userId,
+                used: false
+            }, 
+            { $set: { used: true } },
+            { session: mongoSession }
+        )
 
-        await History.create({
+        await History.create([{
             user: user._id,
             actions: "update",
             resource: "password",
             resourceId: user._id,
             description: `Modification du mot de passe de l'utilisateur ${user.name}`
-        })
+        }], { session: mongoSession })
+
+        await mongoSession.commitTransaction()
+        mongoSession.endSession()
 
         return NextResponse.json({
             message: "Mot de passe modifié avec succès.",
@@ -192,6 +204,8 @@ export const PATCH = withAuth( async (req) => {
         }, { status: 200 })
 
     } catch (error) {
+        await mongoSession.abortTransaction()
+        mongoSession.endSession()
         console.error("Erreur lors de la modifications du mot de passe de l'utilisateur: ", error)
         return NextResponse.json({
             message: "Erreur! Veuillez réessayer.",
