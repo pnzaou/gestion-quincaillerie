@@ -9,7 +9,7 @@ import mongoose from "mongoose";
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs"
 
-export const POST = withAuth(async (req) => {
+export const POST = async (req) => {
     try {
         await dbConnection()
         const { email } = await req.json()
@@ -76,7 +76,7 @@ export const POST = withAuth(async (req) => {
             error: true
         }, { status: 500 })
     }
-})
+}
 
 export const PATCH = async (req) => {
     try {
