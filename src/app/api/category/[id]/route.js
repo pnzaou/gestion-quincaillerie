@@ -123,35 +123,48 @@ export const PUT = withAuthAndRole(async (req, {params}) => {
 })
 
 export const DELETE = withAuthAndRole(async (req, { params }) => {
-    let session
-    try {
-        session = await mongoose.startSession();
-        session.startTransaction();
+    await dbConnection()
+    const mongoSession = await mongoose.startSession();
+    mongoSession.startTransaction();
 
-        await dbConnection()
+    try {
+        const session = await getServerSession(authOptions);
+        const { name, id: userId } = session.user;
         const { id } = await params;
 
         if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+            await mongoSession.abortTransaction();
+            mongoSession.endSession();
             return NextResponse.json(
               { message: "Veuillez fournir un ID valide.", success: false, error: true },
               { status: 400 }
             );
         }
 
-        const deletedCategory = await Category.findByIdAndDelete(id, { session });
+        const deletedCategory = await Category.findByIdAndDelete(id, { session: mongoSession  });
 
 
         if (!deletedCategory) {
+            await mongoSession.abortTransaction();
+            mongoSession.endSession();
             return NextResponse.json(
               { message: "Aucune catégorie trouvée pour cet ID.", success: false, error: true },
               { status: 404 }
             );
         }
 
-        await Product.deleteMany({ category_id: id }, { session });
+        await Product.deleteMany({ category_id: id }, { session: mongoSession  });
 
-        await session.commitTransaction();
-        session.endSession();
+        await History.create([{
+            user: userId,
+            actions: "delete",
+            resource: "category",
+            resourceId: id,
+            description: `${name} a supprimé la catégorie ${deletedCategory.nom}`
+        }], { session: mongoSession });
+
+        await mongoSession.commitTransaction();
+        mongoSession.endSession();
 
         return NextResponse.json(
             { message: "Catégorie supprimée avec succès.", success: true, error: false },
@@ -159,10 +172,8 @@ export const DELETE = withAuthAndRole(async (req, { params }) => {
         )
 
     } catch (error) {
-        if(session){
-            await session.abortTransaction();
-            session.endSession();
-        }
+        await mongoSession.abortTransaction();
+        mongoSession.endSession();
         console.error("Erreur lors de la suppression de la catégorie: ", error)
         return NextResponse.json({
             message: "Erreur! Veuillez réessayer.",
