@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "cron": "node src/utils/outboxWorker.js"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
@@ -44,6 +45,7 @@
     "@tailwindcss/postcss": "^4",
     "eslint": "^9",
     "eslint-config-next": "15.2.4",
+    "node-cron": "^4.1.0",
     "tailwindcss": "^4"
   }
 }

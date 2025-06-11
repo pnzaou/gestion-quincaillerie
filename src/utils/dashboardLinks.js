@@ -2,7 +2,8 @@ import {
     AdjustmentsHorizontalIcon,
     ListBulletIcon,
     UserGroupIcon,
-    BanknotesIcon
+    BanknotesIcon,
+    Cog6ToothIcon
 } from "@heroicons/react/24/outline"
 import { LayoutDashboard } from "lucide-react"
 
@@ -49,6 +50,7 @@ export const links = [
       roles: ["admin", "gerant"],
       subLinks: [
         { name: "Effectuer une vente", href: "/dashboard/vente/vendre" },
+        { name: "Historique des ventes", href: "/dashboard/vente/historique-vente" },
       ],
     },
     {
@@ -71,4 +73,11 @@ export const links = [
         { name: "Tous", href: "/dashboard/utilisateur/liste" },
       ],
     },
+    {
+      name: "Réglages",
+      href: "/dashboard/réglages",
+      icon: Cog6ToothIcon,
+      roles: ["admin"],
+      subLinks: [],
+    }
 ]
