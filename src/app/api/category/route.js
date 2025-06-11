@@ -1,16 +1,27 @@
+import mongoose from "mongoose"
+import { NextResponse } from "next/server"
+import { getServerSession } from "next-auth"
+import authOptions from "@/lib/auth"
+import { withAuth } from "@/utils/withAuth"
+import { withAuthAndRole } from "@/utils/withAuthAndRole"
 import dbConnection from "@/lib/db"
 import Category from "@/models/Category.model"
-import { NextResponse } from "next/server"
-import { withAuthAndRole } from "@/utils/withAuthAndRole"
-import { withAuth } from "@/utils/withAuth"
+import History from "@/models/History.model"
 
 export const POST = withAuthAndRole(async (req) => {
+    await dbConnection()
+    const mongoSession = await mongoose.startSession()
+    mongoSession.startTransaction()
+
     try {
-        await dbConnection()
+        const session = await getServerSession(authOptions)
+        const { name, id } = session.user
 
         const { nom, description } = await req.json()
 
-        if(!nom.trim()) {
+        if(!nom || !nom.trim()) {
+            await mongoSession.abortTransaction()
+            mongoSession.endSession()
             return NextResponse.json(
                 {
                     message: "Veuillez renseigner le nom de la catégorie.",
@@ -21,8 +32,10 @@ export const POST = withAuthAndRole(async (req) => {
             )
         }
 
-        const existingCategory = await Category.findOne({nom})
+        const existingCategory = await Category.findOne({ nom }).session(mongoSession)
         if (existingCategory) {
+            await mongoSession.abortTransaction()
+            mongoSession.endSession()
             return NextResponse.json(
                 { 
                     message: "Cette catégorie existe déjà.",
@@ -33,7 +46,21 @@ export const POST = withAuthAndRole(async (req) => {
             );
         }
 
-        const rep = await Category.create({ nom, description })
+        const [rep] = await Category.create(
+            [{ nom, description }],
+            { session: mongoSession }
+        )
+        await History.create([{
+            user: id,
+            actions: "create",
+            resource: "category",
+            resourceId: rep._id,
+            description: `${name} a créé la catégorie ${rep.nom}`
+        }], { session: mongoSession })
+
+        await mongoSession.commitTransaction()
+        mongoSession.endSession()
+
         return NextResponse.json({
             message: "Catégorie ajoutée avec succès.",
             data: rep,
@@ -42,6 +69,8 @@ export const POST = withAuthAndRole(async (req) => {
         }, { status: 201 })
 
     } catch (error) {
+        await mongoSession.abortTransaction()
+        mongoSession.endSession()
         console.error("Erreur lors de la création d'une catégorie: ", error)
 
         let errorMessage = "Erreur! Veuillez réessayer."
