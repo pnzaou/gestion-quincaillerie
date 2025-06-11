@@ -13,6 +13,9 @@ import PasswordResetToken from "@/models/PasswordResetToken.model"
 import History from "@/models/History.model"
 
 export const GET = withAuth( async (req) => {
+    const mongoSession = await mongoose.startSession()
+    mongoSession.startTransaction()
+
     try {
         const session = await getServerSession(authOptions)
         const { email, name, id } = session.user
@@ -33,16 +36,16 @@ export const GET = withAuth( async (req) => {
             { expiresIn: "15min" }
         )
 
-        await PasswordResetToken.create({
+        await PasswordResetToken.create([{
             userId: id,
             token,
             expiresAt: Date.now() + 15 * 60 * 1000,
             used: false
-        })
+        }], { session: mongoSession })
 
         const resetLink = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${token}`
         
-        const { data, error } = await resend.emails.send({
+        const { error } = await resend.emails.send({
             from: "Support Quincallerie <onboarding@resend.dev>",
             to: email,
             subject: "Confirmation de la modification de votre mot de passe",
@@ -50,6 +53,8 @@ export const GET = withAuth( async (req) => {
         })
 
         if(error) {
+            await mongoSession.abortTransaction()
+            mongoSession.endSession()
             console.error("Erreur lors de l'envoie du mail de la confirmation de la modification du mot de passe: ", error)
             return NextResponse.json({
                 message: "Erreur! Veuillez réessayer.",
@@ -58,7 +63,17 @@ export const GET = withAuth( async (req) => {
             }, { status: 500 })
         }
 
-        console.log("Email envoyé avec succès: ", data)
+        await History.create([{
+            user: id,
+            actions: "update",
+            resource: "password",
+            resourceId: id,
+            description: `L'utilisateur ${name} a envoyé une demande de modification de son mot de passe.`
+        }], { session: mongoSession })
+
+        await mongoSession.commitTransaction()
+        mongoSession.endSession()
+
         return NextResponse.json({
             message: "Un email de confirmation a été envoyé à votre adresse.",
             success: true,
@@ -66,6 +81,8 @@ export const GET = withAuth( async (req) => {
         }, { status: 200 }) 
         
     } catch (error) {
+        await mongoSession.abortTransaction()
+        mongoSession.endSession()
         console.error("Erreur lors de l'envoie du mail de la confirmation de la modification du mot de passe: ", error)
         return NextResponse.json({
             message: "Erreur! Veuillez réessayer.",
