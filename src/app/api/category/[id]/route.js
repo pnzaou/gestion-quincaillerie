@@ -4,6 +4,9 @@ import mongoose from "mongoose"
 import { NextResponse } from "next/server"
 import Product from "@/models/Product.model"
 import { withAuthAndRole } from "@/utils/withAuthAndRole"
+import { getServerSession } from "next-auth"
+import authOptions from "@/lib/auth"
+import History from "@/models/History.model"
 
 export const GET = withAuthAndRole(async (req, {params}) => {
     try {
@@ -45,11 +48,19 @@ export const GET = withAuthAndRole(async (req, {params}) => {
 })
 
 export const PUT = withAuthAndRole(async (req, {params}) => {
+    await dbConnection()
+    const mongoSession = await mongoose.startSession()
+    mongoSession.startTransaction()
+
     try {
-        await dbConnection()
+        const session = await getServerSession(authOptions)
+        const { name, id: userId } = session.user
 
         const { id } = await params
         if(!id || !mongoose.Types.ObjectId.isValid(id)){
+            await mongoSession.abortTransaction()
+            mongoSession.endSession()
+
             return NextResponse.json({ 
                 message: "Veuillez fournir un ID valide", 
                 success: false, 
@@ -60,6 +71,9 @@ export const PUT = withAuthAndRole(async (req, {params}) => {
         const { nom, description } = await req.json()
 
         if (!nom.trim() && !description.trim()) {
+            await mongoSession.abortTransaction()
+            mongoSession.endSession()
+
             return NextResponse.json(
               { message: "Aucune donnée fournie pour la mise à jour.", success: false, error: true },
               { status: 400 }
@@ -69,15 +83,27 @@ export const PUT = withAuthAndRole(async (req, {params}) => {
         const updatedCategory = await Category.findByIdAndUpdate(
             id,
             { nom, description },
-            { new: true, runValidators: true }
+            { new: true, runValidators: true, session: mongoSession }
         )
 
         if (!updatedCategory) {
+            await mongoSession.abortTransaction()
+            mongoSession.endSession()
             return NextResponse.json(
               { message: "Aucune catégorie trouvée pour cet ID.", success: false, error: true },
               { status: 404 }
             );
         }
+        await History.create([{
+            user: userId,
+            actions: "update",
+            resource: "category",
+            resourceId: id,
+            description: `${name} a modifié la catégorie ${updatedCategory.nom}`
+        }], { session: mongoSession })
+
+        await mongoSession.commitTransaction()
+        mongoSession.endSession()
 
         return NextResponse.json(
             { message: "Catégorie mise à jour avec succès.", data: updatedCategory, success: true },
@@ -85,6 +111,8 @@ export const PUT = withAuthAndRole(async (req, {params}) => {
         )
         
     } catch (error) {
+        await mongoSession.abortTransaction()
+        mongoSession.endSession()
         console.error("Erreur lors de la modification de la catégorie: ", error)
         return NextResponse.json({
             message: "Erreur! Veuillez réessayer.",
