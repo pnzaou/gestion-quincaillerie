@@ -4,15 +4,26 @@ import * as XLSX from "xlsx"
 import { NextResponse } from "next/server"
 import { catAliasMapping, mapRowData } from "@/utils/mapping"
 import Category from "@/models/Category.model"
+import mongoose from "mongoose"
+import { getServerSession } from "next-auth"
+import authOptions from "@/lib/auth"
+import History from "@/models/History.model"
 
 export const POST = withAuthAndRole(async (req) => {
-    try {
-        await dbConnection()
+    await dbConnection()
+    const mongoSession = await mongoose.startSession()
+    mongoSession.startTransaction()
 
+    try {
+        const session = await getServerSession(authOptions)
+        const { name, id } = session.user
         const data = await req.formData()
         const file = data.get("file")
 
+
         if (!file) {
+            await mongoSession.abortTransaction()
+            mongoSession.endSession()
             return NextResponse.json(
                 {
                     message: "Aucun fichier reçu.",
@@ -40,15 +51,25 @@ export const POST = withAuthAndRole(async (req) => {
 
             if (!nom) continue
 
-            const existingCat = await Category.findOne({ nom })
+            const existingCat = await Category.findOne({ nom }).session(mongoSession);
             if (existingCat) {
                 doublons.push(nom)
                 continue
             }
 
-            const newCat = await Category.create({ nom, description })
+            const [newCat] = await Category.create([{ nom, description }], { session: mongoSession })
             inserted.push(newCat)
         }
+
+        await History.create([{
+            user: id,
+            action: "create",
+            resource: "category",
+            description: `${name} a importé ${inserted.length} catégories depuis Excel.`,
+        }], { session: mongoSession })
+
+        await mongoSession.commitTransaction()
+        mongoSession.endSession()
 
         let message = ""
 
@@ -71,7 +92,9 @@ export const POST = withAuthAndRole(async (req) => {
         }, { status: 201 })
 
     } catch (error) {
+        await mongoSession.abortTransaction()
         console.error("Erreur lors de l'importation des catégories: ", error)
+        mongoSession.endSession()
 
         return NextResponse.json({
             message: "Erreur! Veuillez réessayer.",
