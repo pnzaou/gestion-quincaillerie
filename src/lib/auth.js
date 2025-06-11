@@ -69,6 +69,20 @@ const authOptions = {
             return session
         }
     },
+    events: {
+        async signOut({ token }) {
+            try {
+                await dbConnection();
+                await History.create({
+                    user: token.id,
+                    actions: "logout",
+                    description: `L'utilisateur ${token.name} s'est déconnecté`
+                });
+            } catch (error) {
+                console.error("Erreur lors du log de déconnexion :", err);
+            }
+        }
+    },
     secret: process.env.NEXTAUTH_SECRET
 }
 
