@@ -143,7 +143,7 @@ export const PATCH = withAuth( async (req) => {
 
         if(!id || !mongoose.Types.ObjectId.isValid(id)) {
             return NextResponse.json({
-                message: "Veuillez fournir un ID valid.",
+                message: "Veuillez fournir un ID valide.",
                 success: false,
                 error: true
             }, { status: 400 })
