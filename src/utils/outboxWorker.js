@@ -7,7 +7,7 @@ import AccountCreatedSuccessfully from '@/components/email/Acount-created-succes
 async function processBatch() {
     await mongoose.connect(process.env.MONGODB_URI)
 
-    const events = await Outbox.find({}).limit(20)
+    const events = await Outbox.find({ processed: false }).limit(20)
     for (const ev of events) {
         try {
             if (ev.type === 'welcome_email') {
