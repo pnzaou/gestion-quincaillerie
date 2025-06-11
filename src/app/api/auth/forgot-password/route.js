@@ -10,6 +10,8 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs"
 
 export const POST = async (req) => {
+    const mongoSession = await mongoose.startSession()
+    mongoSession.startTransaction()
     try {
         await dbConnection()
         const { email } = await req.json()
@@ -21,7 +23,9 @@ export const POST = async (req) => {
                 error: true
             }, { status: 400 }) 
         }
-        const user = await User.findOne({ email })
+        const user = await User
+            .findOne({ email })
+            .session(mongoSession)
         
         if (!user) {
             return NextResponse.json({
@@ -36,16 +40,16 @@ export const POST = async (req) => {
             userEmail: email
         }
         const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '15min' })
-        await PasswordResetToken.create({
+        await PasswordResetToken.create([{
             userId: user._id,
             token,
-            expiresAt: Date.now() + 15 * 60 * 1000,
+            expiresAt: new Date(Date.now() + 15 * 60 * 1000),
             used: false
-        })
+        }], { session: mongoSession })
 
         const forgotPasswordLink = `${process.env.NEXT_PUBLIC_APP_URL}/forgot-password?token=${token}`
 
-        const { data, error } = await resend.emails.send({
+        const { error } = await resend.emails.send({
             from: "Support Quincallerie <onboarding@resend.dev>",
             to: email,
             subject: "Confirmation de la modification de votre mot de passe",
@@ -53,6 +57,8 @@ export const POST = async (req) => {
         })
 
         if(error) {
+            await mongoSession.abortTransaction()
+            mongoSession.endSession()
             console.error("Erreur lors de l'envoie du mail mot de passe oublié: ", error)
             return NextResponse.json({
                 message: "Erreur! Veuillez réessayer.",
@@ -61,7 +67,8 @@ export const POST = async (req) => {
             }, { status: 500 })
         }
 
-        console.log("Email envoyé avec succès: ", data)
+        await mongoSession.commitTransaction()
+        mongoSession.endSession()
         return NextResponse.json({
             message: "Un email de confirmation a été envoyé à votre adresse.",
             success: true,
@@ -69,6 +76,8 @@ export const POST = async (req) => {
         }, { status: 200 })
 
     } catch (error) {
+        await mongoSession.abortTransaction()
+        mongoSession.endSession()
         console.error("Erreur lors de la demande de réinitialisation de mot de passe oublié: ", error)
         return NextResponse.json({
             message: "Erreur! Veuillez réessayer.",
@@ -79,7 +88,11 @@ export const POST = async (req) => {
 }
 
 export const PATCH = async (req) => {
+    const mongoSession = await mongoose.startSession()
+    mongoSession.startTransaction()
+
     try {
+        await dbConnection()
         const { token, password, confirmPassword } = await req.json()
 
         if(!token) {
@@ -107,7 +120,9 @@ export const PATCH = async (req) => {
             }, { status: 400 })
         }
 
-        const dbToken = await PasswordResetToken.findOne({ token })
+        const dbToken = await PasswordResetToken
+            .findOne({ token })
+            .session(mongoSession)
         if(!dbToken || dbToken.used || dbToken.expiresAt < Date.now()) {
             return NextResponse.json({
                 message: "Lien de réinitialisation invalide ou expiré.",
@@ -135,7 +150,9 @@ export const PATCH = async (req) => {
             }, { status: 400 })
         }
 
-        const user = await User.findById(payload.userId)
+        const user = await User
+            .findById(payload.userId)
+            .session(mongoSession)
         if(!user) {
             return NextResponse.json({
                 message: "Aucun utilisateur ne correspond à cet ID.",
@@ -147,15 +164,22 @@ export const PATCH = async (req) => {
         const hashedPassword = await bcrypt.hash(password, salt)
 
         user.password = hashedPassword
-        await user.save()  
+        await user.save({ session: mongoSession})  
         
         dbToken.used = true
-        await dbToken.save()
-        await PasswordResetToken.updateMany({
+        await dbToken.save({ session: mongoSession })
+        await PasswordResetToken.updateMany(
+            {
             token: { $ne: token },
             userId: payload.userId,
             used: false
-        }, { $set: { used: true } })
+            }, 
+            { $set: { used: true } },
+            { session: mongoSession }
+        )
+
+        await mongoSession.commitTransaction()
+        mongoSession.endSession()
 
         return NextResponse.json({
             message: "Mot de passe modifié avec succès.",
@@ -164,7 +188,9 @@ export const PATCH = async (req) => {
         }, { status: 200 })
 
     } catch (error) {
-        console.error("Erreur lors de la modifications du mot de passe de l'utilisateur: ", error)
+        await mongoSession.abortTransaction()
+        mongoSession.endSession()
+        console.error("Erreur lors de la modification du mot de passe de l'utilisateur: ", error)
         return NextResponse.json({
             message: "Erreur! Veuillez réessayer.",
             success: false,
