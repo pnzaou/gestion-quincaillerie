@@ -4,14 +4,22 @@ import Product from "@/models/Product.model"
 import { NextResponse } from "next/server"
 import mongoose from "mongoose"
 import cloudinary from "@/lib/cloudinary"
+import { getServerSession } from "next-auth"
+import authOptions from "@/lib/auth"
+import History from "@/models/History.model"
 
 export const POST = withAuth(async (req) => {
+    await dbConnection()
+    const mongoSession = await mongoose.startSession()
+    mongoSession.startTransaction()
     try {
-        await dbConnection()
+        const session = await getServerSession(authOptions)
+        const { name, id: userId } = session.user
 
         const { nom, prixAchatEnGros, prixVenteEnGros, prixAchatDetail, prixVenteDetail, QteInitial, QteStock, QteAlerte, image, reference, description, dateExpiration, category_id, supplier_id } = await req.json()
 
         if(!nom || prixAchatEnGros === undefined || prixVenteEnGros === undefined || QteInitial === undefined || QteStock === undefined || QteAlerte === undefined || !category_id || !supplier_id) {
+            await mongoSession.abortTransaction()
             return NextResponse.json({
                 message: "Veuillez renseigner les champs obligatoires.",
                 success: false,
@@ -33,6 +41,7 @@ export const POST = withAuth(async (req) => {
             isNaN(parsedAchatEnGros) || parsedAchatEnGros <= 0 ||
             isNaN(parsedVenteEnGros) || parsedVenteEnGros <= 0
         ) {
+            await mongoSession.abortTransaction()
             return NextResponse.json({
                 message: "Les prix d'achat et de vente en gros doivent être des nombres positifs.",
                 success: false,
@@ -44,6 +53,7 @@ export const POST = withAuth(async (req) => {
             (prixAchatDetail && (isNaN(parsedAchatDetail) || parsedAchatDetail <= 0)) ||
             (prixVenteDetail && (isNaN(parsedVenteDetail) || parsedVenteDetail <= 0))
         ) {
+            await mongoSession.abortTransaction()
             return NextResponse.json({
                 message: "Les prix d'achat et de vente en détail doivent être des nombres positifs.",
                 success: false,
@@ -56,6 +66,7 @@ export const POST = withAuth(async (req) => {
             isNaN(parsedQteStock) || parsedQteStock < 0 ||
             isNaN(parsedQteAlerte) || parsedQteAlerte < 0
         ) {
+            await mongoSession.abortTransaction()
             return NextResponse.json({
                 message: "Les quantités doivent être des nombres entiers positifs ou nuls.",
                 success: false,
@@ -64,6 +75,7 @@ export const POST = withAuth(async (req) => {
         }
 
         if (category_id && !mongoose.Types.ObjectId.isValid(category_id)) {
+            await mongoSession.abortTransaction()
             return NextResponse.json({
                 message: "L'ID de la catégorie est invalide.",
                 success: false,
@@ -72,6 +84,7 @@ export const POST = withAuth(async (req) => {
         }
 
         if (supplier_id && !mongoose.Types.ObjectId.isValid(supplier_id)) {
+            await mongoSession.abortTransaction()
             return NextResponse.json({
                 message: "L'ID du fournisseur est invalide.",
                 success: false,
@@ -80,6 +93,7 @@ export const POST = withAuth(async (req) => {
         }
 
         if (dateExpiration && isNaN(Date.parse(dateExpiration))) {
+            await mongoSession.abortTransaction()
             return NextResponse.json({
                 message: "La date d'expiration est invalide.",
                 success: false,
@@ -87,8 +101,9 @@ export const POST = withAuth(async (req) => {
             }, { status: 400 });
         }
 
-        const existingProduct = await Product.findOne({nom})
+        const existingProduct = await Product.findOne({ nom }).session(mongoSession)
         if(existingProduct) {
+            await mongoSession.abortTransaction()
             return NextResponse.json(
                 { 
                     message: "Ce produit existe déjà.",
@@ -120,16 +135,21 @@ export const POST = withAuth(async (req) => {
                 const rep = await cloudinary.uploader.upload(image, {folder: "quincaillerie"})
                 data.image = rep.secure_url 
             } catch (uploadErr) {
-                console.error("Erreur Cloudinary: ", uploadErr)
-                return NextResponse.json({
-                    message: "Erreur lors de l'upload de l'image.",
-                    success: false,
-                    error: true
-                }, { status: 500 });
+                console.warn("Erreur lors de l'upload de l'image sur Cloudinary: ", uploadErr)
             }
         }
 
-        const rep = await Product.create(data)
+        const [rep] = await Product.create([data], { session: mongoSession })
+
+        await History.create([{
+            user: userId,
+            actions: "create",
+            resource: "product",
+            description: `${name} a créé le produit ${rep.nom}.`,
+            resourceId: rep._id
+        }], { session: mongoSession })
+
+        await mongoSession.commitTransaction()
 
         return NextResponse.json({
             message: "Produit ajouté avec succès.",
@@ -140,6 +160,7 @@ export const POST = withAuth(async (req) => {
 
         
     } catch (error) {
+        await mongoSession.abortTransaction()
         console.error("Erreur lors de l'ajout d'un produit: ", error)
 
         let errorMessage = "Erreur! Veuillez réessayer."
@@ -153,6 +174,8 @@ export const POST = withAuth(async (req) => {
             success: false,
             error: true
         }, { status: 500 })
+    } finally {
+        mongoSession.endSession()
     }
 })
 
