@@ -1,15 +1,24 @@
+import authOptions from "@/lib/auth"
 import dbConnection from "@/lib/db"
 import Client from "@/models/Client.model"
+import History from "@/models/History.model"
 import { withAuth } from "@/utils/withAuth"
+import mongoose from "mongoose"
+import { getServerSession } from "next-auth"
 import { NextResponse } from "next/server"
 
 export const POST = withAuth(async (req) => {
+    await dbConnection()
+    const mongoSession = await mongoose.startSession()
+    mongoSession.startTransaction()
     try {
-        await dbConnection()
+        const session = await getServerSession(authOptions)
+        const { name, id: userId } = session.user
 
-        const { nomComplet, tel, email, adresse } = await req.json()
+        const { nomComplet = "", tel = "", email = "", adresse = "" } = await req.json()
         
         if (!nomComplet.trim() || !tel.trim()) {
+            await mongoSession.abortTransaction();
             return NextResponse.json({
                 message: "Le nom et le numéro de téléphone du client sont obligatoires.",
                 success: false,
@@ -17,17 +26,21 @@ export const POST = withAuth(async (req) => {
             }, { status: 400 })
         }
 
-        const existingEmail = await Client.findOne({ email })
-        if (existingEmail) {
-            return NextResponse.json({
-                message: "Cet email est déjà utilisé.",
-                success: false,
-                error: true
-            }, { status: 400 })
+        if(email && email.trim()) {
+            const existingEmail = await Client.findOne({ email }).session(mongoSession)
+            if (existingEmail) {
+                await mongoSession.abortTransaction();
+                return NextResponse.json({
+                    message: "Cet email est déjà utilisé.",
+                    success: false,
+                    error: true
+                }, { status: 400 })
+            }
         }
 
-        const existingTel = await Client.findOne({ tel })
+        const existingTel = await Client.findOne({ tel }).session(mongoSession)
         if (existingTel) {
+            await mongoSession.abortTransaction();
             return NextResponse.json({
                 message: "Ce numéro de téléphone est déjà utilisé.",
                 success: false,
@@ -35,13 +48,22 @@ export const POST = withAuth(async (req) => {
             }, { status: 400 })
         }
 
-        const newClient = await Client.create({
+        const [newClient] = await Client.create([{
             nomComplet: nomComplet.trim(),
             tel: tel.trim(),
-            email: email.trim(),
-            adresse: adresse.trim()
-        })
+            email: email.trim() || "",
+            adresse: adresse.trim() || ""
+        }], { session: mongoSession })
 
+        await History.create([{
+            user: userId,
+            actions: "create",
+            resource: "client",
+            description: `${name} a créé le client ${newClient.nomComplet}.`,
+            resourceId: newClient._id
+        }], { session: mongoSession })
+
+        await mongoSession.commitTransaction()
         return NextResponse.json({
             message: "Client créé avec succès.",
             success: true,
@@ -50,6 +72,7 @@ export const POST = withAuth(async (req) => {
         }, { status: 201 })
         
     } catch (error) {
+        await mongoSession.abortTransaction()
         console.error("Erreur lors de la création d'un client: ", error)
 
         return NextResponse.json({
@@ -57,6 +80,8 @@ export const POST = withAuth(async (req) => {
             success: false,
             error: true
         }, { status: 500 })
+    } finally {
+        mongoSession.endSession()
     }
 })
 

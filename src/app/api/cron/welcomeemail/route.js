@@ -2,7 +2,6 @@ import AccountCreatedSuccessfully from "@/components/email/Acount-created-succes
 import dbConnection from "@/lib/db"
 import { resend } from "@/lib/resend"
 import Outbox from "@/models/Outbox.model"
-import mongoose from "mongoose"
 import { NextResponse } from "next/server"
 
 const RETRY_WINDOW_MS = 1000 * 60 * 60 * 24;
