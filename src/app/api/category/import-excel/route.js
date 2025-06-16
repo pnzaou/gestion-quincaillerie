@@ -63,7 +63,7 @@ export const POST = withAuthAndRole(async (req) => {
 
         await History.create([{
             user: id,
-            action: "create",
+            actions: "create",
             resource: "category",
             description: `${name} a importé ${inserted.length} catégories depuis Excel.`,
         }], { session: mongoSession })
