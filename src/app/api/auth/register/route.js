@@ -9,6 +9,9 @@ import authOptions from "@/lib/auth"
 import mongoose from "mongoose"
 import Outbox from "@/models/Outbox.model"
 
+const mdpRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/
+const emailRegex = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/
+
 export const POST = withAuthAndRole(async (req) => {
     const mongoSession = await mongoose.startSession()
     mongoSession.startTransaction()
@@ -23,6 +26,22 @@ export const POST = withAuthAndRole(async (req) => {
         if(!nom || !prenom || !email || !password || !role) {
             return NextResponse.json({
                 message: "Tous les champs sont obligatoires.",
+                success: false,
+                error: true
+            }, { status: 400 })
+        }
+        
+        if(!mdpRegex.test(password)) {
+            return NextResponse.json({
+                message: "Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.",
+                success: false,
+                error: true
+            }, { status: 400 })
+        }
+
+        if(!emailRegex.test(email)) {
+            return NextResponse.json({
+                message: "Format de l'email invalide.",
                 success: false,
                 error: true
             }, { status: 400 })
