@@ -48,12 +48,18 @@ export const POST = withAuth(async (req) => {
             }, { status: 400 })
         }
 
-        const [newClient] = await Client.create([{
+        const clientData = {
             nomComplet: nomComplet.trim(),
             tel: tel.trim(),
-            email: email.trim() || "",
             adresse: adresse.trim() || ""
-        }], { session: mongoSession })
+        }
+        if(email && email.trim()) {
+            clientData.email = email.trim()
+        }
+
+        const [newClient] = await Client.create([
+            clientData
+        ], { session: mongoSession })
 
         await History.create([{
             user: userId,
