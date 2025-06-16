@@ -1,18 +1,27 @@
+import authOptions from "@/lib/auth"
 import dbConnection from "@/lib/db"
+import History from "@/models/History.model"
 import Product from "@/models/Product.model"
 import { mapRowData, productAliasMapping } from "@/utils/mapping"
 import { withAuthAndRole } from "@/utils/withAuthAndRole"
+import mongoose from "mongoose"
+import { getServerSession } from "next-auth"
 import { NextResponse } from "next/server"
 import * as XLSX from "xlsx"
 
 export const POST = withAuthAndRole(async (req) => {
-    try {
-        await dbConnection()
+    await dbConnection()
+    const mongoSession = await mongoose.startSession()
+    mongoSession.startTransaction()
 
+    try {
+        const session = await getServerSession(authOptions)
+        const { name, id } = session.user
         const data = await req.formData()
         const file = data.get("file")
 
         if (!file) {
+            await mongoSession.abortTransaction()
             return NextResponse.json(
                 {
                     message: "Aucun fichier reçu.",
@@ -48,7 +57,7 @@ export const POST = withAuthAndRole(async (req) => {
 
             if (!nom || prixAchatEnGros === undefined || prixVenteEnGros === undefined || QteInitial === undefined || QteStock === undefined || QteAlerte === undefined) continue
 
-            const existingProd = await Product.findOne({ nom })
+            const existingProd = await Product.findOne({ nom }).session(mongoSession)
             if (existingProd) {
                 doublons.push(nom)
                 continue
@@ -56,7 +65,7 @@ export const POST = withAuthAndRole(async (req) => {
 
             const statut = (QteStock > 0)? "En stock" : "En rupture"
 
-            const newProd = await Product.create({ 
+            const [newProd] = await Product.create([{ 
                 nom,
                 prixAchatEnGros,
                 prixVenteEnGros,
@@ -68,9 +77,18 @@ export const POST = withAuthAndRole(async (req) => {
                 reference,
                 description,
                 statut
-            })
+            }], { session: mongoSession })
             inserted.push(newProd)
         }
+
+        await History.create([{
+            user: id,
+            actions: "create",
+            resource: "product",
+            description: `${name} a importé ${inserted.length} articles depuis Excel.`,
+        }], { session: mongoSession })
+
+        await mongoSession.commitTransaction()
 
         let message = ""
 
@@ -93,6 +111,7 @@ export const POST = withAuthAndRole(async (req) => {
         }, { status: 201 })
 
     } catch (error) {
+        await mongoSession.abortTransaction()
         console.error("Erreur lors de l'importation des articles: ", error)
 
         return NextResponse.json({
@@ -100,5 +119,7 @@ export const POST = withAuthAndRole(async (req) => {
             success: false,
             error: true
         }, { status: 500 })
+    } finally {
+        mongoSession.endSession()
     }
 })
