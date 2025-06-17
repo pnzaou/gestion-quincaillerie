@@ -20,6 +20,11 @@ const SaleSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const Sale = mongoose.models.Sale || mongoose.model("Sale", SaleSchema)
+SaleSchema.index({ dateExacte: 1 })
+SaleSchema.index({ paymentMethod: 1 })
+SaleSchema.index({ vendeur: 1 })
+SaleSchema.index({ client: 1 })
+SaleSchema.index({ vendeur: 1, dateExacte: 1 })
 
+const Sale = mongoose.models.Sale || mongoose.model("Sale", SaleSchema)
 export default Sale
