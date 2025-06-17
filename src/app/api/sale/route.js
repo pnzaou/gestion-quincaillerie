@@ -9,14 +9,15 @@ import { NextResponse } from "next/server"
 import { generateReference } from "@/utils/generateReference"
 import { getOrCreateClient } from "@/utils/handleClient"
 import { validateAndUpdateProducts } from "@/utils/validateAndUpdateProducts"
+import History from "@/models/History.model"
 
 export const POST = withAuth(async (req) => {
+    await dbConnection()
     const mongoSession = await mongoose.startSession()
     mongoSession.startTransaction()
     
     try {
         const session = await getServerSession(authOptions)
-        await dbConnection()
         const payload = await req.json()
 
         const now = new Date(payload.dateExacte || Date.now())
@@ -46,9 +47,15 @@ export const POST = withAuth(async (req) => {
             }
         ], { session: mongoSession })
 
-        await mongoSession.commitTransaction()
-        mongoSession.endSession()
+        await History.create([{
+            user: session?.user.id,
+            actions: "create",
+            resource: "sale",
+            resourceId: sale[0]._id,
+            description: `${session?.user.name} a enregistré une vente de ${payload.total} FCFA.`,
+        }], { session: mongoSession })
 
+        await mongoSession.commitTransaction()
         return NextResponse.json({
             message: "Vente enregistrée avec succès.",
             success: true,
@@ -58,7 +65,6 @@ export const POST = withAuth(async (req) => {
 
     } catch (error) {
         await mongoSession.abortTransaction()
-        mongoSession.endSession()
         console.error("Erreur lors de la création de la vente : ", error)
 
         return NextResponse.json({
@@ -66,5 +72,7 @@ export const POST = withAuth(async (req) => {
             success: false,
             error: true
         }, { status: 500 })
+    } finally {
+        mongoSession.endSession()
     }
 })
