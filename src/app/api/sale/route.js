@@ -156,9 +156,7 @@ export const GET = withAuth(async (req) => {
             Sale.find(filter)
               .sort({ createdAt: -1 })
               .skip(skip)
-              .limit(limit)
-              .populate("client", "nomComplet")
-              .populate("vendeur", "nom prenom"),
+              .limit(limit),
             Sale.countDocuments(filter)
         ])
 

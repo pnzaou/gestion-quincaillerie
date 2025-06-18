@@ -650,5 +650,116 @@ export function ArticleTableSkeleton() {
   );
 }
 
+// Skeleton pour les lignes de la table des ventes
+export function SaleRowSkeleton() {
+  return (
+    <tr className="w-full border-b border-gray-300 last-of-type:border-none animate-pulse [&:first-child>td:first-child]:rounded-tl-lg [&:first-child>td:last-child]:rounded-tr-lg [&:last-child>td:first-child]:rounded-bl-lg [&:last-child>td:last-child]:rounded-br-lg">
+      {/* Référence */}
+      <td className="whitespace-nowrap px-3 py-3">
+        <div className="h-6 w-24 rounded bg-gray-300"></div>
+      </td>
+      {/* Date de vente */}
+      <td className="whitespace-nowrap px-3 py-3">
+        <div className="h-6 w-40 rounded bg-gray-300"></div>
+      </td>
+      {/* Client */}
+      <td className="whitespace-nowrap px-3 py-3">
+        <div className="h-6 w-32 rounded bg-gray-300"></div>
+      </td>
+      {/* Total */}
+      <td className="whitespace-nowrap px-3 py-3">
+        <div className="h-6 w-20 rounded bg-gray-300"></div>
+      </td>
+      {/* Mode de paiement */}
+      <td className="whitespace-nowrap px-3 py-3">
+        <div className="h-6 w-24 rounded bg-gray-300"></div>
+      </td>
+      {/* Actions */}
+      <td className="whitespace-nowrap py-3 pl-6 pr-3">
+        <div className="flex justify-end gap-2">
+          <div className="h-[38px] w-[38px] rounded bg-gray-300"></div>
+          <div className="h-[38px] w-[38px] rounded bg-gray-300"></div>
+          <div className="h-[38px] w-[38px] rounded bg-gray-300"></div>
+        </div>
+      </td>
+    </tr>
+  )
+}
 
+// Skeleton pour les lignes de la table des ventes sur mobile
+export function SaleMobileSkeleton() {
+  return (
+    <div className="mb-2 w-full rounded-md bg-white p-4 animate-pulse">
+      {/* Header: Référence and Date */}
+      <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+        <div className="space-y-2">
+          <div className="h-6 w-24 rounded bg-gray-100"/>
+          <div className="h-6 w-24 rounded bg-gray-100"/>
+        </div>
+      </div>
+
+      {/* Corps: Client, Total, Mode de paiement */}
+      <div className="pt-4 space-y-2">
+        <div className="h-6 w-28 rounded bg-gray-100" /> {/* Client */}
+        <div className="h-6 w-20 rounded bg-gray-100" /> {/* Total */}
+        <div className="h-6 w-24 rounded bg-gray-100" /> {/* Mode de paiement */}
+      </div>
+
+      {/* Actions */}
+      <div className="mt-4 flex justify-end gap-2">
+        <div className="h-10 w-10 rounded bg-gray-100" />
+        <div className="h-10 w-10 rounded bg-gray-100" />
+        <div className="h-10 w-10 rounded bg-gray-100" />
+      </div>
+    </div>
+  )
+}
+
+// Skeleton pour la table des ventes
+export function SaleTableSkeleton() {
+  return (
+    <div className="mt-6 flow-root">
+      <div
+        className={`${shimmer} relative animate-pulse mb-6 h-8 w-36 overflow-hidden rounded-md bg-gray-300`}
+      />
+      <div className="inline-block min-w-full align-middle">
+        <div className="rounded-lg bg-gray-50 p-2 md:pt-0">
+          {/* Mobile Version */}
+          <div className="md:hidden space-y-2">
+            <SaleMobileSkeleton />
+            <SaleMobileSkeleton />
+            <SaleMobileSkeleton />
+            <SaleMobileSkeleton />
+            <SaleMobileSkeleton />
+            <SaleMobileSkeleton />
+          </div>
+
+          {/* Desktop Table Version */}
+          <table className="hidden min-w-full text-gray-900 md:table">
+            <thead className="text-left text-sm font-normal">
+              <tr>
+                <th className="px-3 py-5 font-medium">Référence</th>
+                <th className="px-3 py-5 font-medium">Date de vente</th>
+                <th className="px-3 py-5 font-medium">Client</th>
+                <th className="px-3 py-5 font-medium">Montant (TTC)</th>
+                <th className="px-3 py-5 font-medium">Mode de paiement</th>
+                <th className="py-5 pl-6 pr-3 text-right">
+                  <span className="sr-only">Actions</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white">
+              <SaleRowSkeleton />
+              <SaleRowSkeleton />
+              <SaleRowSkeleton />
+              <SaleRowSkeleton />
+              <SaleRowSkeleton />
+              <SaleRowSkeleton />
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  )
+}
 
