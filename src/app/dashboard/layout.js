@@ -16,10 +16,8 @@ export default async function Layout({ children }) {
         <SideBar />
       </div>
       {/* <div className="flex-grow p-6 md:overflow-y-auto md:p-12">{children}</div> */}
-      <div className="flex-grow p-6 md:overflow-y-auto md:p-12">
-        <div className="mb-2">
-          <DynamicBreadcrumb/>
-        </div>
+      <div className="flex-grow px-6 pb-6 pt-2 md:overflow-y-auto md:px-12 md:pb-12 md:pt-4">
+        <DynamicBreadcrumb/>
         {children}
       </div>
     </div>

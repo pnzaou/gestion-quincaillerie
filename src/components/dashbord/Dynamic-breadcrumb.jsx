@@ -7,6 +7,10 @@ import Link from "next/link";
 const DynamicBreadcrumb = () => {
     const pathname = usePathname()
 
+    if(!pathname || pathname === "/dashboard") {
+        return null;
+    }
+
     const segments = pathname
         .split("/")
         .filter(Boolean)
@@ -25,39 +29,39 @@ const DynamicBreadcrumb = () => {
         }
 
     return (
+      <div className="mb-2">
         <Breadcrumb>
-            <BreadcrumbList>
-                <BreadcrumbItem>
-                    <BreadcrumbLink asChild>
-                        <Link href="/dashboard">Tableau de bord</Link>
-                    </BreadcrumbLink>
-                </BreadcrumbItem>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link href="/dashboard">Tableau de bord</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
 
-                {segments
-                  .slice(1)
-                  .map((segment, index) => {
-                     const href = '/dashboard/'+segments.slice(1, index + 2).join('/')
+            {segments.slice(1).map((segment, index) => {
+              const href =
+                "/dashboard/" + segments.slice(1, index + 2).join("/");
 
-                     const isLat = index === segments.slice(1).length - 1
+              const isLat = index === segments.slice(1).length - 1;
 
-                     return (
-                        <span key={href} className="flex items-center">
-                            <BreadcrumbSeparator/>
-                            <BreadcrumbItem>
-                                {isLat ? (
-                                    <BreadcrumbPage>{formatSegment(segment)}</BreadcrumbPage>
-                                ) : (
-                                    <BreadcrumbLink asChild>
-                                        <Link href={href}>{formatSegment(segment)}</Link>
-                                    </BreadcrumbLink>
-                                )}
-                            </BreadcrumbItem>
-                        </span>
-                     )
-                 })
-                }
-            </BreadcrumbList>
+              return (
+                <span key={href} className="flex items-center">
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    {isLat ? (
+                      <BreadcrumbPage>{formatSegment(segment)}</BreadcrumbPage>
+                    ) : (
+                      <BreadcrumbLink asChild>
+                        <Link href={href}>{formatSegment(segment)}</Link>
+                      </BreadcrumbLink>
+                    )}
+                  </BreadcrumbItem>
+                </span>
+              );
+            })}
+          </BreadcrumbList>
         </Breadcrumb>
+      </div>
     );
 }
 
