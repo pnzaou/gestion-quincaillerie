@@ -14,12 +14,14 @@ const SaleSchema = new mongoose.Schema(
     dateExacte: { type: Date, required: true },
     remise: { type: Number, required: false },
     total: { type: Number, required: true },
-    paymentMethod: { type: String, enum: ["espèce", "carte de crédit", "Wave", "Orange Money", "Free Money"], required: true },
     vendeur: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    status: { type: String, enum: ["paid", "pending", "partial", "cancelled"], required: true },
+    amountDue: { type: Number, required: false },
   },
   { timestamps: true }
 );
 
+SaleSchema.index({ status: 1 })
 SaleSchema.index({ dateExacte: 1 })
 SaleSchema.index({ paymentMethod: 1 })
 SaleSchema.index({ vendeur: 1 })

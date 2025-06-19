@@ -12,6 +12,8 @@ import { validateAndUpdateProducts } from "@/utils/validateAndUpdateProducts"
 import History from "@/models/History.model"
 import Client from "@/models/Client.model"
 import User from "@/models/User.model"
+import Payment from "@/models/Payment.model"
+import { getSaleDescription } from "@/utils/getSaleDescription"
 
 export const POST = withAuth(async (req) => {
     await dbConnection()
@@ -27,6 +29,16 @@ export const POST = withAuth(async (req) => {
         // Génération de la référence de vente
         const reference = await generateReference(now, mongoSession)
 
+        if(payload.status === "partial" || payload.status === "pending") {
+            if(!payload.client) {
+                return NextResponse.json({
+                    message: "Infos du client obligatoires en cas d’acompte ou de vente à crédit.",
+                    success: false,
+                    error: true
+                }, { status: 400 })
+            }
+        }
+
         // Création ou récupération du client
         const clientIdOrResponse = await getOrCreateClient(payload.client, mongoSession)
         if (clientIdOrResponse instanceof Response) return clientIdOrResponse
@@ -36,25 +48,59 @@ export const POST = withAuth(async (req) => {
         const productValidationResponse = await validateAndUpdateProducts(payload.items, mongoSession)
         if(productValidationResponse) return productValidationResponse
 
+        if(!payload.status) return NextResponse.json({
+            message: "Veuillez renseigner le statut de la vente.",
+            success: false,
+            error: true
+        }, { status: 400 })
+
+        let data = {
+            reference,
+            client: clientId,
+            items: payload.items,
+            dateExacte: payload.dateExacte || now,
+            remise: payload.remise || 0,
+            total: payload.total,
+            vendeur: session?.user.id,
+            status: payload.status,
+        }
+
+        if( payload.status === "partial" || payload.status === "pending") {
+            if(payload.status === "partial" && !payload.amountPaid) return NextResponse.json({
+                message: "Veuillez renseigner le montant reçu.",
+                success: false,
+                error: true
+            }, { status: 400 })
+
+            data.amountDue = payload.total - (payload.amountPaid || 0)
+        }
+
         const sale = await Sale.create([
-            {
-                reference,
-                client: clientId,
-                items: payload.items,
-                dateExacte: payload.dateExacte || now,
-                remise: payload.remise || 0,
-                total: payload.total,
-                paymentMethod: payload.paymentMethod,
-                vendeur: session?.user.id
-            }
+            data
         ], { session: mongoSession })
+
+        if( payload.status === "partial" || payload.status === "paid") {
+            await Payment.create([{
+                sale: sale[0]._id,
+                amount: payload.status === "paid" ? payload.total : payload.amountPaid,
+                paymentMethod: payload.paymentMethod,
+            }], { session: mongoSession })
+        }
+
+        const description = getSaleDescription({
+            status: payload.status,
+            total: payload.total,
+            amountPaid: payload.amountPaid,
+            reference: sale[0].reference,
+            userName: session?.user.name,
+        })
 
         await History.create([{
             user: session?.user.id,
             actions: "create",
             resource: "sale",
             resourceId: sale[0]._id,
-            description: `${session?.user.name} a enregistré une vente de ${payload.total} FCFA.`,
+            description
         }], { session: mongoSession })
 
         await mongoSession.commitTransaction()

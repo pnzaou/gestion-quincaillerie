@@ -39,6 +39,7 @@ import PaymentMethod from "./Payment-method";
 import SaleClientSelector from "./Sale-client-selector";
 import Required from "../Required";
 import toast from "react-hot-toast";
+import SaleStatus from "./Sale-status";
 
 const DEFAULT_IMAGE = "/360_F_517535712_q7f9QC9X6TQxWi6xYZZbMmw5cnLMr279.jpg";
 const tabSize = [8, 12, 32, 64, 100];
@@ -66,6 +67,8 @@ const ArticlesListVente = ({ initialArt, initialTotalPages, currentPage, search 
   const [saleDate, setSaleDate] = useState(new Date());
   const [discount, setDiscount] = useState(0);
   const [paiementMethode, setPaiementMethode] = useState("")
+  const [saleStatus, setSaleStatus] = useState("")
+  const [amountPaid, setAmountPaid] = useState(0);
   const [client, setClient] = useState(null);
   const [selectClientOpen, setSelectClientOpen] = useState(false);
   const [newClientDrawerOpen, setNewClientDrawerOpen] = useState(false);
@@ -165,10 +168,27 @@ const ArticlesListVente = ({ initialArt, initialTotalPages, currentPage, search 
                 toast.error("Veuillez ajouter des articles au panier.")
                 return;
             }
-            if(!paiementMethode || paiementMethode.trim() === "") {
+            if(!saleStatus || saleStatus.trim() === "") {
+                toast.error("Veuillez choisir le statut de la vente.")
+                return;
+            }
+            if(saleStatus === "partial" && amountPaid <= 0) {
+                toast.error("Veuillez saisir le montant versé.")
+                return;
+            }
+            if(saleStatus === "partial" && amountPaid > total) {
+                toast.error("L'acompte ne peut pas être supérieur au montant total de la vente.")
+                return;
+            }
+            if( (saleStatus === "paid" || saleStatus === "partial") && (!paiementMethode || paiementMethode.trim() === "")) {
                 toast.error("Veuillez choisir un mode de paiement.")
                 return;
             }
+            if((saleStatus === "partial" || saleStatus === "pending") && !client) {
+                toast.error("Infos du client obligatoires en cas d’acompte ou de vente à crédit.")
+                return;
+            }
+
             const data = {
                 items: cart.map((item) => ({
                     product: item._id,
@@ -179,7 +199,9 @@ const ArticlesListVente = ({ initialArt, initialTotalPages, currentPage, search 
                 remise: discount,
                 total,
                 paymentMethod: paiementMethode,
-                client
+                client,
+                status: saleStatus,
+                amountPaid
             }
             const response = await fetch("/api/sale", {
                 method: "POST",
@@ -195,10 +217,12 @@ const ArticlesListVente = ({ initialArt, initialTotalPages, currentPage, search 
                 setSaleDate(new Date())
                 setDiscount(0)
                 setPaiementMethode("")
+                setSaleStatus("")
+                setAmountPaid(0)
                 return;
             } else {
                 const errorData = await response.json()
-                console.log(errorData)
+                console.error(errorData)
                 toast.error(errorData.message)
                 return;
             }
@@ -209,6 +233,8 @@ const ArticlesListVente = ({ initialArt, initialTotalPages, currentPage, search 
             setLoading(false)
         }
     }
+
+    console.log(client)
 
   return (
     <>
@@ -332,9 +358,30 @@ const ArticlesListVente = ({ initialArt, initialTotalPages, currentPage, search 
                                     </div>
 
                                     <div>
-                                        <Label className="mb-3">Mode de paiement <Required/></Label>
-                                        <PaymentMethod paiementMethode={paiementMethode} setPaiementMethode={setPaiementMethode}/>
+                                        <Label className="mb-3">Statut <Required/></Label>
+                                        <SaleStatus saleStatus={saleStatus} setSaleStatus={setSaleStatus}/>
                                     </div>
+
+                                    {saleStatus === "partial" && (
+                                        <div>
+                                            <Label>Montant reçu <Required/></Label>
+                                            <Input
+                                                type="number"
+                                                value={amountPaid}
+                                                onChange={(e) => setAmountPaid(Number(e.target.value))}
+                                                min={0}
+                                                step={0.00001}
+                                                max={total}
+                                            />
+                                        </div>
+                                    )}
+
+                                    { (saleStatus === "paid" || saleStatus === "partial") && (
+                                        <div>
+                                            <Label className="mb-3">Mode de paiement <Required/></Label>
+                                            <PaymentMethod paiementMethode={paiementMethode} setPaiementMethode={setPaiementMethode}/>
+                                        </div>
+                                    )}
 
                                     <div className="font-semibold">
                                         Total : {total.toFixed(2)} fcfa
