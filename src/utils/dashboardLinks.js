@@ -5,7 +5,7 @@ import {
     BanknotesIcon,
     Cog6ToothIcon
 } from "@heroicons/react/24/outline"
-import { LayoutDashboard } from "lucide-react"
+import { FileText, LayoutDashboard } from "lucide-react"
 
 export const links = [
     {
@@ -32,15 +32,14 @@ export const links = [
       roles: ["admin"],
       subLinks: [
         { name: "Ajouter", href: "/dashboard/article/ajouter" },
-        { name: "Stock", href: "/dashboard/article/stock" },
-        { name: "Commander", href: "/dashboard/article/commander" },
+        { name: "Stock", href: "/dashboard/article/stock" }
       ],
     },
     {
       name: "Clients",
       href: "/dashboard/client",
       icon: UserGroupIcon,
-      roles: ["admin", "gerant", "comptable"],
+      roles: ["admin", "gerant"],
       subLinks: [],
     },
     {
@@ -51,6 +50,16 @@ export const links = [
       subLinks: [
         { name: "Effectuer une vente", href: "/dashboard/vente/vendre" },
         { name: "Historique des ventes", href: "/dashboard/vente/historique-vente" },
+      ],
+    },
+    {
+      name: "Commandes",
+      href: "/dashboard/commande",
+      icon: FileText,
+      roles: ["admin", "comptable"],
+      subLinks: [
+        { name: "Nouvelle commande", href: "/dashboard/commande/ajouter" },
+        { name: "Liste", href: "/dashboard/commande/liste" },
       ],
     },
     {
