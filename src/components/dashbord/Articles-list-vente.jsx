@@ -58,7 +58,6 @@ const ArticlesListVente = ({ initialArt, initialTotalPages, currentPage, search 
     selected,
     toggleCategory,
     totalPages,
-    setModalProdToDelete,
   } = useArticles(initialArt, initialTotalPages, currentPage, search, 8);
 
   const [cart, setCart] = useState([]);
@@ -238,9 +237,9 @@ const ArticlesListVente = ({ initialArt, initialTotalPages, currentPage, search 
 
   return (
     <>
-        <div className="p-6 space-y-4">
+        <div className="space-y-4">
             {/* Barre d'actions fixe */}
-            <div className="flex items-center space-x-2 sticky top-0 bg-white z-10 p-2">
+            <div className="flex items-center space-x-2 sticky top-0 bg-white z-10">
                 <div>
                     <ArticlesHeader
                       searchTerm={searchTerm}
@@ -269,9 +268,16 @@ const ArticlesListVente = ({ initialArt, initialTotalPages, currentPage, search 
                     {/* Ouvrir panier */}
                     <Dialog open={drawerOpen} onOpenChange={setDrawerOpen} >
                         <DialogTrigger asChild>
-                        <Button variant="outline" className="px-4 py-2">
-                            <ShoppingCart className="mr-1 h-4 w-4" /> Panier ({cart.reduce((a, c) => a + c.quantity, 0)})
-                        </Button>
+                        <div className="relative inline-block">
+                            <Button variant="outline" className="px-4 py-2">
+                                <ShoppingCart className="mr-1 h-4 w-4" /> Panier
+                            </Button>
+                            {cart.length > 0 && (
+                                <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-blue-500 rounded-full">
+                                {cart.reduce((a, c) => a + c.quantity, 0)}
+                                </span>
+                            )}
+                        </div>
                         </DialogTrigger>
                         <DialogContent className="min-w-4xl">
                             <DialogHeader>
