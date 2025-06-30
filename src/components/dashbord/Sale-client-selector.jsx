@@ -41,7 +41,7 @@ const SaleClientSelector = ({selectClientOpen, setSelectClientOpen, client, setC
           <div
             className="w-[150px] h-10 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse"
             role="status"
-            aria-label="Chargement des catégories"
+            aria-label="Chargement des clients"
           />
         );
       }
@@ -63,7 +63,7 @@ const SaleClientSelector = ({selectClientOpen, setSelectClientOpen, client, setC
                 <Command>
                     <CommandInput placeholder="Rechercher un client..." className="h-9" />
                     <CommandList>
-                    <CommandEmpty>Aucun client</CommandEmpty>
+                    <CommandEmpty>Aucun client trouvé</CommandEmpty>
                     <CommandGroup>
                         <CommandItem
                           value="reset"
