@@ -17,9 +17,11 @@ import { signIn } from "next-auth/react";
 import toast from "react-hot-toast"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import { Eye, EyeOff } from "lucide-react"
 
 export function LoginForm({className, ...props}) {
   const [isLoading, setIsLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const { handleSubmit, register, formState: { errors } } = useForm()
   const router = useRouter()
   const mdpRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/
@@ -105,16 +107,25 @@ export function LoginForm({className, ...props}) {
                     Mot de passe oublié?
                   </Link>
                 </div>
-                <Input 
-                 id="password" 
-                 type="password" 
-                 required
-                 {...register("password", {
-                  required: true,
-                  pattern: mdpRegex,
-                  min: 8
-                 })}
-                />
+                <div className="relative">
+                  <Input 
+                    id="password" 
+                    type={showPassword ? "text" : "password"}
+                    required
+                    {...register("password", {
+                      required: true,
+                      pattern: mdpRegex,
+                      min: 8
+                    })}
+                  />
+                   <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-3 flex items-center hover:cursor-pointer"
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
                 {errors.password && <span className="
                   mt-2 text-sm text-red-500
                 ">
