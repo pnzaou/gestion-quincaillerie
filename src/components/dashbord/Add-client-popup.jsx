@@ -1,14 +1,21 @@
 "use client"
 
-import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import Required from "../Required";
 import toast from "react-hot-toast";
+import { useSaleStore } from "@/stores/useSaleStore";
 
-const AddClientPopup = ({ newClient, setNewClient, setClient, newClientDrawerOpen, setNewClientDrawerOpen, setSelectClientOpen }) => {
+const AddClientPopup = () => {
+
+    const newClientDrawerOpen = useSaleStore((state) => state.newClientDrawerOpen)
+    const setNewClientDrawerOpen = useSaleStore((state) => state.setNewClientDrawerOpen)
+    const newClient = useSaleStore((state) => state.newClient)
+    const setNewClient = useSaleStore((state) => state.setNewClient)
+    const setClient = useSaleStore((state) => state.setClient)
+    const setSelectClientOpen = useSaleStore((state) => state.setSelectClientOpen)
 
     const handleAddClient = () => {
         if (newClient.nomComplet.trim() === "" || newClient.tel.trim() === "") {
@@ -49,7 +56,7 @@ const AddClientPopup = ({ newClient, setNewClient, setClient, newClientDrawerOpe
                              id="nom"
                              type="text"
                              value={newClient.nomComplet}
-                             onChange={(e) => setNewClient((prev) => ({...prev, nomComplet: e.target.value}))}
+                             onChange={(e) => setNewClient(({...newClient, nomComplet: e.target.value}))}
                             />
                         </div>
                         <div className="grid gap-3 flex-1/2">
@@ -58,7 +65,7 @@ const AddClientPopup = ({ newClient, setNewClient, setClient, newClientDrawerOpe
                              id="tel"
                              type="tel"
                              value={newClient.tel}
-                             onChange={(e) => setNewClient((prev) => ({...prev, tel: e.target.value}))}
+                             onChange={(e) => setNewClient(({...newClient, tel: e.target.value}))}
                             />
                         </div>
                     </div>
@@ -69,7 +76,7 @@ const AddClientPopup = ({ newClient, setNewClient, setClient, newClientDrawerOpe
                              id="email"
                              type="email"
                              value={newClient.email}
-                             onChange={(e) => setNewClient((prev) => ({...prev, email: e.target.value}))}
+                             onChange={(e) => setNewClient(({...newClient, email: e.target.value}))}
                             />
                         </div>
                         <div className="grid gap-3 flex-1/2">
@@ -78,7 +85,7 @@ const AddClientPopup = ({ newClient, setNewClient, setClient, newClientDrawerOpe
                              id="adresse"
                              type="text"
                              value={newClient.adresse}
-                             onChange={(e) => setNewClient((prev) => ({...prev, adresse: e.target.value}))}
+                             onChange={(e) => setNewClient(({...newClient, adresse: e.target.value}))}
                             />
                         </div>
                     </div>
