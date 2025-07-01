@@ -7,34 +7,21 @@ import { Button } from "../ui/button";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "../ui/command";
 import { cn } from "@/lib/utils";
+import { useSaleStore } from "@/stores/useSaleStore";
 
-const SaleClientSelector = ({selectClientOpen, setSelectClientOpen, client, setClient, newClient, setNewClient, newClientDrawerOpen, setNewClientDrawerOpen}) => {
-    
-    const [clientsData, setClientsData] = useState([]);
-    const [loading, setLoading] = useState(false);
+const SaleClientSelector = () => {
+
+    const loading = useSaleStore((state) => state.loading);
+    const clientsData = useSaleStore((state) => state.clientsData);
+    const selectClientOpen = useSaleStore((state) => state.selectClientOpen);
+    const setSelectClientOpen = useSaleStore((state) => state.setSelectClientOpen);
+    const client = useSaleStore((state) => state.client)
+    const setClient = useSaleStore((state) => state.setClient)
+    const getClientsData = useSaleStore((state) => state.getClientsData);
 
     useEffect(() => {
-        const fetchData = async () => {
-            setLoading(true);
-            try {
-                const res = await fetch("/api/client");
-                const body = await res.json();
-        
-                if (!res.ok) {
-                  console.error("Impossible de récupérer les clients :", body.message);
-                  return;
-                }
-        
-                setClientsData(body.data);
-            } catch (err) {
-                console.error("Erreur pendant la récupération des données :", err);
-            } finally {
-                setLoading(false);
-            }
-        }
-
-        fetchData();
-    }, [])
+        getClientsData();
+    }, []);
 
     if (loading) {
         return (
@@ -96,14 +83,7 @@ const SaleClientSelector = ({selectClientOpen, setSelectClientOpen, client, setC
                     </CommandGroup>
                     </CommandList>
                 </Command>
-                <AddClientPopup
-                 newClient={newClient}
-                 setNewClient={setNewClient}
-                 setClient={setClient}
-                 newClientDrawerOpen={newClientDrawerOpen}
-                 setNewClientDrawerOpen={setNewClientDrawerOpen}
-                 setSelectClientOpen={setSelectClientOpen}
-                 />
+                <AddClientPopup/>
             </PopoverContent>
         </Popover>
     );
