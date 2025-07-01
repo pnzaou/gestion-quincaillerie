@@ -31,7 +31,7 @@ const SaleClientSelector = () => {
             aria-label="Chargement des clients"
           />
         );
-      }
+    }
 
     return (
         <Popover open={selectClientOpen} onOpenChange={setSelectClientOpen}>
