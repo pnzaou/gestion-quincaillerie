@@ -1,15 +1,18 @@
 "use client"
 
+import { useSaleStore } from "@/stores/useSaleStore";
 import { Select, SelectContent, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "../ui/select";
 import { SelectGroup } from "@radix-ui/react-select";
 
-const PaymentMethod = ({ paiementMethode, setPaiementMethode }) => {
+const PaymentMethod = () => {
+    const payementMethod = useSaleStore((state) => state.payementMethod);
+    const setPayementMethod = useSaleStore((state) => state.setPayementMethod);
 
     return (
         <Select
-          value={paiementMethode}
+          value={payementMethod}
           onValueChange={(val) => {
-            setPaiementMethode(val);
+            setPayementMethod(val);
           }}
         >
             <SelectTrigger className="w-full">

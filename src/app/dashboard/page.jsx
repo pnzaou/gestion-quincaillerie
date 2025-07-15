@@ -1,10 +1,11 @@
-import { getMonthRevenue, getStockAlerts, getTodayStats } from "@/lib/dashboardData";
+import { countOrdersToReceive, getMonthRevenue, getStockAlerts, getTodayStats } from "@/lib/dashboardData";
 import { preparingServerSideRequest } from "@/utils/preparingServerSideRequest"
 
 const Page = async () => {
-    const monthRevenue = await getMonthRevenue()
+    const {salesCount: salesCountMonth, totalRevenue: totalRevenueMonth} = await getMonthRevenue()
     const { salesCount, totalRevenue } = await getTodayStats()
     const { outOfStockCount, soonCount } = await getStockAlerts()
+    const ordersToReceiveCount = await countOrdersToReceive()
     
     return (
         <div>
@@ -14,11 +15,17 @@ const Page = async () => {
                 </h1>
             </div>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                mois: {monthRevenue}
-                ventes: {salesCount}
-                jour: {totalRevenue}
+                mois: {totalRevenueMonth}
+                <br/>
+                nbr ventes du jour: {salesCount}
+                <br/>
+                chiffre d'affaires du jour: {totalRevenue}
+                <br/>
                 rupture: {outOfStockCount}
+                <br/>
                 alerte: {soonCount}
+                <br/>
+                commandes à recevoir: {ordersToReceiveCount}
             </div>
         </div>
     );

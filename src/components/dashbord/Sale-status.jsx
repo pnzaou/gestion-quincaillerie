@@ -1,5 +1,6 @@
 "use client"
 
+import { useSaleStore } from "@/stores/useSaleStore";
 import { Select, SelectContent, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "../ui/select";
 import { SelectGroup } from "@radix-ui/react-select";
 
@@ -9,7 +10,10 @@ const statusOption = [
     {value: "pending", label: "À crédit"}
 ]
 
-const SaleStatus = ({ saleStatus, setSaleStatus }) => {
+const SaleStatus = () => {
+
+    const saleStatus = useSaleStore((state) => state.saleStatus);
+    const setSaleStatus = useSaleStore((state) => state.setSaleStatus);
 
     return (
         <Select
