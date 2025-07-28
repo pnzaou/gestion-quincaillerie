@@ -65,8 +65,9 @@ const ArticlesListVente = ({
     <>
       <div className="space-y-4">
         {/* Barre d'actions fixe */}
-        <div className="flex items-center space-x-2 sticky top-0 bg-white z-10">
-          <div>
+        <div className="flex gap-5 items-center justify-between sticky top-0 bg-white z-10 w-full px-4 py-2">
+          {/* 1. Le left = header qui occupe tout l’espace dispo */}
+          <div className="flex-1">
             <ArticlesHeader
               searchTerm={searchTerm}
               onSearchChange={handleSearchChange}
@@ -78,12 +79,14 @@ const ArticlesListVente = ({
               tabSize={tabSize}
             />
           </div>
-          <div className="flex gap-2">
-            {/* Choisir client */}
-            <SaleClientSelector/>
 
-            {/* Ouvrir panier */}
-            <PanierVente localStocks={localStocks} setLocalStocks={setLocalStocks} />
+          {/* 2. Le right = client + panier */}
+          <div className="flex items-center gap-5">
+            <SaleClientSelector />
+            <PanierVente
+              localStocks={localStocks}
+              setLocalStocks={setLocalStocks}
+            />
           </div>
         </div>
 
@@ -133,7 +136,9 @@ const ArticlesListVente = ({
                       <Button
                         size="icon"
                         variant="ghost"
-                        onClick={() => removeFromCart(article._id, setLocalStocks)}
+                        onClick={() =>
+                          removeFromCart(article._id, setLocalStocks)
+                        }
                         disabled={!inCart}
                         className="border rounded-full w-8 h-8 text-red-600 hover:bg-red-100 hover:cursor-pointer"
                       >
@@ -147,7 +152,9 @@ const ArticlesListVente = ({
                       <Button
                         size="icon"
                         variant="ghost"
-                        onClick={() => addToCart(article, localStocks, setLocalStocks)}
+                        onClick={() =>
+                          addToCart(article, localStocks, setLocalStocks)
+                        }
                         className="border rounded-full w-8 h-8 text-green-600 hover:bg-green-100 hover:cursor-pointer"
                       >
                         <Plus className="w-4 h-4" />
