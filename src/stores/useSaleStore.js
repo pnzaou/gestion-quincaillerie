@@ -49,6 +49,15 @@ export const useSaleStore = create((set, get) => ({
     },
     setNewClient: (newClient) => set({ newClient }),
 
+    handleUpdateNewClient: () => {
+        set({
+            panierDrawerOpen: false,
+            selectClientOpen: true,
+            newClientDrawerOpen: true,
+            newClient: get().client
+        })
+    },
+
     //gestion du combobox de selection d'un client
     selectClientOpen: false,
     setSelectClientOpen: (isOpen) => set({ selectClientOpen: isOpen }),
@@ -198,7 +207,6 @@ export const useSaleStore = create((set, get) => ({
             }
         } catch (error) {
             console.error("Erreur pendant la création de la vente :", error);
-            toast.error("Une erreur est survenue lors de la création de la vente.");
         } finally {
             set({ loading: false });
         }

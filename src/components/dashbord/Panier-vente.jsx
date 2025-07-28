@@ -35,14 +35,13 @@ import Required from "../Required";
 import SaleStatus from "./Sale-status";
 import PaymentMethod from "./Payment-method";
 
-const PanierVente = () => {
+const PanierVente = ({ localStocks, setLocalStocks }) => {
   const loading = useSaleStore((state) => state.loading);
   const saleDate = useSaleStore((state) => state.saleDate);
   const setSaleDate = useSaleStore((state) => state.setSaleDate);
   const panierDrawerOpen = useSaleStore((state) => state.panierDrawerOpen);
-  const setPanierDrawerOpen = useSaleStore(
-    (state) => state.setPanierDrawerOpen
-  );
+  const setPanierDrawerOpen = useSaleStore((state) => state.setPanierDrawerOpen);
+  const setSelectClientOpen = useSaleStore((state) => state.setSelectClientOpen);
   const cart = useSaleStore((state) => state.cart);
   const addToCart = useSaleStore((state) => state.addToCart);
   const removeFromCart = useSaleStore((state) => state.removeFromCart);
@@ -55,6 +54,7 @@ const PanierVente = () => {
   const handleDeleteSelectedClient = useSaleStore((state) => state.handleDeleteSelectedClient);
   const amountPaid = useSaleStore((state) => state.amountPaid);
   const setAmountPaid = useSaleStore((state) => state.setAmountPaid);
+  const handleUpdateNewClient = useSaleStore((state) => state.handleUpdateNewClient);
 
   return (
     <Dialog open={panierDrawerOpen} onOpenChange={setPanierDrawerOpen}>
@@ -85,7 +85,7 @@ const PanierVente = () => {
                   <Button
                     size="icon"
                     variant="ghost"
-                    onClick={() => removeFromCart(item._id)}
+                    onClick={() => removeFromCart(item._id, setLocalStocks)}
                     className="border rounded-full w-8 h-8 text-red-600 hover:bg-red-100 hover:cursor-pointer"
                   >
                     <Minus />
@@ -94,7 +94,7 @@ const PanierVente = () => {
                   <Button
                     size="icon"
                     variant="ghost"
-                    onClick={() => addToCart(item)}
+                    onClick={() => addToCart(item, localStocks, setLocalStocks)}
                     className="border rounded-full w-8 h-8 text-red-600 hover:bg-red-100 hover:cursor-pointer"
                   >
                     <Plus />
@@ -237,7 +237,7 @@ const PanierVente = () => {
                       size="icon"
                       variant="ghost"
                       onClick={() => {
-                        setDrawerOpen(false);
+                        setPanierDrawerOpen(false);
                         setSelectClientOpen(true);
                       }}
                       className="border rounded-full w-6 h-6 text-green-600 hover:bg-green-100 hover:cursor-pointer"
