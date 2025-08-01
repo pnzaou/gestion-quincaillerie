@@ -1,7 +1,6 @@
 import ComfirmResetPassword from "@/components/email/Comfirm-reset-password";
 import dbConnection from "@/lib/db";
 import { resend } from "@/lib/resend";
-import { withAuth } from "@/utils/withAuth";
 import PasswordResetToken from "@/models/PasswordResetToken.model";
 import User from "@/models/User.model";
 import jwt from "jsonwebtoken";
@@ -9,66 +8,18 @@ import mongoose from "mongoose";
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs"
 
+import { parsePasswordResetRequestDto } from "@/dtos/auth.dto";
+import { requestPasswordReset } from "@/services/auth.service";
+
 export const POST = async (req) => {
-    const mongoSession = await mongoose.startSession()
-    mongoSession.startTransaction()
     try {
-        await dbConnection()
-        const { email } = await req.json()
+        // validation
+        const body = await req.json()
+        const dto = parsePasswordResetRequestDto(body)
 
-        if(!email) {
-            return NextResponse.json({
-                message: "Veuillez renseigner votre email.",
-                success: false,
-                error: true
-            }, { status: 400 }) 
-        }
-        const user = await User
-            .findOne({ email })
-            .session(mongoSession)
-        
-        if (!user) {
-            return NextResponse.json({
-                message: "Aucun compte utilisateur trouvé avec cet email.",
-                success: false,
-                error: true
-            }, { status: 404 }) 
-        }
+        //Traitement
+        await requestPasswordReset(dto)
 
-        const payload = {
-            userId: user._id,
-            userEmail: email
-        }
-        const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '15min' })
-        await PasswordResetToken.create([{
-            userId: user._id,
-            token,
-            expiresAt: new Date(Date.now() + 15 * 60 * 1000),
-            used: false
-        }], { session: mongoSession })
-
-        const forgotPasswordLink = `${process.env.NEXT_PUBLIC_APP_URL}/forgot-password?token=${token}`
-
-        const { error } = await resend.emails.send({
-            from: "Support Quincallerie <onboarding@resend.dev>",
-            to: email,
-            subject: "Confirmation de la modification de votre mot de passe",
-            react: <ComfirmResetPassword resetLink={forgotPasswordLink} userFullName={user.prenom}/>
-        })
-
-        if(error) {
-            await mongoSession.abortTransaction()
-            mongoSession.endSession()
-            console.error("Erreur lors de l'envoie du mail mot de passe oublié: ", error)
-            return NextResponse.json({
-                message: "Erreur! Veuillez réessayer.",
-                success: false,
-                error: true
-            }, { status: 500 })
-        }
-
-        await mongoSession.commitTransaction()
-        mongoSession.endSession()
         return NextResponse.json({
             message: "Un email de confirmation a été envoyé à votre adresse.",
             success: true,
@@ -76,14 +27,14 @@ export const POST = async (req) => {
         }, { status: 200 })
 
     } catch (error) {
-        await mongoSession.abortTransaction()
-        mongoSession.endSession()
-        console.error("Erreur lors de la demande de réinitialisation de mot de passe oublié: ", error)
+        const status  = error.status  || 500;
+        const message = error.message || "Erreur! Veuillez réessayer.";
+        console.error("POST /api/auth/forgot-password :", error);
         return NextResponse.json({
-            message: "Erreur! Veuillez réessayer.",
+            message,
             success: false,
             error: true
-        }, { status: 500 })
+        }, { status })
     }
 }
 

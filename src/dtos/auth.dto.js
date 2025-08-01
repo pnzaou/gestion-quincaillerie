@@ -26,3 +26,14 @@ export const paseCreateUserDto = (body) => {
 
   return { nom, prenom, email, password, role };
 };
+
+export function parsePasswordResetRequestDto(body) {
+  const { email } = body;
+  if (!email) {
+    throw { status: 400, message: "Veuillez renseigner votre email." };
+  }
+  if (!emailRegex.test(email)) {
+    throw { status: 400, message: "Format de l'email invalide." };
+  }
+  return { email };
+}
