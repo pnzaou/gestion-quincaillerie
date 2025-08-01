@@ -58,7 +58,7 @@ export default function AccountCreatedSuccessfully({ userFullName, defaultPasswo
           </a>
           <p style={{ fontSize: "16px", color: "#555", marginTop: "30px" }}>Merci,</p>
           <p style={{ fontSize: "16px", color: "#ff6600", fontWeight: "bold" }}>
-            Support Quincaillerie
+            StockIt
           </p>
         </div>
       </div>

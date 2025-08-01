@@ -50,7 +50,7 @@ export default function ComfirmResetPassword({ userFullName, resetLink }) {
             </p>
             <p style={{ fontSize: "16px", color: "#555", marginTop: "30px" }}>Merci,</p>
             <p style={{ fontSize: "16px", color: "#ff6600", fontWeight: "bold" }}>
-                Support Quincallerie
+                StockIt
             </p>
           </div>
         </div>
