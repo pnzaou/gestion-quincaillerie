@@ -4,16 +4,17 @@ import bcrypt from "bcryptjs";
 import History from "@/models/History.model";
 import Outbox from "@/models/Outbox.model";
 import dbConnection from "@/lib/db";
+import jwt from "jsonwebtoken";
 import PasswordResetToken from "@/models/PasswordResetToken.model";
 import { resend } from "@/lib/resend";
 import ComfirmResetPassword from "@/components/email/Comfirm-reset-password";
 
 export const createUser = async (dto, sessionData) => {
+  await dbConnection();
   const mongoSession = await mongoose.startSession();
   mongoSession.startTransaction();
 
   try {
-    await dbConnection();
 
     const { nom, prenom, email, password, role } = dto;
     const { id: creatorId, name: creatorName } = sessionData.user;
@@ -75,11 +76,11 @@ export const createUser = async (dto, sessionData) => {
 };
 
 export const requestPasswordReset = async (dto) => {
+  await dbConnection();
   const mongoSession = await mongoose.startSession();
   mongoSession.startTransaction();
 
   try {
-    await dbConnection();
     const { email } = dto;
 
     //recherche utilisateur
