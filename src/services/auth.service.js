@@ -15,7 +15,6 @@ export const createUser = async (dto, sessionData) => {
   mongoSession.startTransaction();
 
   try {
-
     const { nom, prenom, email, password, role } = dto;
     const { id: creatorId, name: creatorName } = sessionData.user;
 
@@ -128,6 +127,80 @@ export const requestPasswordReset = async (dto) => {
     if (error) {
       throw { status: 500, message: "Erreur lors de l'envoi de l'email." };
     }
+
+    await mongoSession.commitTransaction();
+  } catch (error) {
+    await mongoSession.abortTransaction();
+    throw error;
+  } finally {
+    mongoSession.endSession();
+  }
+};
+
+export const confirmPasswordReset = async (dto) => {
+  await dbConnection();
+  const mongoSession = await mongoose.startSession();
+  mongoSession.startTransaction();
+
+  try {
+    const { token, password } = dto;
+
+    // retrouver le token en base
+    const dbToken = await PasswordResetToken.findOne({ token }).session(
+      mongoSession
+    );
+
+    if (
+      !dbToken ||
+      dbToken.used ||
+      dbToken.expiresAt.getTime() < Date.now()
+    ) {
+      throw {
+        status: 400,
+        message: "Lien de réinitialisation invalide ou expiré.",
+      };
+    }
+
+    //Vérificatio du token
+    let payload;
+    try {
+      payload = jwt.verify(token, process.env.JWT_SECRET);
+    } catch {
+      throw { status: 400, message: "Token invalide." };
+    }
+
+    //vérification de l'ID
+    if (!mongoose.Types.ObjectId.isValid(payload.userId)) {
+      throw { status: 400, message: "Token invalide." };
+    }
+
+    // récupération de l'user
+    const user = await User.findById(payload.userId).session(mongoSession);
+    if (!user) {
+      throw {
+        status: 400,
+        message: "Aucun utilisateur ne correspond à cet ID.",
+      };
+    }
+
+    // hash du nouveau mot de passe
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(password, salt);
+    await user.save({ session: mongoSession });
+
+    //marquer le token comme utilisé et invalider mes autres
+    dbToken.used = true;
+    await dbToken.save({ session: mongoSession });
+
+    await PasswordResetToken.updateMany(
+      {
+        token: { $ne: token },
+        userId: payload.userId,
+        used: false,
+      },
+      { $set: { used: true } },
+      { session: mongoSession }
+    );
 
     await mongoSession.commitTransaction();
   } catch (error) {
