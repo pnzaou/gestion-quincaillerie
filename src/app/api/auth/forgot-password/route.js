@@ -1,22 +1,22 @@
 import { NextResponse } from "next/server";
 
 import {
-  parsePasswordResetConfirmDto,
-  parsePasswordResetRequestDto,
+  parseForgotPasswordConfirmDto,
+  parseForgotPasswordRequestDto,
 } from "@/dtos/auth.dto";
 import {
-  confirmPasswordReset,
-  requestPasswordReset,
+  confirmForgotPasswordReset,
+  requestForgotPasswordReset,
 } from "@/services/auth.service";
 
 export const POST = async (req) => {
   try {
     // validation
     const body = await req.json();
-    const dto = parsePasswordResetRequestDto(body);
+    const dto = parseForgotPasswordRequestDto(body);
 
     //Traitement
-    await requestPasswordReset(dto);
+    await requestForgotPasswordReset(dto);
 
     return NextResponse.json(
       {
@@ -44,9 +44,9 @@ export const POST = async (req) => {
 export const PATCH = async (req) => {
   try {
     const body = await req.json();
-    const dto = parsePasswordResetConfirmDto(body);
+    const dto = parseForgotPasswordConfirmDto(body);
 
-    await confirmPasswordReset(dto);
+    await confirmForgotPasswordReset(dto);
 
     return NextResponse.json(
       {

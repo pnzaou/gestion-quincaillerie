@@ -27,7 +27,7 @@ export const paseCreateUserDto = (body) => {
   return { nom, prenom, email, password, role };
 };
 
-export function parsePasswordResetRequestDto(body) {
+export function parseForgotPasswordRequestDto(body) {
   const { email } = body;
   if (!email) {
     throw { status: 400, message: "Veuillez renseigner votre email." };
@@ -38,7 +38,7 @@ export function parsePasswordResetRequestDto(body) {
   return { email };
 }
 
-export function parsePasswordResetConfirmDto(body) {
+export function parseForgotPasswordConfirmDto(body) {
   const { token, password, confirmPassword } = body;
 
   if (!token) {

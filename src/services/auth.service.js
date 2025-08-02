@@ -74,7 +74,7 @@ export const createUser = async (dto, sessionData) => {
   }
 };
 
-export const requestPasswordReset = async (dto) => {
+export const requestForgotPasswordReset = async (dto) => {
   await dbConnection();
   const mongoSession = await mongoose.startSession();
   mongoSession.startTransaction();
@@ -137,7 +137,7 @@ export const requestPasswordReset = async (dto) => {
   }
 };
 
-export const confirmPasswordReset = async (dto) => {
+export const confirmForgotPasswordReset = async (dto) => {
   await dbConnection();
   const mongoSession = await mongoose.startSession();
   mongoSession.startTransaction();
