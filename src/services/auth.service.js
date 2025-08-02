@@ -111,7 +111,7 @@ export const requestForgotPasswordReset = async (dto) => {
     );
 
     //Envoie du mail
-    const resetLink = `${process.env.NEXT_PUBLIC_APP_URL}/forgot-password?token=${token}`;
+    const resetLink = `${process.env.NEXT_PUBLIC_APP_URL}/forgotten-password-change?token=${token}`;
     const { error } = await resend.emails.send({
       from: "StockIt <onboarding@resend.dev>",
       to: email,
