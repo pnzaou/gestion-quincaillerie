@@ -60,3 +60,29 @@ export function parseForgotPasswordConfirmDto(body) {
 
   return { token, password };
 }
+
+export function parsePasswordChangeDto(body) {
+  const { token,  oldPassword, newPassword, confirmPassword } = body;
+
+  if (!token) {
+    throw { status: 400, message: "Veuillez fournir un token." };
+  }
+
+  if (!oldPassword || !newPassword || !confirmPassword) {
+    throw { status: 400, message: "Tous les champs sont obligatoires." };
+  }
+
+  if (newPassword !== confirmPassword) {
+    throw { status: 400, message: "Les deux mots de passe sont différents." };
+  }
+
+  if (!mdpRegex.test(newPassword)) {
+    throw {
+      status: 400,
+      message:
+        "Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial."
+    };
+  }
+
+  return { token, oldPassword, newPassword };
+}
