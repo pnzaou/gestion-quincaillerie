@@ -86,7 +86,7 @@ export function LoginForm({className, ...props}) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)}>
+          <form onSubmit={handleSubmit(onSubmit)} noValidate>
             <div className="flex flex-col gap-6">
               <div className="grid gap-3">
                 <Label htmlFor="email">E-mail</Label>
@@ -94,7 +94,6 @@ export function LoginForm({className, ...props}) {
                   id="email"
                   type="email"
                   placeholder="m@example.com"
-                  required
                   {...register("email")}
                 />
                 {errors?.email && <span className="
@@ -116,7 +115,6 @@ export function LoginForm({className, ...props}) {
                   <Input 
                     id="password" 
                     type={showPassword ? "text" : "password"}
-                    required
                     {...register("password")}
                   />
                    <button
