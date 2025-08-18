@@ -17,6 +17,8 @@ import toast from "react-hot-toast";
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { userResetPassword } from "@/schemas";
 
 export function ForgottenPasswordChangeForm({ className, ...props }) {
   const router = useRouter();
@@ -25,16 +27,19 @@ export function ForgottenPasswordChangeForm({ className, ...props }) {
 
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const mdpRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
 
   const {
     handleSubmit,
     register,
-    watch,
     formState: { errors },
-  } = useForm();
-
-  const passwordValue = watch("password", "");
+  } = useForm({
+    mode: "onChange",
+    defaultValues: {
+      password: "",
+      confirmPassword: ""
+    },
+    resolver: yupResolver(userResetPassword)
+  });
 
   const onSubmit = async (data) => {
     if (!token) {
@@ -84,18 +89,7 @@ export function ForgottenPasswordChangeForm({ className, ...props }) {
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    {...register("password", {
-                      required: "Champ requis !",
-                      pattern: {
-                        value: mdpRegex,
-                        message:
-                          "Min. 8 car., 1 majuscule, 1 minuscule, 1 chiffre, 1 spécial",
-                      },
-                      min: {
-                        value: 8,
-                        message: "Au moins 8 caractères",
-                      },
-                    })}
+                    {...register("password")}
                   />
                   <button
                     type="button"
@@ -105,9 +99,9 @@ export function ForgottenPasswordChangeForm({ className, ...props }) {
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
-                {errors.password && (
-                  <span className="mt-2 text-sm text-red-500">
-                    {errors.password.message}
+                {errors?.password && (
+                  <span className="mt-2 text-xs text-red-500">
+                    {errors?.password.message}
                   </span>
                 )}
               </div>
@@ -117,12 +111,7 @@ export function ForgottenPasswordChangeForm({ className, ...props }) {
                   <Input
                     id="confirmPassword"
                     type={showPassword ? "text" : "password"}
-                    {...register("confirmPassword", {
-                      required: "Champ requis !",
-                      validate: (val) =>
-                        val === passwordValue ||
-                        "Les deux mots de passe doivent correspondre",
-                    })}
+                    {...register("confirmPassword")}
                   />
                   <button
                     type="button"
@@ -132,9 +121,9 @@ export function ForgottenPasswordChangeForm({ className, ...props }) {
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
-                {errors.confirmPassword && (
+                {errors?.confirmPassword && (
                   <span className="mt-2 text-sm text-red-500">
-                    {errors.confirmPassword.message}
+                    {errors?.confirmPassword.message}
                   </span>
                 )}
               </div>

@@ -15,11 +15,16 @@ import Link from "next/link"
 import { useForm } from "react-hook-form"
 import toast from "react-hot-toast"
 import { useState } from "react"
+import { yupResolver } from "@hookform/resolvers/yup"
+import { userForgotPassword } from "@/schemas"
 
 export function ForgottenPasswordRequestForm({className, ...props}) {
   const [isLoading, setIsLoading] = useState(false)
-  const { handleSubmit, register, formState: { errors }, setValue } = useForm()
-  const emailRegex = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/
+  const { handleSubmit, register, formState: { errors }, setValue } = useForm({
+    mode: "onChange",
+    defaultValues: { email: "" },
+    resolver: yupResolver(userForgotPassword)
+  })
 
   const onSubmit = async (data) => {
       try {
@@ -66,15 +71,12 @@ export function ForgottenPasswordRequestForm({className, ...props}) {
                   type="email"
                   placeholder="m@example.com"
                   required
-                  {...register("email", {
-                    required: true,
-                    pattern: emailRegex
-                  })}
+                  {...register("email")}
                 />
-                {errors.email && <span className="
+                {errors?.email && <span className="
                   mt-2 text-sm text-red-500
                 ">
-                  Champ requis! Veuillez saisir un email valid
+                  {errors?.email.message}
                 </span>}
               </div>
               <div className="flex flex-col gap-3">
