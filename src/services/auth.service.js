@@ -241,7 +241,7 @@ export const sendResetForLoggedUser = async (session) => {
     const resetLink = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${token}`
 
     const { error } = await resend.emails.send({
-      from: "Support Quincallerie <onboarding@resend.dev>",
+      from: "StockIt <onboarding@resend.dev>",
       to: email,
       subject: "Confirmation de la modification de votre mot de passe",
       react: <ComfirmResetPassword userFullName={(name || "").split(" ")[0]} resetLink={resetLink}/>
@@ -268,5 +268,86 @@ export const sendResetForLoggedUser = async (session) => {
     throw error
   } finally {
     mongoSession.endSession()
+  }
+}
+
+export const confirmChangePassword = async (session, dto) => {
+  await dbConnection()
+  const mongoSession = await mongoose.startSession()
+  mongoSession.startTransaction()
+
+  try {
+    const { token, oldPassword, newPassword } = dto;
+    const userIdFromSession = sessionData?.user?.id;
+
+    // 1) retrouver le token en base
+    const dbToken = await PasswordResetToken.findOne({ token }).session(mongoSession);
+    if (!dbToken || dbToken.used || new Date(dbToken.expiresAt).getTime() < Date.now()) {
+      throw { status: 400, message: "Lien de réinitialisation invalide ou expiré." };
+    }
+
+    // 2) vérifier le JWT
+    let payload;
+    try {
+      payload = jwt.verify(token, process.env.JWT_SECRET);
+    } catch {
+      throw { status: 400, message: "Token invalide." };
+    }
+
+    // 3) vérifier l'ID de session
+    if (!userIdFromSession || !mongoose.Types.ObjectId.isValid(userIdFromSession)) {
+      throw { status: 400, message: "Veuillez fournir un ID valide." };
+    }
+    if (userIdFromSession !== payload.userId) {
+      throw { status: 403, message: "Utilisateur non autorisé à utiliser ce token." };
+    }
+
+    // 4) récupérer l'utilisateur
+    const user = await User.findById(userIdFromSession).session(mongoSession);
+    if (!user) {
+      throw { status: 400, message: "Aucun utilisateur ne correspond à cet ID." };
+    }
+
+    // 5) vérifier l'ancien mot de passe
+    const isOldOk = await bcrypt.compare(oldPassword, user.password);
+    if (!isOldOk) {
+      throw { status: 400, message: "Ancien mot de passe incorrect." };
+    }
+
+    // 6) hash du nouveau mot de passe et sauvegarde
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    await user.save({ session: mongoSession });
+
+    // 7) marquer token utilisé et invalider les autres
+    dbToken.used = true;
+    await dbToken.save({ session });
+
+    await PasswordResetToken.updateMany(
+      { token: { $ne: token }, userId: payload.userId, used: false },
+      { $set: { used: true } },
+      { session }
+    );
+
+    // 8) enregistrer l'historique
+    await History.create(
+      [
+        {
+          user: user._id,
+          actions: "update",
+          resource: "password",
+          resourceId: user._id,
+          description: `Modification du mot de passe de l'utilisateur ${user.name || user.prenom || user.email}`
+        }
+      ],
+      { session: mongoSession }
+    );
+
+    await mongoSession.commitTransaction();
+  } catch (error) {
+    await mongoSession.abortTransaction();
+    throw error;
+  } finally {
+    mongoSession.endSession();
   }
 }
