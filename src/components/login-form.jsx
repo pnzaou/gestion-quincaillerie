@@ -18,14 +18,22 @@ import toast from "react-hot-toast"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { Eye, EyeOff } from "lucide-react"
+import { yupResolver } from "@hookform/resolvers/yup"
+import { userLoginSchema } from "@/schemas/login.schema"
 
 export function LoginForm({className, ...props}) {
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-  const { handleSubmit, register, formState: { errors } } = useForm()
   const router = useRouter()
-  const mdpRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/
-  const emailRegex = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/
+
+  const { handleSubmit, register, formState: { errors } } = useForm({
+    mode: "onChange",
+    defaultValues: {
+      email: "",
+      password: ""
+    },
+    resolver: yupResolver(userLoginSchema)
+  })
 
   const onSubmit = async (data) => {
     setIsLoading(true)
@@ -87,15 +95,12 @@ export function LoginForm({className, ...props}) {
                   type="email"
                   placeholder="m@example.com"
                   required
-                  {...register("email", {
-                    required: true,
-                    pattern: emailRegex
-                  })}
+                  {...register("email")}
                 />
-                {errors.email && <span className="
-                  mt-2 text-sm text-red-500
+                {errors?.email && <span className="
+                  mt-2 text-xs text-red-500
                 ">
-                  Champ requis! Veuillez saisir un email valid
+                  {errors?.email.message}
                 </span>}
               </div>
               <div className="grid gap-3">
@@ -112,11 +117,7 @@ export function LoginForm({className, ...props}) {
                     id="password" 
                     type={showPassword ? "text" : "password"}
                     required
-                    {...register("password", {
-                      required: true,
-                      pattern: mdpRegex,
-                      min: 8
-                    })}
+                    {...register("password")}
                   />
                    <button
                     type="button"
@@ -126,10 +127,10 @@ export function LoginForm({className, ...props}) {
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
-                {errors.password && <span className="
-                  mt-2 text-sm text-red-500
+                {errors?.password && <span className="
+                  mt-2 text-sx text-red-500
                 ">
-                  Champ requis! Minimum: 1 maj, 1 min, 1 chiffre, 1 spé, 8 car
+                  {errors?.password.message}
                 </span>}
               </div>
               <div className="flex flex-col gap-3">
