@@ -6,89 +6,28 @@ import mongoose from "mongoose"
 import { getServerSession } from "next-auth"
 import { NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
-import { resend } from "@/lib/resend"
-import ComfirmResetPassword from "@/components/email/Comfirm-reset-password"
 import jwt from "jsonwebtoken"
 import PasswordResetToken from "@/models/PasswordResetToken.model"
 import History from "@/models/History.model"
 
-export const GET = withAuth( async (req) => {
-    const mongoSession = await mongoose.startSession()
-    mongoSession.startTransaction()
+import { sendResetForLoggedUser } from "@/services/auth.service"
 
+export const GET = withAuth( async (req) => {
     try {
         const session = await getServerSession(authOptions)
-        const { email, name, id } = session.user
-        await dbConnection()
-
-        if(!email) {
-            console.error("Impossible de récupérer l'email de l'utilisateur connecté.")
-            return NextResponse.json({
-                message: "Impossible de récupérer l'email de l'utilisateur connecté.",
-                success: false,
-                error: true
-            }, { status: 400 })
-        }
-
-        const token = jwt.sign(
-            { userId: id, userEmail: email },
-            process.env.JWT_SECRET,
-            { expiresIn: "15min" }
-        )
-
-        await PasswordResetToken.create([{
-            userId: id,
-            token,
-            expiresAt: Date.now() + 15 * 60 * 1000,
-            used: false
-        }], { session: mongoSession })
-
-        const resetLink = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${token}`
-        
-        const { error } = await resend.emails.send({
-            from: "Support Quincallerie <onboarding@resend.dev>",
-            to: email,
-            subject: "Confirmation de la modification de votre mot de passe",
-            react: <ComfirmResetPassword userFullName={name.split(" ")[0]} resetLink={resetLink}/>
-        })
-
-        if(error) {
-            await mongoSession.abortTransaction()
-            mongoSession.endSession()
-            console.error("Erreur lors de l'envoie du mail de la confirmation de la modification du mot de passe: ", error)
-            return NextResponse.json({
-                message: "Erreur! Veuillez réessayer.",
-                success: false,
-                error: true
-            }, { status: 500 })
-        }
-
-        await History.create([{
-            user: id,
-            actions: "update",
-            resource: "password",
-            resourceId: id,
-            description: `L'utilisateur ${name} a envoyé une demande de modification de son mot de passe.`
-        }], { session: mongoSession })
-
-        await mongoSession.commitTransaction()
-        mongoSession.endSession()
+        await sendResetForLoggedUser(session)
 
         return NextResponse.json({
-            message: "Un email de confirmation a été envoyé à votre adresse.",
+            message: "Un email de confirmation vous a été envoyé.",
             success: true,
             error: false
         }, { status: 200 }) 
         
     } catch (error) {
-        await mongoSession.abortTransaction()
-        mongoSession.endSession()
-        console.error("Erreur lors de l'envoie du mail de la confirmation de la modification du mot de passe: ", error)
-        return NextResponse.json({
-            message: "Erreur! Veuillez réessayer.",
-            success: false,
-            error: true
-        }, { status: 500 })
+        const status = error.status || 500;
+        const message = error.message || "Erreur! Veuillez réessayer.";
+        console.error("GET /auth/send-reset :", error);
+        return NextResponse.json({ message, success: false, error: true }, { status });
     }
 })
 

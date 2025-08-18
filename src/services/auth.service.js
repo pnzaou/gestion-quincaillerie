@@ -210,3 +210,63 @@ export const confirmForgotPasswordReset = async (dto) => {
     mongoSession.endSession();
   }
 };
+
+export const sendResetForLoggedUser = async (session) => {
+  await dbConnection()
+  const mongoSession = await mongoose.startSession()
+  mongoSession.startTransaction()
+
+  try {
+    if(!session || !session.user || !session.user.email) {
+      throw {status: 400,message: "Impossible de récupérer l'email de l'utilisateur connecté."}
+    }
+    const { id, email, name } = session.user;
+
+    const token = jwt.sign(
+      { userId: id, userEmail: email },
+      process.env.JWT_SECRET,
+      { expiresIn: "15min" }
+    )
+
+    await PasswordResetToken.create(
+      [{
+        userId: id,
+        token,
+        expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+        used: false
+      }],
+      { session: mongoSession }
+    )
+
+    const resetLink = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${token}`
+
+    const { error } = await resend.emails.send({
+      from: "Support Quincallerie <onboarding@resend.dev>",
+      to: email,
+      subject: "Confirmation de la modification de votre mot de passe",
+      react: <ComfirmResetPassword userFullName={(name || "").split(" ")[0]} resetLink={resetLink}/>
+    })
+
+    if (error) {
+      throw { status: 500, message: "Erreur lors de l'envoi de l'email." };
+    }
+
+    await History.create(
+      [{
+        user: id,
+        actions: "update",
+        resource: "password",
+        resourceId: id,
+        description: `L'utilisateur ${name} a envoyé une demande de modification de son mot de passe.`,
+      }],
+      { session: mongoSession }
+    )
+
+    await mongoSession.commitTransaction()
+  } catch (error) {
+    await mongoSession.abortTransaction()
+    throw error
+  } finally {
+    mongoSession.endSession()
+  }
+}
