@@ -2,126 +2,41 @@ import authOptions from "@/lib/auth"
 import dbConnection from "@/lib/db"
 import Sale from "@/models/Sale.model"
 import { withAuth } from "@/utils/withAuth"
-import mongoose from "mongoose"
 import { getServerSession } from "next-auth"
 import { NextResponse } from "next/server"
-
-import { generateReference } from "@/utils/generateReference"
-import { getOrCreateClient } from "@/utils/handleClient"
-import { validateAndUpdateProducts } from "@/utils/validateAndUpdateProducts"
-import History from "@/models/History.model"
 import Client from "@/models/Client.model"
 import User from "@/models/User.model"
-import Payment from "@/models/Payment.model"
-import { getSaleDescription } from "@/utils/getSaleDescription"
+import { validateSalePayload } from "@/dtos/sale.dto"
+import { createSale } from "@/services/sale.service"
 
 export const POST = withAuth(async (req) => {
-    await dbConnection()
-    const mongoSession = await mongoose.startSession()
-    mongoSession.startTransaction()
+    await dbConnection();
     
     try {
         const session = await getServerSession(authOptions)
-        const payload = await req.json()
+        const rawPayload = await req.json()
 
-        const now = new Date(payload.dateExacte || Date.now())
-
-        // Génération de la référence de vente
-        const reference = await generateReference(now, mongoSession)
-
-        if(payload.status === "partial" || payload.status === "pending") {
-            if(!payload.client) {
-                return NextResponse.json({
-                    message: "Infos du client obligatoires en cas d’acompte ou de vente à crédit.",
-                    success: false,
-                    error: true
-                }, { status: 400 })
-            }
+        const { valid, errors, payload } = validateSalePayload(rawPayload)
+        if (!valid) {
+          return NextResponse.json({message: "Données invalides", errors, success: false, error: true,},{ status: 400 });
         }
 
-        // Création ou récupération du client
-        const clientIdOrResponse = await getOrCreateClient(payload.client, mongoSession)
-        if (clientIdOrResponse instanceof Response) return clientIdOrResponse
-        const clientId = clientIdOrResponse
-        
-        // Vérification des produits et mise à jour du stock
-        const productValidationResponse = await validateAndUpdateProducts(payload.items, mongoSession)
-        if(productValidationResponse) return productValidationResponse
+        const sale = await createSale({ rawPayload: payload, user: session?.user })
 
-        if(!payload.status) return NextResponse.json({
-            message: "Veuillez renseigner le statut de la vente.",
-            success: false,
-            error: true
-        }, { status: 400 })
-
-        let data = {
-            reference,
-            client: clientId,
-            items: payload.items,
-            dateExacte: payload.dateExacte || now,
-            remise: payload.remise || 0,
-            total: payload.total,
-            vendeur: session?.user.id,
-            status: payload.status,
-        }
-
-        if( payload.status === "partial" || payload.status === "pending") {
-            if(payload.status === "partial" && !payload.amountPaid) return NextResponse.json({
-                message: "Veuillez renseigner le montant reçu.",
-                success: false,
-                error: true
-            }, { status: 400 })
-
-            data.amountDue = payload.total - (payload.amountPaid || 0)
-        }
-
-        const sale = await Sale.create([
-            data
-        ], { session: mongoSession })
-
-        if( payload.status === "partial" || payload.status === "paid") {
-            await Payment.create([{
-                sale: sale[0]._id,
-                amount: payload.status === "paid" ? payload.total : payload.amountPaid,
-                paymentMethod: payload.paymentMethod,
-            }], { session: mongoSession })
-        }
-
-        const description = getSaleDescription({
-            status: payload.status,
-            total: payload.total,
-            amountPaid: payload.amountPaid,
-            reference: sale[0].reference,
-            userName: session?.user.name,
-        })
-
-        await History.create([{
-            user: session?.user.id,
-            actions: "create",
-            resource: "sale",
-            resourceId: sale[0]._id,
-            description
-        }], { session: mongoSession })
-
-        await mongoSession.commitTransaction()
         return NextResponse.json({
             message: "Vente enregistrée avec succès.",
             success: true,
             error: false,
-            data: sale[0]
+            data: sale
         }, { status: 201 })
 
-    } catch (error) {
-        await mongoSession.abortTransaction()
-        console.error("Erreur lors de la création de la vente : ", error)
+    } catch (err) {
+        console.error("Erreur route POST /sales :", err)
+        if (err instanceof HttpError || (err.status && err.message)) {
+        return NextResponse.json({ message: err.message, success: false, error: true }, { status: err.status || 400 })
+        }
 
-        return NextResponse.json({
-            message: "Erreur! Veuillez réessayer.",
-            success: false,
-            error: true
-        }, { status: 500 })
-    } finally {
-        mongoSession.endSession()
+        return NextResponse.json({ message: "Erreur! Veuillez réessayer.", success: false, error: true }, { status: 500 })
     }
 })
 
