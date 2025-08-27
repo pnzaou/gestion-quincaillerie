@@ -7,8 +7,8 @@ const ClientSchema = new mongoose.Schema({
     adresse: {type: String, required: false},
 }, {
     timestamps: true
-})
+});
 
-const Client = mongoose.models.Client || mongoose.model("Client", ClientSchema)
+const Client = mongoose.models.Client || mongoose.model("Client", ClientSchema);
 
-export default Client 
+export default Client;
