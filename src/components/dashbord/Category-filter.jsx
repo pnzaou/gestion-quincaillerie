@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
@@ -8,11 +8,11 @@ import {
   CommandEmpty,
   CommandGroup,
   CommandInput,
-  CommandItem
+  CommandItem,
 } from "../ui/command";
 import { Checkbox } from "../ui/checkbox";
 
-export default function CategoryFilter({ selected, toggleCategory}) {
+export default function CategoryFilter({ selected, toggleCategory }) {
   const [categories, setCategories] = useState([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -25,7 +25,10 @@ export default function CategoryFilter({ selected, toggleCategory}) {
         const body = await res.json();
 
         if (!res.ok) {
-          console.error("Impossible de récupérer les catégories :", body.message);
+          console.error(
+            "Impossible de récupérer les catégories :",
+            body.message
+          );
           return;
         }
 
@@ -43,7 +46,7 @@ export default function CategoryFilter({ selected, toggleCategory}) {
   if (loading) {
     return (
       <div
-        className="w-[200px] h-10 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse"
+        className="w-40 h-10 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse"
         role="status"
         aria-label="Chargement des catégories"
       />
@@ -56,20 +59,20 @@ export default function CategoryFilter({ selected, toggleCategory}) {
         <Button
           variant="outline"
           role="combobox"
-          className="w-[200px] justify-between"
+          className="w-40 justify-between"
         >
           {selected.length > 0
-            ? `${selected.length} catégories sélectionnées`
-            : 'Toutes les catégories'}
+            ? `${selected.length} catégories`
+            : "Toutes les catégories"}
         </Button>
       </PopoverTrigger>
 
-      <PopoverContent className="w-[200px] p-0">
+      <PopoverContent className="w-full sm:w-56 p-0">
         <Command>
           <CommandInput placeholder="Rechercher..." />
           <CommandEmpty>Aucune catégorie trouvée.</CommandEmpty>
           <CommandGroup>
-            {categories.map(cat => (
+            {categories.map((cat) => (
               <CommandItem
                 key={cat._id}
                 onSelect={() => toggleCategory(cat._id)}

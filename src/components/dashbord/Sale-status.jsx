@@ -14,6 +14,7 @@ const SaleStatus = () => {
 
     const saleStatus = useSaleStore((state) => state.saleStatus);
     const setSaleStatus = useSaleStore((state) => state.setSaleStatus);
+    const cart = useSaleStore((state) => state.cart);
 
     return (
         <Select
@@ -21,6 +22,7 @@ const SaleStatus = () => {
           onValueChange={(val) => {
             setSaleStatus(val);
           }}
+          disabled={!cart.length > 0}
         >
             <SelectTrigger className="w-full">
                 <SelectValue placeholder="Sélectionnez le mode de paiement"/>

@@ -35,8 +35,8 @@ const ArticlesListCommande = ({ initialArt, currentPage, initialTotalPages, sear
     return (
         <>
             <div className=" space-y-4">
-                <div className="flex items-center space-x-2 sticky top-0 bg-white z-10">
-                    <div>
+                <div className="flex gap-5 items-center justify-between sticky top-0 bg-white z-10 w-full px-4 py-2">
+                    <div className="xl:flex-1">
                         <ArticlesHeader
                         searchTerm={searchTerm}
                         onSearchChange={handleSearchChange}
@@ -48,7 +48,7 @@ const ArticlesListCommande = ({ initialArt, currentPage, initialTotalPages, sear
                         tabSize={tabSize}
                         />
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex items-center gap-5">
                         <OrderSupplierSelector/>
                     </div>
 

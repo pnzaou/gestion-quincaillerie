@@ -17,16 +17,17 @@ function DetailsVentePanier() {
   const saleStatus = useSaleStore((state) => state.saleStatus);
   const total = useSaleStore((state) => state.total());
   const createSale = useSaleStore((state) => state.createSale);
-  const amountPaid = useSaleStore((state) => state.amountPaid);
-  const setAmountPaid = useSaleStore((state) => state.setAmountPaid);
+  const paymentsSum = useSaleStore((s) => s.paymentsSum());
+
+  const remaining = total - paymentsSum;
 
   // formate la date pour l'afficher dans l'input YYYY-MM-DD
   const isoDate = saleDate ? format(saleDate, "yyyy-MM-dd") : "";
 
   return (
-    <div className="space-y-4 w-[250px]">
+    <div className="space-y-4 w-full">
       <div>
-        <Label className="mb-3">Date de la vente</Label>
+        <Label className="mb-2">Date de la vente</Label>
         <Input
           type="date"
           value={isoDate}
@@ -46,7 +47,7 @@ function DetailsVentePanier() {
       </div>
 
       <div>
-        <Label className="mb-3">Remise %</Label>
+        <Label className="mb-2">Remise %</Label>
         <Input
           type="number"
           value={discount}
@@ -58,40 +59,25 @@ function DetailsVentePanier() {
       </div>
 
       <div>
-        <Label className="mb-3">
+        <Label className="mb-2">
           Statut <Required />
         </Label>
         <SaleStatus />
       </div>
 
-      {saleStatus === "partial" && (
-        <div>
-          <Label>
-            Montant reçu <Required />
-          </Label>
-          <Input
-            type="number"
-            value={amountPaid}
-            onChange={(e) => setAmountPaid(Number(e.target.value))}
-            min={0}
-            step={0.01}
-            max={total}
-          />
-        </div>
-      )}
-
       {(saleStatus === "paid" || saleStatus === "partial") && (
         <div>
-          <Label className="mb-3">
-            Mode de paiement <Required />
+          <Label className="mb-2">
+            Paiements <Required />
           </Label>
           <PaymentMethod />
+          { saleStatus === "partial" && <div className="mt-2 text-sm">Reste à payer : {remaining.toFixed(2)} FCFA</div>}
         </div>
       )}
 
       <div className="font-semibold">Total : {total.toFixed(2)} fcfa</div>
       <button
-        className="w-full bg-[#0084D1] hover:bg-[#0042d1] text-white py-2 rounded"
+        className="w-full bg-[#0084D1] hover:bg-[#0042d1] text-white py-2 rounded hover:cursor-pointer"
         onClick={createSale}
         disabled={loading}
       >

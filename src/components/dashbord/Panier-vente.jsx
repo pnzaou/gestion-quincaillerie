@@ -33,27 +33,38 @@ const PanierVente = ({ localStocks, setLocalStocks }) => {
             <ShoppingCart className="mr-1 h-4 w-4" /> Panier
           </Button>
           {cart.length > 0 && (
-            <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-blue-500 rounded-full">
+            <span className="absolute -top-2 -right-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-blue-500 rounded-full">
               {cart.reduce((a, c) => a + c.quantity, 0)}
             </span>
           )}
         </div>
       </DialogTrigger>
-      <DialogContent className="min-w-4xl">
+
+      <DialogContent className="min-w-6xl">
         <DialogHeader>
           <DialogTitle>
             <p className="text-lg font-bold mb-4">Récapitulatif de la vente</p>
           </DialogTitle>
         </DialogHeader>
-        <div className="flex gap-10">
+
+        <div className="flex flex-col md:flex-row md:justify-between">
           {/* 1. Liste des articles */}
-          <ListeArticlesPanier localStocks={localStocks} setLocalStocks={setLocalStocks} />
+          <div>
+            <ListeArticlesPanier
+              localStocks={localStocks}
+              setLocalStocks={setLocalStocks}
+            />
+          </div>
 
           {/* 2. Détails de la vente */}
-          <DetailsVentePanier/>
+          <div className="md:w-80 lg:w-96">
+            <DetailsVentePanier />
+          </div>
 
           {/* 3. Infos client */}
-          <InfosClientPanier/>
+          <div className="md:w-64">
+            <InfosClientPanier />
+          </div>
         </div>
       </DialogContent>
     </Dialog>
