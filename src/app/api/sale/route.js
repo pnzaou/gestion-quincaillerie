@@ -8,21 +8,17 @@ import Client from "@/models/Client.model"
 import User from "@/models/User.model"
 import { validateSalePayload } from "@/dtos/sale.dto"
 import { createSale } from "@/services/sale.service"
+import { HttpError } from "@/services/errors.service"
 
 export const POST = withAuth(async (req) => {
     await dbConnection();
-    
+    const raw = await req.json()
+    const { valid, errors, payload } = validateSalePayload(raw)
+    if (!valid) return NextResponse.json({message: "Données invalides", errors, success: false, error: true,},{ status: 400 });
+
+    const session = await getServerSession(authOptions)
     try {
-        const session = await getServerSession(authOptions)
-        const rawPayload = await req.json()
-
-        const { valid, errors, payload } = validateSalePayload(rawPayload)
-        if (!valid) {
-          return NextResponse.json({message: "Données invalides", errors, success: false, error: true,},{ status: 400 });
-        }
-
-        const sale = await createSale({ rawPayload: payload, user: session?.user })
-
+        const sale = await createSale({ payload, user: session?.user })
         return NextResponse.json({
             message: "Vente enregistrée avec succès.",
             success: true,
@@ -35,7 +31,6 @@ export const POST = withAuth(async (req) => {
         if (err instanceof HttpError || (err.status && err.message)) {
         return NextResponse.json({ message: err.message, success: false, error: true }, { status: err.status || 400 })
         }
-
         return NextResponse.json({ message: "Erreur! Veuillez réessayer.", success: false, error: true }, { status: 500 })
     }
 })
