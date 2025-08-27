@@ -1,9 +1,7 @@
-"use client";
-
 import toast from "react-hot-toast";
 import { SaleValidationError } from "./erros";
 
-export const saleVerif = (cart, saleStatus, amountPaid, total, client, payementMethod) => {
+export const saleVerif = (cart, saleStatus, payments, total, client) => {
   if (cart.length === 0) {
     toast.error("Veuillez ajouter des articles au panier.");
     throw new SaleValidationError("PANIER_VIDE");
@@ -12,27 +10,36 @@ export const saleVerif = (cart, saleStatus, amountPaid, total, client, payementM
     toast.error("Veuillez choisir le statut de la vente.");
     throw new SaleValidationError("STATUT_VENTE_MANQUANT");
   }
-  if (saleStatus === "partial" && amountPaid <= 0) {
-    toast.error("Veuillez saisir le montant versé.");
-    throw new SaleValidationError("MONTANT_VERSE_MANQUANT");
+
+  const paymentsSum = Array.isArray(payments) ? payments.reduce((s,p) => s + Number(p.amount || 0), 0) : 0;
+
+  // Paid => paymentsSum === total
+  if (saleStatus === "paid" && paymentsSum !== total) {
+    toast.error("Le total des paiements doit être égal au total de la vente (statut reglé).");
+    throw new SaleValidationError("PAIEMENT_TOTAL_MISMATCH");
   }
-  if (saleStatus === "partial" && amountPaid > total) {
-    toast.error(
-      "L'acompte ne peut pas être supérieur au montant total de la vente."
-    );
-    throw new SaleValidationError("MONTANT_ACOMPTE_SUP_TOTAL");
+
+  // Partial => 0 < paymentsSum < total
+  if (saleStatus === "partial" && !(paymentsSum > 0 && paymentsSum < total)) {
+    toast.error("Pour un acompte (partial), le montant payé doit être > 0 et < total.");
+    throw new SaleValidationError("PARTIAL_INVALID");
   }
-  if (
-    (saleStatus === "paid" || saleStatus === "partial") &&
-    (!payementMethod || payementMethod.trim() === "")
-  ) {
-    toast.error("Veuillez choisir un mode de paiement.");
-    throw new SaleValidationError("MODE_PAIEMENT_MANQUANT");
+
+  // Pending => paymentsSum === 0
+  if (saleStatus === "pending" && paymentsSum !== 0) {
+    toast.error("Pour un statut 'pending', aucun paiement immédiat ne doit être enregistré.");
+    throw new SaleValidationError("PENDING_WITH_PAYMENTS");
   }
-  if ((saleStatus === "partial" || saleStatus === "pending") && !client) {
-    toast.error(
-      "Infos du client obligatoires en cas d’acompte ou de vente à crédit."
-    );
-    throw new SaleValidationError("INFOS_CLIENT_MANQUANT");
+
+  // Somme des paiements ne doit pas dépasser total
+  if (paymentsSum > total) {
+    toast.error("La somme des paiements dépasse le total.");
+    throw new SaleValidationError("PAYMENTS_EXCEED_TOTAL");
   }
-}; 
+
+  // Si un paiement account existe => client requis
+  if (Array.isArray(payments) && payments.some(p => String(p.method).toLowerCase() === "account") && !client) {
+    toast.error("Sélectionner un client pour utiliser le Compte client.");
+    throw new SaleValidationError("CLIENT_REQUIRED_FOR_ACCOUNT");
+  }
+};
