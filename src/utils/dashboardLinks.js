@@ -5,7 +5,7 @@ import {
     BanknotesIcon,
     Cog6ToothIcon
 } from "@heroicons/react/24/outline"
-import { FileText, LayoutDashboard } from "lucide-react"
+import { FileText, LayoutDashboard, Truck } from "lucide-react"
 
 export const links = [
     {
@@ -65,7 +65,7 @@ export const links = [
     {
       name: "Fournisseurs",
       href: "/dashboard/fournisseurs",
-      icon: "",
+      icon: Truck,
       roles: ["admin", "comptable"],
       subLinks: [
         { name: "Ajouter", href: "/dashboard/fournisseurs/ajouter" },

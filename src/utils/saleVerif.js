@@ -31,6 +31,12 @@ export const saleVerif = (cart, saleStatus, payments, total, client) => {
     throw new SaleValidationError("PENDING_WITH_PAYMENTS");
   }
 
+  // Pending => client requis
+  if (saleStatus === "pending" && !client) {
+    toast.error("Sélectionner un client pour enregistrer une dette.");
+    throw new SaleValidationError("CLIENT_REQUIRED_FOR_PENDING");
+  }
+
   // Somme des paiements ne doit pas dépasser total
   if (paymentsSum > total) {
     toast.error("La somme des paiements dépasse le total.");

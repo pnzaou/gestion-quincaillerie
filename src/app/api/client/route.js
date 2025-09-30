@@ -95,14 +95,33 @@ export const GET = withAuth(async (req) => {
     try {
         await dbConnection()
 
-        const clients = await Client.find()
+        const { searchParams } = new URL(req.url)
+        const page = parseInt(searchParams.get("page") || "1")
+        const limit = parseInt(searchParams.get("limit") || "0")
+        const search = searchParams.get("search") || ""
+        const skip = (page - 1) * limit
+
+        const query = search
+        ? { nomComplet: { $regex: search, $options: "i" } }
+        : {}
+
+        const [clients, total] = await Promise.all([
+            Client.find(query)
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit),
+            Client.countDocuments(query)
+        ])
 
         return NextResponse.json({
-            message: "Clients récupérés avec succès.",
+            message: clients.length === 0? "Aucun client enregistré." : "Clients récupérés avec succès.",
+            data: clients,
+            total,
+            currentPage: page,
+            totalPages: Math.ceil(total / limit),
             success: true,
             error: false,
-            data: clients
-        }, { status: 200 })
+        }, { status: 200, headers: { "Cache-Control": "no-store" } })
     } catch (error) {
         console.error("Erreur lors de la récupération des clients: ", error)
 

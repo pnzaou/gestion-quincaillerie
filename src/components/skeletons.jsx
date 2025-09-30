@@ -1,6 +1,102 @@
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+
 // Loading animation
 const shimmer =
   'before:absolute before:inset-0 before:-translate-x-full before:animate-[shimmer_2s_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/60 before:to-transparent';
+
+export function StatItemsSkeleton() {
+  const items = [
+    { id: 1, currency: true },
+    { id: 2, currency: true },
+    { id: 3, currency: true },
+    { id: 4, currency: true },
+    { id: 5, currency: false },
+    { id: 6, currency: false },
+    { id: 7, currency: false },
+    { id: 8, currency: false },
+  ];
+
+  return (
+    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      {items.map((item) => (
+        <div
+          key={item.id}
+          className="relative flex items-center gap-3 p-4 bg-white rounded-lg shadow-sm animate-pulse"
+          aria-hidden="true"
+        >
+          {/* icône placeholder : element RELATIVE car shimmer before:absolute se positionnera par rapport à lui */}
+          <div
+            className={`${shimmer} relative overflow-hidden p-2 rounded-md bg-gray-50`}
+            style={{ minWidth: 40 }}
+          >
+            <div className="w-6 h-6 bg-gray-200 rounded" />
+          </div>
+
+          {/* texte placeholder : aussi RELATIVE pour shimmer */}
+          <div className="flex-1 min-w-0">
+            <div
+              className={`${shimmer} relative overflow-hidden mb-2 h-3 w-36 rounded bg-gray-200`}
+            />
+            <div
+              className={`${shimmer} relative overflow-hidden h-5 rounded bg-gray-200 ${item.currency ? "w-40" : "w-24"}`}
+            />
+          </div>
+
+          {/* container ABSOLUTE positionné bottom-right (sans relative) */}
+          <div className="absolute bottom-2 right-2">
+            {/* child RELATIVE pour que le shimmer before:absolute se positionne correctement */}
+            <div className={`${shimmer} relative overflow-hidden w-8 h-8 rounded-full bg-gray-200`} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export const ChartSkeleton = () => {
+  return (
+    <Card className="bg-gradient-card border-border shadow-medium">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <div className="h-6 bg-muted rounded w-32 animate-pulse"></div>
+        <div className="h-8 bg-muted rounded w-20 animate-pulse"></div>
+      </CardHeader>
+      <CardContent>
+        <div className="h-8 bg-muted rounded w-24 mb-2 animate-pulse"></div>
+        <div className="h-3 bg-muted rounded w-20 mb-4 animate-pulse"></div>
+        <div className="h-[300px] bg-muted rounded animate-pulse"></div>
+      </CardContent>
+    </Card>
+  );
+};
+
+export const ProductListSkeleton = () => {
+  return (
+    <Card className="bg-gradient-card border-border shadow-medium">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+        <div className="h-6 bg-muted rounded w-28 animate-pulse"></div>
+        <div className="h-8 bg-muted rounded w-32 animate-pulse"></div>
+      </CardHeader>
+      <CardContent>
+        <div className="h-3 bg-muted rounded w-40 mb-4 animate-pulse"></div>
+        <div className="space-y-4">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="flex items-center space-x-4 p-3 rounded-lg">
+              <div className="w-10 h-10 bg-muted rounded-full animate-pulse"></div>
+              <div className="flex-1 space-y-2">
+                <div className="h-4 bg-muted rounded w-3/4 animate-pulse"></div>
+                <div className="h-3 bg-muted rounded w-1/2 animate-pulse"></div>
+                <div className="flex justify-between">
+                  <div className="h-3 bg-muted rounded w-16 animate-pulse"></div>
+                  <div className="h-3 bg-muted rounded w-12 animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
 
 export function CardSkeleton() {
   return (
