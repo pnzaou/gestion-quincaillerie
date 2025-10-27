@@ -28,7 +28,6 @@ const account = await ClientAccount.findOneAndUpdate(
  * Déposer de l'argent sur le compte client.
  * Retourne { account, transaction }.
 */
-
 export async function deposit(clientId, amount, {
   session = null,
   reference = null,

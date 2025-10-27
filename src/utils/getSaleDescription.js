@@ -3,13 +3,13 @@ export function getSaleDescription({ status, total, amountPaid = 0, reference, u
   
     switch (status) {
       case "paid":
-        return `${userName} a enregistré une vente de ${total} FCFA (réf. ${reference}).`;
+        return `${userName} a enregistré une vente de ${total} fcfa (réf. ${reference}).`;
   
       case "partial":
-        return `${userName} a encaissé ${amountPaid} FCFA en acompte (solde restant : ${remaining} FCFA).`;
+        return `${userName} a encaissé ${amountPaid} fcfa en acompte (solde restant : ${remaining} fcfa).`;
   
       case "pending":
-        return `${userName} a enregistré une dette client de ${total} FCFA (paiement à venir).`;
+        return `${userName} a enregistré une dette client de ${total} fcfa (paiement à venir).`;
   
       default:
         throw new Error(`Statut inconnu : ${status}`);

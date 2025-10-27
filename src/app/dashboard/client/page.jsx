@@ -18,7 +18,7 @@ const Page = async ({ searchParams }) => {
     return (
       <div className="flow-root">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Catégories</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Clients</h2>
         <p className="mt-2 text-sm text-gray-500">
             Gestion des clients
         </p>

@@ -200,6 +200,7 @@ export const useSaleStore = create((set, get) => ({
       discount,
       saleStatus,
       payments,
+      clearPayments
     } = get();
     const total = get().total();
     try {
@@ -235,6 +236,7 @@ export const useSaleStore = create((set, get) => ({
           amountPaid: 0,
           payementMethod: "",
         });
+        clearPayments();
         return;
       } else {
         const errorData = await res.json();

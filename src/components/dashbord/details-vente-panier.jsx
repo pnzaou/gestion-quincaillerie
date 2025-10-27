@@ -71,7 +71,7 @@ function DetailsVentePanier() {
             Paiements <Required />
           </Label>
           <PaymentMethod />
-          { saleStatus === "partial" && <div className="mt-2 text-sm">Reste à payer : {remaining.toFixed(2)} FCFA</div>}
+          { saleStatus === "partial" && <div className="mt-2 text-sm">Reste à payer : {remaining.toFixed(2)} fcfa</div>}
         </div>
       )}
 

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { DeleteCategory, DetailsCategory, UpdateCategory } from "./button-category";
+import { DeleteCategory, UpdateCategory, DetailsClient } from "./button-client";
 import Pagination from "./Pagination";
 import toast from "react-hot-toast";
 import { PlusIcon } from "@heroicons/react/24/outline";
@@ -48,7 +48,7 @@ const ClientTable = ({initialClient, initialTotalPages, currentPage, search}) =>
         fetch(`/api/client?page=${page}&limit=5&search=${activeSearch}`)
           .then(response => response.json())
           .then(({ data, totalPages: tp, currentPage: cp }) => {
-            setCategories(data)
+            setClients(data)
             setTotalPages(tp)
             setPage(cp)
         }).catch(error => {
@@ -149,8 +149,7 @@ const ClientTable = ({initialClient, initialTotalPages, currentPage, search}) =>
                       </div>
 
                       <div className="flex justify-end gap-2 mt-4">
-                        <DetailsCategory id={client._1d ?? client._id} />
-                        <UpdateCategory id={client._id} />
+                        <DetailsClient id={client._1d ?? client._id} />
                         <UpdateCategory id={client._id} />
                         <DeleteCategory
                           id={client._id}
@@ -206,8 +205,7 @@ const ClientTable = ({initialClient, initialTotalPages, currentPage, search}) =>
                       </td>
                       <td className="whitespace-nowrap py-4 pl-6 pr-3 text-right">
                         <div className="flex justify-end gap-2">
-                          <DetailsCategory id={client._id} />
-                          <UpdateCategory id={client._id} />
+                          <DetailsClient id={client._id} />
                           <UpdateCategory id={client._id} />
                           <DeleteCategory
                             id={client._id}

@@ -9,7 +9,7 @@ import ConfirmDialog from "./ConfirmDialog"
 export function DetailsCategory({ id }) {
     return (
       <Link
-        href={`/dashboard/categorie/liste/${id}/détails`}
+        href={`/dashboard/categorie/liste/${id}/details`}
         className="rounded-md border p-2 hover:bg-gray-100"
       >
         <EyeIcon className="w-5" />

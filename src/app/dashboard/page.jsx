@@ -21,7 +21,7 @@ const Page = async () => {
     return (
       <div>
         <div className="mb-4">
-          <h1 className="text-2xl font-semibold text-black/80">
+          <h1 className="text-2xl font-semibold text-black/70">
             Tableau de bord
           </h1>
         </div>

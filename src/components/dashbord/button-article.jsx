@@ -9,7 +9,7 @@ import { Button } from "../ui/button"
 export function DetailsArticle({ id }) {
     return (
       <Link
-        href={`/dashboard/article/stock/${id}/détails`}
+        href={`/dashboard/article/stock/${id}/details`}
         className="rounded-md border p-2 hover:bg-gray-100"
       >
         <EyeIcon className="w-5" />

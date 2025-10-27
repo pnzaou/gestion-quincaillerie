@@ -96,7 +96,7 @@ const PaymentMethod = () => {
               className="flex items-center justify-between border rounded px-2 py-1 mt-2"
             >
               <div>
-                {label} — {Number(p.amount).toFixed(2)} FCFA
+                {label} — {Number(p.amount).toFixed(2)} fcfa
               </div>
               <div className="flex gap-2">
                 <Button
@@ -114,7 +114,7 @@ const PaymentMethod = () => {
       </div>
 
       <div className="text-sm font-medium">
-        Somme paiements : {paymentsSum.toFixed(2)} FCFA
+        Somme paiements : {paymentsSum.toFixed(2)} fcfa
       </div>
     </div>
   );

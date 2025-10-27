@@ -85,7 +85,7 @@ const RevenueChart = ({ initialData }) => {
             <>
               <div className="mb-4">
                 <p className="text-2xl font-bold text-sky-600">
-                  {revenueData.total} fcfa
+                  {revenueData.total.toFixed(2)} fcfa
                 </p>
                 <p className="text-sm text-muted-foreground">
                   Total pour {selectedYear}

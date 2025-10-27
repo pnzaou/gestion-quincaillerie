@@ -63,7 +63,7 @@ export const catAliasMapping = {
       "Détail",
       "détail",
       "Détails",
-      "détails",
+      "details",
       "commentaire",
       "Commentaire",
       "Remarque",
@@ -166,7 +166,7 @@ export const productAliasMapping = {
   ],
 
   description: [
-    "description", "détails", "desc", "infos", "commentaire", "commentaires",
+    "description", "details", "desc", "infos", "commentaire", "commentaires",
     "description produit", "description_produit", "product description",
     "product_details", "note", "remarques", "info", "about", "descriptif",
     "productdesc", "detail", "infos_produit", "specifications"

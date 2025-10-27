@@ -1,0 +1,17 @@
+import './AccountTransaction.model'
+import './Category.model'
+import './Client.model'
+import './ClientAccount.model'
+import './History.model'
+import './Order.model'
+import './Outbox.model'
+import './PasswordResetToken.model'
+import './Payment.model'
+import './Product.model'
+import './Promotion.model'
+import './Quote.model'
+import './Sale.model'
+import './Supplier.model'
+import './User.model'
+
+export {}

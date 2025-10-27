@@ -6,10 +6,10 @@ import Link from "next/link"
 import { Button } from "../ui/button"
 import ConfirmDialog from "./ConfirmDialog"
 
-export function DetailsSale({ id }) {
+export function DetailsClient({ id }) {
     return (
       <Link
-        href={`/dashboard/vente/historique-vente/${id}/details`}
+        href={`/dashboard/client/${id}/details`}
         className="rounded-md border p-2 hover:bg-gray-100"
       >
         <EyeIcon className="w-5" />
@@ -17,10 +17,10 @@ export function DetailsSale({ id }) {
     )
 }
 
-export function UpdateSale({ id }) {
+export function UpdateCategory({ id }) {
     return (
       <Link
-        href={`/dashboard/vente/historique-vente/${id}/details`}
+        href={`/dashboard/categorie/liste/${id}/modification`}
         className="rounded-md border p-2 hover:bg-gray-100"
       >
         <PencilIcon className="w-5" />
@@ -28,7 +28,7 @@ export function UpdateSale({ id }) {
     )
 }
 
-export function DeleteSale({ id, open, onOpenChange, onConfirm, loading }) {
+export function DeleteCategory({ id, open, onOpenChange, onConfirm, loading }) {
 
     return (
       <>

@@ -167,7 +167,7 @@ export const getTopProducts = async (start, end, limit = 10) => {
           revenue: { $sum: { $multiply: ["$items.quantity", "$items.price"] } },
         },
       },
-      // récupérer les détails du produit
+      // récupérer les details du produit
       {
         $lookup: {
           from: Product.collection.name,

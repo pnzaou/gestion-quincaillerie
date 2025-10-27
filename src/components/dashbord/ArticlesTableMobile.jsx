@@ -30,7 +30,7 @@ const ArticlesTableMobile = ({articles, deleting, modalProdToDelete, setModalPro
                             {art.prixVenteDetail
                                 ? art.prixVenteDetail
                                 : art.prixVenteEnGros}{" "}
-                            xof
+                            fcfa
                         </p>
                         <p className="text-sm text-gray-700">
                             Stock: {art.QteStock}
