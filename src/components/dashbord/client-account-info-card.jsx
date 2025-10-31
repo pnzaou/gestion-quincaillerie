@@ -16,9 +16,11 @@ export default function ClientAccountInfoCard({ client, account, setAccount, tra
   const [depositDescription, setDepositDescription] = useState("");
   const [loading, setLoading] = useState(false)
 
+  const url = `/api/client/${client._id}/client-account`;
+
   const handleCreateAccount = async (amount) => {
     try {
-      const res = await fetch(`/api/client/${client._id}/client-account`, {
+      const res = await fetch(url, {
         method: "POST",
         body: JSON.stringify({
           amount,
@@ -26,9 +28,8 @@ export default function ClientAccountInfoCard({ client, account, setAccount, tra
         }),
       });
 
-      console.log(res);
       const data = await res.json();
-      console.log(data);
+
       if (!res.ok && res.status !== 201) {
         toast.error(data?.message || "Erreur lors de la création du compte");
         return;
@@ -47,7 +48,35 @@ export default function ClientAccountInfoCard({ client, account, setAccount, tra
     }
   };
 
-  // const handleUpdateBalance = async () => {}
+  const handleUpdateBalance = async (amount) => {
+    try {
+      const res = await fetch(url, {
+        method: "PUT",
+        body: JSON.stringify({
+          amount,
+          description: depositDescription,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok && res.status !== 200) {
+        toast.error(data?.message || "Erreur lors de la mise à jour du solde");
+        return;
+      }
+      
+      setAccount({ ...account, balance: data?.data?.account?.balance, lastUpdated: data?.data?.account?.lastUpdated });
+      setTransactions([data?.data?.transaction, ...transactions]);
+
+    } catch (error) {
+      console.error(
+        "Erreur lors de la mise à jour du solde:",
+        error
+      );
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleDeposit = async () => {
     setLoading(true)
@@ -64,25 +93,22 @@ export default function ClientAccountInfoCard({ client, account, setAccount, tra
       handleCreateAccount(amount);
     } else if (account) {
       // Add deposit to existing account
-      const newBalance = account.balance + amount;
-      setAccount({ ...account, balance: newBalance, lastUpdated: new Date() });
+      // const newBalance = account.balance + amount;
+      // setAccount({ ...account, balance: newBalance, lastUpdated: new Date() });
       
-      const newTransaction = {
-        _id: `tx${Date.now()}`,
-        account: account._id,
-        type: "deposit",
-        amount,
-        balanceAfter: newBalance,
-        description: depositDescription || "Dépôt",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      setTransactions([newTransaction, ...transactions]);
+      // const newTransaction = {
+      //   _id: `tx${Date.now()}`,
+      //   account: account._id,
+      //   type: "deposit",
+      //   amount,
+      //   balanceAfter: newBalance,
+      //   description: depositDescription || "Dépôt",
+      //   createdAt: new Date(),
+      //   updatedAt: new Date(),
+      // };
+      // setTransactions([newTransaction, ...transactions]);
       
-      toast({
-        title: "Dépôt effectué",
-        description: `${amount.toLocaleString()} FCFA ajouté au compte`,
-      });
+      handleUpdateBalance(amount);
     }
 
     setIsDialogOpen(false);
