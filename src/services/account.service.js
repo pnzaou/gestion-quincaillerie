@@ -1,12 +1,14 @@
 import Client from "@/models/Client.model";
 import { HttpError } from "./errors.service";
-import ClientAccount from "@/models/ClientAccount.model";
+import mongoose from "mongoose";
+import AccountTransactionModel from "@/models/AccountTransaction.model";
+import ClientAccountModel from "@/models/ClientAccount.model";
 
 export async function getAccountByClientId(clientId, session = null) {
   if (!mongoose.Types.ObjectId.isValid(clientId)) {
     throw new HttpError(400, "clientId invalide");
   }
-  return ClientAccount.findOne({ client: clientId }).session(session);
+  return ClientAccountModel.findOne({ client: clientId }).session(session);
 }
 
 export async function ensureAccountForClient(clientId, session = null) {
@@ -14,8 +16,8 @@ export async function ensureAccountForClient(clientId, session = null) {
     throw new HttpError(400, "clientId invalide");
   }
 
-// On utilise upsert pour créer le compte si absent
-const account = await ClientAccount.findOneAndUpdate(
+  // On utilise upsert pour créer le compte si absent
+  const account = await ClientAccountModel.findOneAndUpdate(
     { client: clientId },
     { $setOnInsert: { client: clientId, balance: 0, lastUpdated: new Date() } },
     { new: true, upsert: true, session }
@@ -44,7 +46,7 @@ export async function deposit(clientId, amount, {
   if (!clientExists) throw new HttpError(404, "Client introuvable.");
 
   // upsert + $inc atomique pour créer ou incrémenter le solde
-  const updatedAccount = await ClientAccount.findOneAndUpdate(
+  const updatedAccount = await ClientAccountModel.findOneAndUpdate(
     { client: clientId },
     {
       $inc: { balance: amount },
@@ -66,7 +68,7 @@ export async function deposit(clientId, amount, {
     meta: { ...meta, createdBy }
   };
 
-  const [transaction] = await AccountTransaction.create([trans], { session });
+  const [transaction] = await AccountTransactionModel.create([trans], { session });
 
   return { account: updatedAccount, transaction };
 }
@@ -91,7 +93,7 @@ export async function debit(clientId, amount, {
   }
 
   // Vérifier existence client/account
-  const account = await ClientAccount.findOne({ client: clientId }).session(session);
+  const account = await ClientAccountModel.findOne({ client: clientId }).session(session);
   if (!account) {
     throw new HttpError(404, "Compte client introuvable.");
   }
@@ -99,14 +101,14 @@ export async function debit(clientId, amount, {
   let updatedAccount;
   if (allowNegative) {
     // simple décrément atomique (autorise solde négatif)
-    updatedAccount = await ClientAccount.findOneAndUpdate(
+    updatedAccount = await ClientAccountModel.findOneAndUpdate(
       { client: clientId },
       { $inc: { balance: -amount }, $set: { lastUpdated: new Date() } },
       { new: true, session }
     );
   } else {
     // décrément atomique seulement si balance >= amount
-    updatedAccount = await ClientAccount.findOneAndUpdate(
+    updatedAccount = await ClientAccountModel.findOneAndUpdate(
       { client: clientId, balance: { $gte: amount } },
       { $inc: { balance: -amount }, $set: { lastUpdated: new Date() } },
       { new: true, session }
@@ -128,7 +130,7 @@ export async function debit(clientId, amount, {
     meta: { ...meta, createdBy, relatedSaleId }
   };
 
-  const [transaction] = await AccountTransaction.create([trans], { session });
+  const [transaction] = await AccountTransactionModel.create([trans], { session });
 
   return { account: updatedAccount, transaction };
 }
@@ -137,7 +139,7 @@ export async function debit(clientId, amount, {
  * Obtenir le solde courant
  */
 export async function getBalance(clientId, session = null) {
-  const account = await ClientAccount.findOne({ client: clientId }).session(session);
+  const account = await ClientAccountModel.findOne({ client: clientId }).session(session);
   return account ? account.balance : 0;
 }
 
@@ -145,11 +147,11 @@ export async function getBalance(clientId, session = null) {
  * Lister les transactions
 */
 export async function listTransactions({ clientId, limit = 50, page = 1, session = null } = {}) {
-  const account = await ClientAccount.findOne({ client: clientId }).session(session);
+  const account = await ClientAccountModel.findOne({ client: clientId }).session(session);
   if (!account) throw new HttpError(404, "Compte client introuvable.");
 
   const skip = (page - 1) * limit;
-  const txs = await AccountTransaction.find({ account: account._id })
+  const txs = await AccountTransactionModel.find({ account: account._id })
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit)
