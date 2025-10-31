@@ -14,35 +14,54 @@ export default function ClientAccountInfoCard({ client, account, setAccount, tra
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [depositAmount, setDepositAmount] = useState("");
   const [depositDescription, setDepositDescription] = useState("");
+  const [loading, setLoading] = useState(false)
 
-  const handleDeposit = async () => {
-    const amount = parseFloat(depositAmount);
-    
-    if (!amount || amount <= 0) {
-      toast.error("Veuillez entrer un montant valide");
-      return;
-    }
-
-    // Create account if doesn't exist
-    if (!account && client) {
-      
+  const handleCreateAccount = async (amount) => {
+    try {
       const res = await fetch(`/api/client/${client._id}/client-account`, {
         method: "POST",
-        body: JSON.stringify({ amount, description: depositDescription || "Dépôt initial" }),
-      })
+        body: JSON.stringify({
+          amount,
+          description: depositDescription || "Dépôt initial",
+        }),
+      });
 
-      console.log(res)
+      console.log(res);
       const data = await res.json();
-      console.log(data)
-      if(!res.ok && res.status !== 201){
+      console.log(data);
+      if (!res.ok && res.status !== 201) {
         toast.error(data?.message || "Erreur lors de la création du compte");
         return;
       }
       setAccount(data?.data?.account);
       setTransactions([data?.data?.transaction, ...transactions]);
-      
-      toast.success("Compte créé avec succès");
 
+      toast.success("Compte créé avec succès");
+    } catch (error) {
+      console.error(
+        "Erreur lors de la récupération des détails du client:",
+        error
+      );
+    } finally {
+      setLoading(false)
+    }
+  };
+
+  // const handleUpdateBalance = async () => {}
+
+  const handleDeposit = async () => {
+    setLoading(true)
+    const amount = parseFloat(depositAmount);
+    
+    if (!amount || amount <= 0) {
+      toast.error("Veuillez entrer un montant valide");
+      setLoading(false)
+      return;
+    }
+
+    // Create account if doesn't exist
+    if (!account && client) {
+      handleCreateAccount(amount);
     } else if (account) {
       // Add deposit to existing account
       const newBalance = account.balance + amount;
@@ -107,9 +126,19 @@ export default function ClientAccountInfoCard({ client, account, setAccount, tra
                 <Button
                   className="w-full bg-sky-600 hover:bg-sky-700"
                   size="lg"
+                  disabled={loading}
                 >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Effectuer un Dépôt
+                  {loading ? (
+                    <>
+                      <span className="w-4 h-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></span>{" "}
+                      Dépot en cours...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Effectuer un Dépôt
+                    </>
+                  )}
                 </Button>
               </DialogTrigger>
               <DialogContent>
@@ -170,9 +199,19 @@ export default function ClientAccountInfoCard({ client, account, setAccount, tra
                 <Button
                   className="w-full bg-sky-600 hover:bg-sky-700 text-white"
                   size="lg"
+                  disabled={loading}
                 >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Créer un Compte
+                  {loading ? (
+                    <>
+                      <span className="w-4 h-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></span>{" "}
+                      Création en cours...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Créer un Compte
+                    </>
+                  )}
                 </Button>
               </DialogTrigger>
               <DialogContent>
