@@ -146,7 +146,7 @@ export async function getBalance(clientId, session = null) {
 /**
  * Lister les transactions
 */
-export async function listTransactions({ clientId, limit = 50, page = 1, session = null } = {}) {
+export async function listTransactions({ clientId, limit = 10, page = 1, session = null } = {}) {
   const account = await ClientAccountModel.findOne({ client: clientId }).session(session);
   if (!account) throw new HttpError(404, "Compte client introuvable.");
 

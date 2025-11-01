@@ -63,8 +63,8 @@ export async function createSale({ payload, user }) {
       // debit lève HttpError si solde insuffisant
       await debit(clientId, accountTotal, {
         session,
-        reference: sale._id.toString(),
-        description: `Paiement depuis compte pour vente ${sale.reference}`,
+        reference: sale.reference,
+        description: "Achat via compte client",
         relatedSaleId: sale._id,
         createdBy: user?.id
       });

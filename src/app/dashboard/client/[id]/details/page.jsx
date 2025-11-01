@@ -1,13 +1,12 @@
 "use client"
 
 import { useState, useEffect } from "react";
-import { ArrowLeft, User, TrendingUp, TrendingDown } from "lucide-react";
+import { ArrowLeft, User, TrendingUp, TrendingDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "react-hot-toast";
-import { mockClients, mockClientAccounts, mockAccountTransactions } from "@/data/mockClients";
 import TransactionTypeBadge from "@/components/transaction-type-badge";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -17,10 +16,17 @@ const Page = () => {
   const params = useParams();
   const id = params.id;
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingTransactions, setIsLoadingTransactions] = useState(false);
   const [client, setClient] = useState(null);
   const [account, setAccount] = useState(null);
   const [transactions, setTransactions] = useState([]);
+  
+  // États pour la pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  const [hasMore, setHasMore] = useState(true);
 
+  // Récupération des données du client
   useEffect(() => {
     const fetchClient = async () => {
       try {
@@ -34,6 +40,7 @@ const Page = () => {
         setAccount(data.data.account);
       } catch (error) {
         console.error("Erreur lors de la récupération des détails du client:", error);
+        toast.error("Erreur lors du chargement des données");
       } finally {
         setIsLoading(false);
       }
@@ -41,26 +48,52 @@ const Page = () => {
     fetchClient();
   }, [id]);
 
-  // useEffect(() => {
-  //   // Simulate loading
-  //   const timer = setTimeout(() => {
-  //     const foundClient = mockClients.find((c) => c._id === id);
-  //     setClient(foundClient || null);
+  // Récupération des transactions paginées
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      if (!account) return;
       
-  //     if (foundClient) {
-  //       const foundAccount = mockClientAccounts.find((a) => a.client === foundClient._id);
-  //       setAccount(foundAccount || null);
+      setIsLoadingTransactions(true);
+      try {
+        const res = await fetch(
+          `/api/client/${id}/client-account/transactions?page=${currentPage}&limit=${itemsPerPage}`
+        );
+        console.log(res)
+        const data = await res.json();
         
-  //       if (foundAccount) {
-  //         const foundTransactions = mockAccountTransactions.filter((t) => t.account === foundAccount._id);
-  //         setTransactions(foundTransactions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
-  //       }
-  //     }
-      
-  //     setIsLoading(false);
-  //   }, 1000);
-  //   return () => clearTimeout(timer);
-  // }, [id]);
+        if(!res.ok) {
+          toast.error(data?.message || "Erreur lors de la récupération des transactions");
+          return;
+        }
+        
+        const fetchedTransactions = data?.data?.transactions || [];
+        setTransactions(fetchedTransactions);
+        
+        // Vérifier s'il y a plus de transactions
+        setHasMore(fetchedTransactions.length === itemsPerPage);
+        
+      } catch (error) {
+        console.error("Erreur lors de la récupération des transactions:", error);
+        toast.error("Erreur lors du chargement des transactions");
+      } finally {
+        setIsLoadingTransactions(false);
+      }
+    };
+    
+    fetchTransactions();
+  }, [id, account, currentPage, itemsPerPage]);
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(prev => prev - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (hasMore) {
+      setCurrentPage(prev => prev + 1);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -173,7 +206,13 @@ const Page = () => {
               <CardTitle>Historique des Transactions</CardTitle>
             </CardHeader>
             <CardContent>
-              {transactions.length === 0 ? (
+              {isLoadingTransactions ? (
+                <div className="space-y-4">
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                </div>
+              ) : transactions.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   Aucune transaction enregistrée
                 </div>
@@ -254,7 +293,7 @@ const Page = () => {
                             <div>
                               <p className="text-sm text-muted-foreground">Montant</p>
                               <p className={`font-bold flex items-center gap-1 ${
-                                transaction.type === "deposit" ? "text-success" : "text-warning"
+                                transaction.type === "deposit" ? "text-[#1ECA5D]" : "text-[#F59F0A]"
                               }`}>
                                 {transaction.type === "deposit" ? (
                                   <TrendingUp className="h-4 w-4" />
@@ -287,6 +326,33 @@ const Page = () => {
                         </CardContent>
                       </Card>
                     ))}
+                  </div>
+
+                  {/* Pagination */}
+                  <div className="flex items-center justify-between mt-6 pt-4 border-t">
+                    <div className="text-sm text-muted-foreground">
+                      Page {currentPage}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handlePreviousPage}
+                        disabled={currentPage === 1 || isLoadingTransactions}
+                      >
+                        <ChevronLeft className="h-4 w-4 mr-1" />
+                        Précédent
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleNextPage}
+                        disabled={!hasMore || isLoadingTransactions}
+                      >
+                        Suivant
+                        <ChevronRight className="h-4 w-4 ml-1" />
+                      </Button>
+                    </div>
                   </div>
                 </>
               )}
