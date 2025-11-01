@@ -8,6 +8,7 @@ import { createPaymentsForSale } from "./payment.service";
 import { createHistory } from "./history.service";
 import { HttpError } from "./errors.service";
 import { getSaleDescription } from "@/utils/getSaleDescription"; // tu peux laisser en utils
+import { debit } from "./account.service";
 
 export async function createSale({ payload, user }) {
   const session = await mongoose.startSession();
