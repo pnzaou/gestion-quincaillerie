@@ -124,7 +124,7 @@ const StatItemWrapper = async () => {
         value={totalDebts}
         currency
         linkAriaLabel="Voir le total des dettes"
-        href="#"
+        href="/dashboard/vente/historique-vente?status=pending,partial"
       />
     </div>
   );

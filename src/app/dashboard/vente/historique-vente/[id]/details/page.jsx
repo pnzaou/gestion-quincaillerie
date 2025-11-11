@@ -27,12 +27,13 @@ import {
   Printer,
   FileText
 } from "lucide-react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import toast from "react-hot-toast";
 
 const Page = () => {
   const params = useParams();
+  const router = useRouter();
   const id = params.id;
   const [isLoading, setIsLoading] = useState(true);
   const [sale, setSale] = useState(null);
@@ -253,15 +254,14 @@ const Page = () => {
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="flex items-center gap-4">
-              <Link href="/dashboard/vente/historique-vente">
                 <Button
                   variant="outline"
                   size="icon"
                   className="shrink-0"
+                  onClick={() => router.back()}
                 >
                   <ArrowLeft className="w-4 h-4" />
                 </Button>
-              </Link>
               <div>
                 <h1 className="text-3xl font-bold text-foreground">
                   {sale.reference}
