@@ -6,14 +6,21 @@ const Page = async ({ searchParams }) => {
 
     const { cookie, host, protocol } = await preparingServerSideRequest()
 
-    const { page, search } = await searchParams
+    const { page, search, status } = await searchParams
     const page1 = page || 1
     const search1 = search || ""
+    const status1 = status || ""
 
-    const rep = await fetch(`${protocol}://${host}/api/sale?page=${page1}&limit=10&search=${search1}`, {
+    const statusParam = status1 ? `&status=${status1}` : ""
+
+    const rep = await fetch(`${protocol}://${host}/api/sale?page=${page1}&limit=10&search=${search1}${statusParam}`, {
         headers: { 'Cookie': cookie }
     })
+    
     const { data, totalPages, currentPage } = await rep.json()
+
+    // Convertir status en tableau pour le composant
+    const initialStatus = status1 ? status1.split(',').map(s => s.trim()).filter(Boolean) : []
     return (
         <div className="flow-root">
             <div className="mb-6">
@@ -28,6 +35,7 @@ const Page = async ({ searchParams }) => {
               initialTotalPages={totalPages}
               currentPage={currentPage}
               search={search1}
+              initialStatus={initialStatus}
             />
         </div>
     );

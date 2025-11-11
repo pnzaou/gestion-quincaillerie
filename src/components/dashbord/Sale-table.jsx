@@ -1,11 +1,17 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import ExcelExportButton from "./ExcelExportButton"
 import SearchLoader from "./Search-loader"
 import { DeleteSale, DetailsSale, UpdateSale } from "./button-sale"
 import Pagination from "./Pagination"
 import { SaleStatusBadge } from "./Sale-status-badge"
+import { Button } from "@/components/ui/button"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Filter } from "lucide-react"
 
 const dateOptions = {
   day: '2-digit',
@@ -16,14 +22,27 @@ const dateOptions = {
   hour12: false,
 }
 
-const SaleTable = ({ initialSales, initialTotalPages, currentPage, search }) => {
+const STATUS_OPTIONS = [
+  { value: "paid", label: "Payé" },
+  { value: "pending", label: "En attente" },
+  { value: "partial", label: "Partiel" },
+  { value: "cancelled", label: "Annulé" }
+]
+
+const SaleTable = ({ initialSales, initialTotalPages, currentPage, search, initialStatus = [] }) => {
+    const router = useRouter()
+    const searchParams = useSearchParams()
+    
+    
     const [sales, setSales] = useState(initialSales)
     const [totalPages, setTotalPages] = useState(initialTotalPages)
     const [page, setPage] = useState(currentPage)
 
     const [searchTerm, setSearchTerm] = useState(search)
-    const [debouncedSearch, setDebouncedSearch] = useState(search);
+    const [debouncedSearch, setDebouncedSearch] = useState(search)
+    const [selectedStatus, setSelectedStatus] = useState(initialStatus)
     const [isLoading, setIsLoading] = useState(false)
+    const [open, setOpen] = useState(false)
 
     const isFirstRun = useRef(false)
 
@@ -41,7 +60,10 @@ const SaleTable = ({ initialSales, initialTotalPages, currentPage, search }) => 
         if(debouncedSearch.length > 0 && debouncedSearch.length < 3) return;
 
         setIsLoading(true)
-        fetch(`/api/sale?page=${page}&limit=10&search=${debouncedSearch}`)
+        
+        const statusParam = selectedStatus.length > 0 ? `&status=${selectedStatus.join(",")}` : ""
+        
+        fetch(`/api/sale?page=${page}&limit=10&search=${debouncedSearch}${statusParam}`)
             .then(res => res.json())
             .then(({ data, totalPages: tp, currentPage: cp }) => {
                 setSales(data)
@@ -52,10 +74,45 @@ const SaleTable = ({ initialSales, initialTotalPages, currentPage, search }) => 
                 console.error(error)
                 toast.error("Une erreur s'est produite! Veuillez réessayer.")
             }).finally(() => setIsLoading(false))
-    }, [debouncedSearch, page])
+    }, [debouncedSearch, page, selectedStatus])
 
     const handleSearchChange = (e) => {
         setSearchTerm(e.target.value)
+        if (page !== 1) {
+            setPage(1)
+        }
+    }
+
+    const toggleStatus = (status) => {
+        setSelectedStatus(prev => {
+            const newSelected = prev.includes(status)
+                ? prev.filter(s => s !== status)
+                : [...prev, status]
+            
+            // Mettre à jour l'URL
+            const params = new URLSearchParams(searchParams)
+            if (newSelected.length > 0) {
+                params.set('status', newSelected.join(','))
+            } else {
+                params.delete('status')
+            }
+            params.set('page', '1')
+            router.push(`?${params.toString()}`, { scroll: false })
+            
+            if (page !== 1) {
+                setPage(1)
+            }
+            
+            return newSelected
+        })
+    }
+
+    const clearFilters = () => {
+        setSelectedStatus([])
+        const params = new URLSearchParams(searchParams)
+        params.delete('status')
+        params.set('page', '1')
+        router.push(`?${params.toString()}`, { scroll: false })
         if (page !== 1) {
             setPage(1)
         }
@@ -67,19 +124,69 @@ const SaleTable = ({ initialSales, initialTotalPages, currentPage, search }) => 
         currency: "XOF",
         minimumFractionDigits: 0,
       }).format(amount);
-    };
-    console.log(sales)
+    }
+
     return (
       <>
-        <div className="flex justify-between items-center mb-4">
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={handleSearchChange}
-            placeholder="Recherche (ref, date, client, vendeur)"
-            className="w-full md:w-1/2 px-4 py-2 border rounded-md"
-          />
-          <div className="hidden mb-4 mr-4 md:block">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-3">
+          <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={handleSearchChange}
+              placeholder="Recherche (ref, date, client, vendeur)"
+              className="w-full md:w-96 px-4 py-2 border rounded-md"
+            />
+            
+            <Popover open={open} onOpenChange={setOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  className="w-full md:w-48 justify-between"
+                >
+                  <Filter className="w-4 h-4 mr-2" />
+                  {selectedStatus.length > 0
+                    ? `${selectedStatus.length} statut${selectedStatus.length > 1 ? 's' : ''}`
+                    : "Tous les statuts"}
+                </Button>
+              </PopoverTrigger>
+
+              <PopoverContent className="w-full sm:w-56 p-0">
+                <Command>
+                  <CommandInput placeholder="Rechercher un statut..." />
+                  <CommandEmpty>Aucun statut trouvé.</CommandEmpty>
+                  <CommandGroup>
+                    {STATUS_OPTIONS.map((status) => (
+                      <CommandItem
+                        key={status.value}
+                        onSelect={() => toggleStatus(status.value)}
+                        className="flex items-center gap-2 cursor-pointer"
+                      >
+                        <Checkbox
+                          checked={selectedStatus.includes(status.value)}
+                          onCheckedChange={() => toggleStatus(status.value)}
+                        />
+                        <SaleStatusBadge status={status.value} />
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </Command>
+              </PopoverContent>
+            </Popover>
+
+            {selectedStatus.length > 0 && (
+              <Button
+                variant="ghost"
+                onClick={clearFilters}
+                className="w-full md:w-auto"
+              >
+                Réinitialiser
+              </Button>
+            )}
+          </div>
+
+          <div className="hidden md:block">
             <ExcelExportButton initUrl={""} />
           </div>
         </div>
@@ -106,8 +213,11 @@ const SaleTable = ({ initialSales, initialTotalPages, currentPage, search }) => 
                       <p className="text-sm">
                         Client: {sale.client?.nomComplet || "Client anonyme"}
                       </p>
-                      <p className="text-sm">Total: {sale.total} TTC</p>
-                      <p className="text-sm">Paiement: {sale.paymentMethod}</p>
+                      <p className="text-sm">Total: {formatCurrency(sale.total)}</p>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm">Statut:</span>
+                        <SaleStatusBadge status={sale.status} />
+                      </div>
                     </div>
                     <div className="flex justify-end gap-2 mt-4">
                       <DetailsSale id={sale._id} />
@@ -133,7 +243,7 @@ const SaleTable = ({ initialSales, initialTotalPages, currentPage, search }) => 
                   </tr>
                 </thead>
                 <tbody className="bg-white">
-                  {sales.map((sale) => (
+                  {sales?.map((sale) => (
                     <tr
                       key={sale._id}
                       className="border-b last:border-none text-sm"
