@@ -5,6 +5,16 @@ import ExcelExportButton from "./ExcelExportButton"
 import SearchLoader from "./Search-loader"
 import { DeleteSale, DetailsSale, UpdateSale } from "./button-sale"
 import Pagination from "./Pagination"
+import { SaleStatusBadge } from "./Sale-status-badge"
+
+const dateOptions = {
+  day: '2-digit',
+  month: 'long',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false,
+}
 
 const SaleTable = ({ initialSales, initialTotalPages, currentPage, search }) => {
     const [sales, setSales] = useState(initialSales)
@@ -50,6 +60,15 @@ const SaleTable = ({ initialSales, initialTotalPages, currentPage, search }) => 
             setPage(1)
         }
     }
+
+    const formatCurrency = (amount) => {
+      return new Intl.NumberFormat("fr-FR", {
+        style: "currency",
+        currency: "XOF",
+        minimumFractionDigits: 0,
+      }).format(amount);
+    };
+    console.log(sales)
     return (
       <>
         <div className="flex justify-between items-center mb-4">
@@ -72,7 +91,7 @@ const SaleTable = ({ initialSales, initialTotalPages, currentPage, search }) => 
             <div className="rounded-lg bg-gray-50 p-2 md:pt-0">
               {/* Mobile */}
               <div className="md:hidden space-y-2">
-                {sales.map((sale) => (
+                {sales?.map((sale) => (
                   <div
                     key={sale._id}
                     className="rounded-md bg-white p-4 shadow-sm"
@@ -80,12 +99,12 @@ const SaleTable = ({ initialSales, initialTotalPages, currentPage, search }) => 
                     <div className="flex justify-between items-start border-b pb-2">
                       <p className="font-semibold">{sale.reference}</p>
                       <p className="text-sm text-gray-500">
-                        {new Date(sale.dateExacte).toLocaleDateString()}
+                        {new Date(sale.dateExacte).toLocaleDateString('fr-FR', dateOptions)}
                       </p>
                     </div>
                     <div className="pt-2 space-y-1">
                       <p className="text-sm">
-                        Client: {sale.client.nomComplet}
+                        Client: {sale.client?.nomComplet || "Client anonyme"}
                       </p>
                       <p className="text-sm">Total: {sale.total} TTC</p>
                       <p className="text-sm">Paiement: {sale.paymentMethod}</p>
@@ -105,8 +124,9 @@ const SaleTable = ({ initialSales, initialTotalPages, currentPage, search }) => 
                     <th className="px-3 py-5 font-medium">Référence</th>
                     <th className="px-3 py-5 font-medium">Date de vente</th>
                     <th className="px-3 py-5 font-medium">Client</th>
-                    <th className="px-3 py-5 font-medium">Montant (TTC)</th>
-                    <th className="px-3 py-5 font-medium">Mode de paiement</th>
+                    <th className="px-3 py-5 font-medium">Vendeur</th>
+                    <th className="px-3 py-5 font-medium text-end">Montant</th>
+                    <th className="px-3 py-5 font-medium">Statut</th>
                     <th className="py-5 pl-6 pr-3 text-right">
                       <span className="sr-only">Actions</span>
                     </th>
@@ -120,11 +140,30 @@ const SaleTable = ({ initialSales, initialTotalPages, currentPage, search }) => 
                     >
                       <td className="py-4 px-3">{sale.reference}</td>
                       <td className="py-4 px-3">
-                        {new Date(sale.dateExacte).toLocaleDateString()}
+                        {new Date(sale.dateExacte).toLocaleDateString('fr-FR', dateOptions)}
                       </td>
-                      <td className="py-4 px-3">{sale.client.nomComplet}</td>
-                      <td className="py-4 px-3">{sale.total} TTC</td>
-                      <td className="py-4 px-3">{sale.paymentMethod}</td>
+                      <td className="py-4 px-3">
+                        {sale.client ? (
+                            <div>
+                              <div className="font-medium">{sale.client.nomComplet}</div>
+                              <div className="text-xs text-muted-foreground">{sale.client.tel}</div>
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground">Client anonyme</span>
+                          )}
+                      </td>
+                      <td className="py-4 px-3">{sale.vendeur.nom} {sale.vendeur.prenom}</td>
+                      <td className="py-4 px-3 text-end">
+                        {formatCurrency(sale.total)}
+                          {sale.amountDue && sale.amountDue > 0 && (
+                            <div className="text-xs text-[#E19209]">
+                              Reste: {formatCurrency(sale.amountDue)}
+                            </div>
+                          )}
+                      </td>
+                      <td className="py-4 px-3">
+                        <SaleStatusBadge status={sale.status} />
+                      </td>
                       <td className="py-4 pl-6 pr-3 text-right">
                         <div className="flex justify-end gap-2">
                           <DetailsSale id={sale._id} />

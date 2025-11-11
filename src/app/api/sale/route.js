@@ -109,11 +109,12 @@ export const GET = withAuth(async (req) => {
         // 5) Pagination + recupération des données
         const skip = (page - 1) * limit
         const [sales, total] = await Promise.all([
-            Sale.find(filter)
+            Sale.find(filter, { reference: 1, dateExacte: 1, client: 1, vendeur: 1, total: 1, amountDue: 1, status: 1 })
               .sort({ createdAt: -1 })
               .skip(skip)
               .limit(limit)
-              .populate("client", "nomComplet"),
+              .populate("client", "nomComplet tel")
+              .populate("vendeur", "nom prenom"),
             Sale.countDocuments(filter)
         ])
 
