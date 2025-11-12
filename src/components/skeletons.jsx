@@ -631,83 +631,141 @@ export function ArticleTableSkeleton() {
   );
 }
 
-// Skeleton pour les lignes de la table des ventes
+// Skeleton pour une card de statistique
+export function StatCardSkeleton() {
+  return (
+    <div className="bg-white rounded-lg shadow p-6 border-l-4 border-gray-300 animate-pulse">
+      <div className="flex items-center justify-between">
+        <div className="flex-1 space-y-3">
+          <div className="h-4 w-24 rounded bg-gray-200" />
+          <div className="h-8 w-32 rounded bg-gray-200" />
+          <div className="h-3 w-20 rounded bg-gray-200" />
+        </div>
+        <div className="ml-4 p-3 rounded-full bg-gray-200">
+          <div className="w-6 h-6 rounded-full bg-gray-300" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Skeleton pour une ligne de vente (desktop)
 export function SaleRowSkeleton() {
   return (
-    <tr className="w-full border-b border-gray-300 last-of-type:border-none animate-pulse [&:first-child>td:first-child]:rounded-tl-lg [&:first-child>td:last-child]:rounded-tr-lg [&:last-child>td:first-child]:rounded-bl-lg [&:last-child>td:last-child]:rounded-br-lg">
+    <tr className="w-full border-b border-gray-300 last-of-type:border-none animate-pulse">
       {/* Référence */}
       <td className="whitespace-nowrap px-3 py-3">
-        <div className="h-6 w-24 rounded bg-gray-300"></div>
+        <div className="h-6 w-24 rounded bg-gray-200"></div>
       </td>
       {/* Date de vente */}
       <td className="whitespace-nowrap px-3 py-3">
-        <div className="h-6 w-40 rounded bg-gray-300"></div>
+        <div className="h-6 w-40 rounded bg-gray-200"></div>
       </td>
       {/* Client */}
       <td className="whitespace-nowrap px-3 py-3">
-        <div className="h-6 w-32 rounded bg-gray-300"></div>
+        <div className="space-y-1">
+          <div className="h-5 w-32 rounded bg-gray-200"></div>
+          <div className="h-4 w-24 rounded bg-gray-200"></div>
+        </div>
       </td>
-      {/* Total */}
+      {/* Vendeur */}
       <td className="whitespace-nowrap px-3 py-3">
-        <div className="h-6 w-20 rounded bg-gray-300"></div>
+        <div className="h-6 w-28 rounded bg-gray-200"></div>
       </td>
-      {/* Mode de paiement */}
+      {/* Montant */}
       <td className="whitespace-nowrap px-3 py-3">
-        <div className="h-6 w-24 rounded bg-gray-300"></div>
+        <div className="flex flex-col items-end gap-1">
+          <div className="h-6 w-24 rounded bg-gray-200"></div>
+        </div>
+      </td>
+      {/* Statut */}
+      <td className="whitespace-nowrap px-3 py-3">
+        <div className="h-6 w-20 rounded-full bg-gray-200"></div>
       </td>
       {/* Actions */}
       <td className="whitespace-nowrap py-3 pl-6 pr-3">
         <div className="flex justify-end gap-2">
-          <div className="h-[38px] w-[38px] rounded bg-gray-300"></div>
-          <div className="h-[38px] w-[38px] rounded bg-gray-300"></div>
-          <div className="h-[38px] w-[38px] rounded bg-gray-300"></div>
+          <div className="h-[38px] w-[38px] rounded bg-gray-200"></div>
+          <div className="h-[38px] w-[38px] rounded bg-gray-200"></div>
+          <div className="h-[38px] w-[38px] rounded bg-gray-200"></div>
         </div>
       </td>
     </tr>
-  )
+  );
 }
 
-// Skeleton pour les lignes de la table des ventes sur mobile
+// Skeleton pour les lignes de vente sur mobile
 export function SaleMobileSkeleton() {
   return (
     <div className="mb-2 w-full rounded-md bg-white p-4 animate-pulse">
-      {/* Header: Référence and Date */}
+      {/* Header: Référence et Date */}
       <div className="flex items-center justify-between border-b border-gray-100 pb-4">
         <div className="space-y-2">
-          <div className="h-6 w-24 rounded bg-gray-100"/>
-          <div className="h-6 w-24 rounded bg-gray-100"/>
+          <div className="h-5 w-24 rounded bg-gray-200"/>
+          <div className="h-4 w-32 rounded bg-gray-200"/>
         </div>
       </div>
 
-      {/* Corps: Client, Total, Mode de paiement */}
+      {/* Corps: Client, Total, Statut */}
       <div className="pt-4 space-y-2">
-        <div className="h-6 w-28 rounded bg-gray-100" /> {/* Client */}
-        <div className="h-6 w-20 rounded bg-gray-100" /> {/* Total */}
-        <div className="h-6 w-24 rounded bg-gray-100" /> {/* Mode de paiement */}
+        <div className="h-5 w-36 rounded bg-gray-200" />
+        <div className="h-5 w-28 rounded bg-gray-200" />
+        <div className="h-6 w-20 rounded-full bg-gray-200" />
       </div>
 
       {/* Actions */}
       <div className="mt-4 flex justify-end gap-2">
-        <div className="h-10 w-10 rounded bg-gray-100" />
-        <div className="h-10 w-10 rounded bg-gray-100" />
-        <div className="h-10 w-10 rounded bg-gray-100" />
+        <div className="h-10 w-10 rounded bg-gray-200" />
+        <div className="h-10 w-10 rounded bg-gray-200" />
       </div>
     </div>
-  )
+  );
 }
 
-// Skeleton pour la table des ventes
-export function SaleTableSkeleton() {
+// Skeleton pour la barre de recherche et filtres
+export function SearchAndFiltersSkeleton() {
   return (
-    <div className="mt-6 flow-root">
-      <div
-        className={`${shimmer} relative animate-pulse mb-6 h-8 w-36 overflow-hidden rounded-md bg-gray-300`}
-      />
+    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-3 animate-pulse">
+      <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+        {/* Barre de recherche */}
+        <div className="w-full md:w-96 h-10 rounded-md bg-gray-200" />
+        
+        {/* Filtre de statut */}
+        <div className="w-full md:w-48 h-10 rounded-md bg-gray-200" />
+      </div>
+
+      {/* Bouton export */}
+      <div className="hidden md:block h-10 w-32 rounded-md bg-gray-200" />
+    </div>
+  );
+}
+
+// Skeleton complet pour la page des ventes
+export function SalesPageSkeleton() {
+  return (
+    <div className="flow-root">
+      {/* En-tête */}
+      <div className="mb-6 animate-pulse">
+        <div className="h-8 w-48 rounded bg-gray-200 mb-2" />
+        <div className="h-4 w-64 rounded bg-gray-200" />
+      </div>
+
+      {/* Cards de statistiques */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
+        <StatCardSkeleton />
+        <StatCardSkeleton />
+        <StatCardSkeleton />
+        <StatCardSkeleton />
+      </div>
+
+      {/* Barre de recherche et filtres */}
+      <SearchAndFiltersSkeleton />
+
+      {/* Tableau des ventes */}
       <div className="inline-block min-w-full align-middle">
         <div className="rounded-lg bg-gray-50 p-2 md:pt-0">
           {/* Mobile Version */}
           <div className="md:hidden space-y-2">
-            <SaleMobileSkeleton />
             <SaleMobileSkeleton />
             <SaleMobileSkeleton />
             <SaleMobileSkeleton />
@@ -722,8 +780,9 @@ export function SaleTableSkeleton() {
                 <th className="px-3 py-5 font-medium">Référence</th>
                 <th className="px-3 py-5 font-medium">Date de vente</th>
                 <th className="px-3 py-5 font-medium">Client</th>
-                <th className="px-3 py-5 font-medium">Montant (TTC)</th>
-                <th className="px-3 py-5 font-medium">Mode de paiement</th>
+                <th className="px-3 py-5 font-medium">Vendeur</th>
+                <th className="px-3 py-5 font-medium text-end">Montant</th>
+                <th className="px-3 py-5 font-medium">Statut</th>
                 <th className="py-5 pl-6 pr-3 text-right">
                   <span className="sr-only">Actions</span>
                 </th>
@@ -736,11 +795,26 @@ export function SaleTableSkeleton() {
               <SaleRowSkeleton />
               <SaleRowSkeleton />
               <SaleRowSkeleton />
+              <SaleRowSkeleton />
+              <SaleRowSkeleton />
+              <SaleRowSkeleton />
+              <SaleRowSkeleton />
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* Pagination skeleton */}
+      <div className="mt-5 flex w-full justify-center animate-pulse">
+        <div className="flex gap-2">
+          <div className="h-10 w-10 rounded bg-gray-200" />
+          <div className="h-10 w-10 rounded bg-gray-200" />
+          <div className="h-10 w-10 rounded bg-gray-200" />
+          <div className="h-10 w-10 rounded bg-gray-200" />
+          <div className="h-10 w-10 rounded bg-gray-200" />
+        </div>
+      </div>
     </div>
-  )
+  );
 }
 

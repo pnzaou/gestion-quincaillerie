@@ -1,10 +1,10 @@
-import { SaleTableSkeleton } from "@/components/skeletons";
+import { SalesPageSkeleton } from "@/components/skeletons";
 
 
 const Loading = () => {
     return (
         <div>
-            <SaleTableSkeleton/>
+            <SalesPageSkeleton/>
         </div>
     );
 }
