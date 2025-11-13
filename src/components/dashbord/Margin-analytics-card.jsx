@@ -12,7 +12,7 @@ export const MarginAnalyticsCard = ({ analytics }) => {
     <Card className="shadow-lg bg-gradient-to-br from-card to-card/50">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-primary" />
+          <TrendingUp className="w-5 h-5 text-blue-600" />
           Analyse de marge
         </CardTitle>
       </CardHeader>
@@ -59,19 +59,22 @@ const AnalyticItem = ({
 }) => {
   const variantClasses = {
     default: "bg-muted",
-    success: "bg-success/10 border-success/20",
-    warning: "bg-warning/10 border-warning/20",
-    info: "bg-info/10 border-info/20",
-    destructive: "bg-destructive/10 border-destructive/20"
+    success: "bg-blue-600/10 border-blue-600/20",
+    warning: "bg-yellow-600/10 border-yellow-600/20",
+    info: "bg-cyan-500/10 border-cyan-500/20",
+    destructive: "bg-red-600/10 border-red-600/20"
   };
 
   const iconClasses = {
     default: "text-muted-foreground",
-    success: "text-success",
-    warning: "text-warning",
-    info: "text-info",
-    destructive: "text-destructive"
+    success: "text-blue-600",
+    warning: "text-yellow-600",
+    info: "text-cyan-500",
+    destructive: "text-red-600"
   };
+
+  console.log(variantClasses[variant]);
+  
 
   return (
     <div className={`p-4 rounded-lg border ${variantClasses[variant]} transition-all hover:shadow-md`}>

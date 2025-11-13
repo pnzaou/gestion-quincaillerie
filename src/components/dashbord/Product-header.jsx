@@ -25,11 +25,11 @@ export const ProductHeader = ({ product }) => {
         </div>
         
         <div className="flex gap-2 flex-wrap">
-          <Badge variant={product.statut === "En stock" ? "default" : "destructive"}>
+          <Badge variant="secondary">
             {product.statut}
           </Badge>
           {product.QteStock <= product.QteAlerte && (
-            <Badge variant="outline" className="border-warning text-warning">
+            <Badge variant="outline" className="border-[#FFC107] text-[#FFC107]">
               Alerte stock
             </Badge>
           )}

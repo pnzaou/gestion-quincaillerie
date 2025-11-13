@@ -9,11 +9,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "react-hot-toast";
 import TransactionTypeBadge from "@/components/transaction-type-badge";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import ClientAccountInfoCard from "@/components/dashbord/client-account-info-card";
 
 const Page = () => {
   const params = useParams();
+  const router = useRouter();
   const id = params.id;
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingTransactions, setIsLoadingTransactions] = useState(false);
@@ -119,11 +120,9 @@ const Page = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-4 md:p-8">
         <div className="max-w-7xl mx-auto space-y-6">
-          <Link href="/dashboard/client">
-            <Button variant="outline" size="icon">
+            <Button variant="outline" size="icon" onClick={() => router.back()}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
-          </Link>
           <Card>
             <CardContent className="py-12 text-center">
               <p className="text-muted-foreground">Client non trouvé</p>
@@ -139,11 +138,9 @@ const Page = () => {
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
-          <Link href="/dashboard/client">
-            <Button variant="outline" size="icon">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
+          <Button variant="outline" size="icon" onClick={() => router.back()}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
           <h1 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
             {client.nomComplet}
           </h1>
@@ -180,7 +177,9 @@ const Page = () => {
               </div>
               <div className="grid grid-cols-2 gap-4 pt-2 border-t">
                 <div>
-                  <p className="text-sm text-muted-foreground">Date de création</p>
+                  <p className="text-sm text-muted-foreground">
+                    Date de création
+                  </p>
                   <p className="font-medium text-sm">
                     {new Date(client.createdAt).toLocaleDateString("fr-FR")}
                   </p>
@@ -191,11 +190,11 @@ const Page = () => {
 
           {/* Account Information */}
           <ClientAccountInfoCard
-           client={client}
-           account={account}
-           transactions={transactions}
-           setAccount={setAccount}
-           setTransactions={setTransactions}
+            client={client}
+            account={account}
+            transactions={transactions}
+            setAccount={setAccount}
+            setTransactions={setTransactions}
           />
         </div>
 
@@ -235,19 +234,27 @@ const Page = () => {
                         {transactions.map((transaction) => (
                           <TableRow key={transaction._id}>
                             <TableCell className="font-medium">
-                              {new Date(transaction.createdAt).toLocaleDateString("fr-FR")}
+                              {new Date(
+                                transaction.createdAt
+                              ).toLocaleDateString("fr-FR")}
                               <br />
                               <span className="text-xs text-muted-foreground">
-                                {new Date(transaction.createdAt).toLocaleTimeString("fr-FR")}
+                                {new Date(
+                                  transaction.createdAt
+                                ).toLocaleTimeString("fr-FR")}
                               </span>
                             </TableCell>
                             <TableCell>
                               <TransactionTypeBadge type={transaction.type} />
                             </TableCell>
                             <TableCell>
-                              <span className={`font-semibold flex items-center gap-1 ${
-                                transaction.type === "deposit" ? "text-[#1ECA5D]" : "text-[#F59F0A]"
-                              }`}>
+                              <span
+                                className={`font-semibold flex items-center gap-1 ${
+                                  transaction.type === "deposit"
+                                    ? "text-[#1ECA5D]"
+                                    : "text-[#F59F0A]"
+                                }`}
+                              >
                                 {transaction.type === "deposit" ? (
                                   <TrendingUp className="h-4 w-4" />
                                 ) : (
@@ -279,22 +286,34 @@ const Page = () => {
                         <CardContent className="p-4 space-y-3">
                           <div className="flex justify-between items-start">
                             <div>
-                              <p className="text-sm text-muted-foreground">Date</p>
+                              <p className="text-sm text-muted-foreground">
+                                Date
+                              </p>
                               <p className="font-medium">
-                                {new Date(transaction.createdAt).toLocaleDateString("fr-FR")}
+                                {new Date(
+                                  transaction.createdAt
+                                ).toLocaleDateString("fr-FR")}
                               </p>
                               <p className="text-xs text-muted-foreground">
-                                {new Date(transaction.createdAt).toLocaleTimeString("fr-FR")}
+                                {new Date(
+                                  transaction.createdAt
+                                ).toLocaleTimeString("fr-FR")}
                               </p>
                             </div>
                             <TransactionTypeBadge type={transaction.type} />
                           </div>
                           <div className="grid grid-cols-2 gap-3">
                             <div>
-                              <p className="text-sm text-muted-foreground">Montant</p>
-                              <p className={`font-bold flex items-center gap-1 ${
-                                transaction.type === "deposit" ? "text-[#1ECA5D]" : "text-[#F59F0A]"
-                              }`}>
+                              <p className="text-sm text-muted-foreground">
+                                Montant
+                              </p>
+                              <p
+                                className={`font-bold flex items-center gap-1 ${
+                                  transaction.type === "deposit"
+                                    ? "text-[#1ECA5D]"
+                                    : "text-[#F59F0A]"
+                                }`}
+                              >
                                 {transaction.type === "deposit" ? (
                                   <TrendingUp className="h-4 w-4" />
                                 ) : (
@@ -305,7 +324,9 @@ const Page = () => {
                               </p>
                             </div>
                             <div>
-                              <p className="text-sm text-muted-foreground">Solde Après</p>
+                              <p className="text-sm text-muted-foreground">
+                                Solde Après
+                              </p>
                               <p className="font-bold">
                                 {transaction.balanceAfter.toLocaleString()}
                               </p>
@@ -313,14 +334,22 @@ const Page = () => {
                           </div>
                           {transaction.reference && (
                             <div>
-                              <p className="text-sm text-muted-foreground">Référence</p>
-                              <p className="font-medium text-sm">{transaction.reference}</p>
+                              <p className="text-sm text-muted-foreground">
+                                Référence
+                              </p>
+                              <p className="font-medium text-sm">
+                                {transaction.reference}
+                              </p>
                             </div>
                           )}
                           {transaction.description && (
                             <div>
-                              <p className="text-sm text-muted-foreground">Description</p>
-                              <p className="text-sm">{transaction.description}</p>
+                              <p className="text-sm text-muted-foreground">
+                                Description
+                              </p>
+                              <p className="text-sm">
+                                {transaction.description}
+                              </p>
                             </div>
                           )}
                         </CardContent>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -25,11 +25,13 @@ import {
   Receipt,
   DollarSign,
   Printer,
-  FileText
+  FileText,
+  ExternalLink
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import { PaymentDialog } from "@/components/dashbord/Payment-dialog";
 
 const Page = () => {
   const params = useParams();
@@ -41,33 +43,44 @@ const Page = () => {
   const [printMode, setPrintMode] = useState(null);
   const [showInvoicePreview, setShowInvoicePreview] = useState(false);
   const [showReceiptPreview, setShowReceiptPreview] = useState(false);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+
+  // Fonction pour charger les données de la vente
+  const fetchSale = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch(`/api/sale/${id}`, {
+        cache: 'no-store' // Force le rechargement sans cache
+      });
+      const data = await res.json();
+      
+      if(!res.ok) {
+        toast.error(data?.message || "Erreur lors de la récupération de la vente");
+        return;
+      }
+      setSale(data?.sale);
+      setPayments(data?.payments);
+      
+    } catch (error) {
+      console.error("Error fetching sale:", error);
+      toast.error("Erreur lors du chargement des données");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [id]);
 
   useEffect(() => {
-    const fetchSale = async () => {
-      try {
-        const res = await fetch(`/api/sale/${id}`);
-        const data = await res.json();
-        console.log(res)
-        if(!res.ok) {
-            toast.error(data?.message || "Erreur lors de la récupération de la vente")
-            return;
-        }
-        setSale(data?.sale);
-        setPayments(data?.payments);
-        
-      } catch (error) {
-        console.error("Error fetching sale:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
     fetchSale();
-  }, [id]);
+  }, [fetchSale]);
+
+  // Callback après paiement réussi
+  const handlePaymentSuccess = () => {
+    fetchSale(); // Recharger les données
+  };
 
   const handlePrintInvoice = () => {
     setShowInvoicePreview(false);
     setPrintMode('invoice');
-    // Augmenter le délai pour s'assurer que le DOM est mis à jour
     setTimeout(() => {
       window.print();
       setPrintMode(null);
@@ -77,7 +90,6 @@ const Page = () => {
   const handlePrintReceipt = () => {
     setShowReceiptPreview(false);
     setPrintMode('receipt');
-    // Augmenter le délai pour s'assurer que le DOM est mis à jour
     setTimeout(() => {
       window.print();
       setPrintMode(null);
@@ -204,7 +216,6 @@ const Page = () => {
   }
 
   if (!sale) {
-    console.log("first")
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
@@ -254,14 +265,14 @@ const Page = () => {
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="flex items-center gap-4">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="shrink-0"
-                  onClick={() => router.back()}
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="shrink-0"
+                onClick={() => router.back()}
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </Button>
               <div>
                 <h1 className="text-3xl font-bold text-foreground">
                   {sale.reference}
@@ -273,6 +284,15 @@ const Page = () => {
             </div>
             <div className="flex items-center gap-2 flex-wrap">
               <SaleStatusBadge status={sale.status} />
+              {(sale.status === "pending" || sale.status === "partial") && (
+                <Button
+                  onClick={() => setShowPaymentDialog(true)}
+                  className="gap-2 bg-[#0084D1] text-white hover:bg-[#006BB3]"
+                >
+                  <CreditCard className="w-4 h-4" />
+                  Procéder au paiement
+                </Button>
+              )}
               <Button
                 variant="outline"
                 onClick={() => setShowInvoicePreview(true)}
@@ -424,10 +444,23 @@ const Page = () => {
               {/* Informations client */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-2xl">
-                    <User className="w-5 h-5 text-[#0B64F3]" />
-                    Client
-                  </CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      <User className="w-5 h-5 text-primary" />
+                      Client
+                    </CardTitle>
+                    {sale.client && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => { router.push(`/dashboard/client/${sale.client._id}/details`) }}
+                        className="gap-2"
+                      >
+                        <ExternalLink className="w-3 h-3" />
+                        Voir détails
+                      </Button>
+                    )}
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {sale.client ? (
@@ -563,6 +596,18 @@ const Page = () => {
         sale={sale}
         payments={payments}
         onPrint={handlePrintReceipt}
+      />
+
+      {/* Dialog de paiement */}
+      <PaymentDialog
+        open={showPaymentDialog}
+        onOpenChange={setShowPaymentDialog}
+        totalAmount={sale.total}
+        amountDue={sale.amountDue || sale.total}
+        saleReference={sale.reference}
+        saleId={sale._id}
+        hasClient={!!sale.client}
+        onPaymentSuccess={handlePaymentSuccess}
       />
     </>
   );
