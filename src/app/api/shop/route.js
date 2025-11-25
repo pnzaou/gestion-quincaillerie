@@ -64,3 +64,34 @@ export const POST = withAuthAndRole(async (req) => {
       );
     }
 })
+
+export const GET = withAuthAndRole(async (req) => {
+    try {
+        const businesses = await BusinessModel.find({})
+        if(!businesses || businesses.length === 0) {
+            return NextResponse.json({
+                message: "Aucune boutique trouvée.",
+                success: false,
+                error: true
+            }, { status: 404 })
+        }
+        return NextResponse.json({
+            message: "Boutiques récupérées avec succès.",
+            success: true,
+            error: false,
+            data: businesses
+        }, { status: 200 })
+        
+    } catch (error) {
+    console.error("Erreur lors de la récupération des boutiques: ", error);
+
+    return NextResponse.json(
+      {
+        message: "Une erreur est survenue. Veuillez réessayer.",
+        success: false,
+        error: true,
+      },
+      { status: 500 }
+    );
+    }
+})
