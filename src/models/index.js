@@ -13,5 +13,6 @@ import './Quote.model'
 import './Sale.model'
 import './Supplier.model'
 import './User.model'
+import './Business.model'
 
 export {}
