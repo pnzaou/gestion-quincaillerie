@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Skeleton } from "./ui/skeleton";
 
 // Loading animation
 const shimmer =
@@ -814,6 +815,62 @@ export function SalesPageSkeleton() {
           <div className="h-10 w-10 rounded bg-gray-200" />
         </div>
       </div>
+    </div>
+  );
+}
+
+export function BusinessCardSkeletonGrid({ count = 4 }) {
+  return (
+    <div
+      role="status"
+      aria-busy="true"
+      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+    >
+      {Array.from({ length: count }).map((_, i) => (
+        // Chaque "carte" est un Skeleton qui sert aussi de conteneur visuel
+        <Skeleton
+          key={i}
+          className="flex flex-col gap-3 p-4 rounded-lg shadow-sm overflow-hidden"
+        >
+          {/* header: icône circulaire + actions */}
+          <Skeleton className="flex items-start justify-between mb-2">
+            <Skeleton className="flex items-center justify-center w-12 h-12 rounded-lg bg-gray-200">
+              <Skeleton className="w-6 h-6 rounded bg-gray-200" />
+            </Skeleton>
+
+            <Skeleton className="flex gap-2">
+              <Skeleton className="h-8 w-8 rounded-full bg-gray-200" />
+              <Skeleton className="h-8 w-8 rounded-full bg-gray-200" />
+            </Skeleton>
+          </Skeleton>
+
+          {/* titre */}
+          <Skeleton className="h-6 w-3/4 bg-gray-300" />
+
+          {/* contenu: téléphone / email / adresse / site */}
+          <Skeleton className="flex flex-col gap-3">
+            <Skeleton className="flex items-center gap-2 text-sm">
+              <Skeleton className="w-4 h-4 rounded bg-gray-200" />
+              <Skeleton className="h-4 w-24 bg-gray-200" />
+            </Skeleton>
+
+            <Skeleton className="flex items-center gap-2 text-sm">
+              <Skeleton className="w-4 h-4 rounded bg-gray-200" />
+              <Skeleton className="h-4 w-32 bg-gray-200" />
+            </Skeleton>
+
+            <Skeleton className="flex items-center gap-2 text-sm">
+              <Skeleton className="w-4 h-4 rounded bg-gray-200" />
+              <Skeleton className="h-4 w-40 bg-gray-200" />
+            </Skeleton>
+
+            <Skeleton className="flex items-center gap-2 text-sm">
+              <Skeleton className="w-4 h-4 rounded bg-gray-200" />
+              <Skeleton className="h-4 w-28 bg-gray-200" />
+            </Skeleton>
+          </Skeleton>
+        </Skeleton>
+      ))}
     </div>
   );
 }
