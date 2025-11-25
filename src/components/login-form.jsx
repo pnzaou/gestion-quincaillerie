@@ -132,7 +132,7 @@ export function LoginForm({className, ...props}) {
                 </span>}
               </div>
               <div className="flex flex-col gap-3">
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Button type="submit" className="w-full bg-sky-600 hover:bg-sky-700" disabled={isLoading}>
                   {isLoading 
                   ? (
                     <>

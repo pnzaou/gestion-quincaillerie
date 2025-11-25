@@ -14,7 +14,7 @@ const DisconnectBtn = () => {
               hover:bg-sky-100 hover:text-blue-600 
               md:flex-none md:justify-start md:p-2 md:px-3"
               onClick={() => signOut({
-                callbackUrl: '/login',
+                callbackUrl: '/',
                 redirect: true
               })}
             >

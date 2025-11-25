@@ -8,7 +8,7 @@ import { redirect } from "next/navigation";
 export default async function Layout({ children }) {
     const session = await getServerSession(authOptions);
     if (!session) {
-      redirect("/login");
+      redirect("/");
     }
   return (
     <div className="flex min-h-screen flex-col md:flex-row md:overflow-hidden">

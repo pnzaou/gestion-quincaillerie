@@ -56,7 +56,7 @@ export const createUser = async (dto, sessionData) => {
           payload: {
             to: email, // en prod on envoie à l'utilisateur
             defaultPassword: password,
-            loginLink: `${process.env.NEXT_PUBLIC_APP_URL}/login`,
+            loginLink: `${process.env.NEXT_PUBLIC_APP_URL}/`,
             userFullName: prenom,
           },
         },

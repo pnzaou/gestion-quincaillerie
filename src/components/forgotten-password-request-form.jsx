@@ -79,7 +79,7 @@ export function ForgottenPasswordRequestForm({className, ...props}) {
                 </span>}
               </div>
               <div className="flex flex-col gap-3">
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Button type="submit" className="w-full bg-sky-600 hover:bg-sky-700" disabled={isLoading}>
                   {isLoading 
                   ? (
                     <>
@@ -93,7 +93,7 @@ export function ForgottenPasswordRequestForm({className, ...props}) {
           </form>
           <div className="mt-4 text-center">
             <Link
-              href="/login"
+              href="/"
               className="text-sm text-blue-600 underline"
             >
               Retour à la page de connexion

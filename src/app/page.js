@@ -1,23 +1,20 @@
-"use client"
+import { LoginForm } from "@/components/login-form"
+import authOptions from "@/lib/auth";
+import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
 
-import LoadingScreen from "@/components/LoadingScreen";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+export default async function Page() {
+  const session = await getServerSession(authOptions)
 
-export default function Home() {
-  const {data: session, status} = useSession()
-  const router = useRouter()
-
-  useEffect(() => {
-    if(status === "unauthenticated") {
-      router.replace("/login")
-    }
-  },[status, router])
-
-  if (status === "loading") return <LoadingScreen/>
+  if(session) {
+    redirect("/dashboard")
+  }
 
   return (
-    <div>Hello APP</div>
+    (<div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
+      <div className="w-full max-w-md">
+        <LoginForm />
+      </div>
+    </div>)
   );
 }

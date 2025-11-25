@@ -59,7 +59,7 @@ export function ForgottenPasswordChangeForm({ className, ...props }) {
 
       if (res.ok) {
         toast.success(resData.message || "Mot de passe réinitialisé avec succès");
-        router.push("/login");
+        router.push("/");
       } else {
         toast.error(resData.message || "Erreur. Veuillez réessayer.");
       }
@@ -142,7 +142,7 @@ export function ForgottenPasswordChangeForm({ className, ...props }) {
             </div>
           </form>
           <div className="mt-4 text-center">
-            <Link href="/login" className="text-sm text-blue-600 underline">
+            <Link href="/" className="text-sm text-blue-600 underline">
               Retour à la page de connexion
             </Link>
           </div>
