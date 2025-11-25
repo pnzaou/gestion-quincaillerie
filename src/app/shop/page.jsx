@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, Store, Phone, Mail, MapPin, Globe, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,119 +26,115 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { createShopSchema } from "@/schemas";
+import { BusinessCardSkeletonGrid } from "@/components/skeletons";
 
 const Page = () => {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
-  const [formData, setFormData] = useState({
-    name: "",
-    phone: "",
-    email: "",
-    address: "",
-    website: "",
-  });
-  const [errors, setErrors] = useState({});
 
-  // Mock data - sera remplacé par les vraies données de la DB
-  const [businesses, setBusinesses] = useState([
-    {
-      id: "1",
-      name: "Boutique Centre-Ville",
-      phone: "+33 1 23 45 67 89",
-      email: "centre@example.com",
-      address: "15 Rue de la Paix, Paris",
-      website: "https://boutique-centre.fr",
+  const { register, handleSubmit, formState: { errors }, reset, setValue } = useForm({
+    defaultValues: {
+      name: "",
+      phone: "",
+      email: "",
+      address: "",
+      website: "",
     },
-  ]);
+    mode: "onChange",
+    resolver: yupResolver(createShopSchema),
+  })
 
-  const handleInputChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    // Effacer l'erreur du champ modifié
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: "" }));
-    }
-  };
+  const [businesses, setBusinesses] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    try {
-      // Validation
-      const validated = businessSchema.parse(formData);
-      
-      if (editingId) {
-        // Mode édition
-        setBusinesses((prev) =>
-          prev.map((b) =>
-            b.id === editingId
-              ? {
-                  ...b,
-                  name: validated.name,
-                  phone: validated.phone,
-                  email: validated.email,
-                  address: validated.address || undefined,
-                  website: validated.website || undefined,
-                }
-              : b
-          )
+  useEffect(() => {
+    const fetchBusinesses = async () => {
+      try {
+        const rep = await fetch("/api/shop");
+        const repData = await rep.json();
+
+        if (!rep.ok) {
+          toast.error(
+            repData?.message ||
+              "Erreur lors de la récupération des boutiques. Veuillez réessayer."
+          );
+          return;
+        }
+
+        if (rep.ok) {
+          setBusinesses(repData?.data || []);
+        }
+      } catch (error) {
+        toast.error(
+          "Erreur lors de la récupération des boutiques. Veuillez réessayer."
         );
-        
-        toast.success(`${validated.name} a été modifiée avec succès.`);
-      } else {
-        // Mode création
-        const newBusiness = {
-          id: Date.now().toString(),
-          name: validated.name,
-          phone: validated.phone,
-          email: validated.email,
-          address: validated.address || undefined,
-          website: validated.website || undefined,
-        };
-        
-        setBusinesses((prev) => [...prev, newBusiness]);
-        
-        toast.success(`${validated.name} a été créée avec succès.`);
-        
-        // Navigation vers le dashboard uniquement en mode création
-        router.push(`/dashboard/${newBusiness.id}`);
+        console.error(error);
+        return;
+      } finally {
+        setIsLoading(false);
       }
-      
-      // Réinitialiser le formulaire
-      setFormData({
-        name: "",
-        phone: "",
-        email: "",
-        address: "",
-        website: "",
+    };
+
+    fetchBusinesses();
+  }, []);
+
+  const onSubmit = async (data) => {
+
+    if (
+      !data.name ||
+      !data.name.trim() ||
+      !data.phone ||
+      !data.phone.trim() ||
+      !data.email ||
+      !data.email.trim()
+    ) {
+      toast.error("Veuillez remplir tous les champs obligatoires.");
+      return;
+    }
+
+    try {
+      const rep = await fetch("/api/shop", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
       });
-      setErrors({});
-      setEditingId(null);
-      setOpen(false);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        const newErrors = {};
-        error.errors.forEach((err) => {
-          if (err.path[0]) {
-            newErrors[err.path[0]] = err.message;
-          }
-        });
-        setErrors(newErrors);
+      const repData = await rep.json();
+
+      if (!rep.ok) {
+        toast.error(
+          repData?.message ||
+            "Erreur lors de la création de la boutique. Veuillez réessayer."
+        );
+        return;
       }
+
+      if (rep.ok) {
+        toast.success(repData?.message || "Boutique créée avec succès.");
+        setBusinesses((prev) => [...prev, repData?.data]);
+        reset();
+        setOpen(false);
+      }
+    } catch (error) {
+      toast.error(
+        "Erreur lors de la création de la boutique. Veuillez réessayer."
+      );
+      console.error(error);
+      return;
     }
   };
 
   const handleEdit = (business) => {
-    setEditingId(business.id);
-    setFormData({
-      name: business.name,
-      phone: business.phone,
-      email: business.email,
-      address: business.address || "",
-      website: business.website || "",
-    });
+    setEditingId(business._id);
     setOpen(true);
+    const { name = "", phone = "", email = "", address = "", website = "" } = business;
+    reset({ name, phone, email, address, website });
   };
 
   const handleDelete = () => {
@@ -156,14 +152,6 @@ const Page = () => {
     setOpen(newOpen);
     if (!newOpen) {
       setEditingId(null);
-      setFormData({
-        name: "",
-        phone: "",
-        email: "",
-        address: "",
-        website: "",
-      });
-      setErrors({});
     }
   };
 
@@ -203,20 +191,19 @@ const Page = () => {
                   Renseignez les informations de votre boutique. Les champs marqués d'un * sont obligatoires.
                 </DialogDescription>
               </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
                 <div className="space-y-2">
                   <Label htmlFor="name">
                     Nom <span className="text-destructive">*</span>
                   </Label>
                   <Input
                     id="name"
-                    value={formData.name}
-                    onChange={(e) => handleInputChange("name", e.target.value)}
                     placeholder="Ma Boutique"
-                    className={errors.name ? "border-destructive" : ""}
+                    {...register("name")}
+                    className={errors.name ? "border-red-500" : ""}
                   />
                   {errors.name && (
-                    <p className="text-sm text-destructive">{errors.name}</p>
+                    <p className="text-sm text-red-500">{errors.name?.message}</p>
                   )}
                 </div>
 
@@ -226,13 +213,12 @@ const Page = () => {
                   </Label>
                   <Input
                     id="phone"
-                    value={formData.phone}
-                    onChange={(e) => handleInputChange("phone", e.target.value)}
-                    placeholder="+33 1 23 45 67 89"
-                    className={errors.phone ? "border-destructive" : ""}
+                    placeholder="+221 77 111 11 11"
+                    {...register("phone")}
+                    className={errors.phone ? "border-red-500" : ""}
                   />
                   {errors.phone && (
-                    <p className="text-sm text-destructive">{errors.phone}</p>
+                    <p className="text-sm text-red-500">{errors.phone?.message}</p>
                   )}
                 </div>
 
@@ -242,14 +228,12 @@ const Page = () => {
                   </Label>
                   <Input
                     id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange("email", e.target.value)}
                     placeholder="contact@boutique.com"
-                    className={errors.email ? "border-destructive" : ""}
+                    {...register("email")}
+                    className={errors.email ? "border-red-500" : ""}
                   />
                   {errors.email && (
-                    <p className="text-sm text-destructive">{errors.email}</p>
+                    <p className="text-sm text-red-500">{errors.email?.message}</p>
                   )}
                 </div>
 
@@ -257,9 +241,8 @@ const Page = () => {
                   <Label htmlFor="address">Adresse</Label>
                   <Input
                     id="address"
-                    value={formData.address}
-                    onChange={(e) => handleInputChange("address", e.target.value)}
-                    placeholder="15 Rue de la Paix, Paris"
+                    placeholder="Votre adresse"
+                    {...register("address")}
                   />
                 </div>
 
@@ -268,13 +251,11 @@ const Page = () => {
                   <Input
                     id="website"
                     type="url"
-                    value={formData.website}
-                    onChange={(e) => handleInputChange("website", e.target.value)}
                     placeholder="https://www.boutique.com"
-                    className={errors.website ? "border-destructive" : ""}
+                    {...register("website")}
                   />
                   {errors.website && (
-                    <p className="text-sm text-destructive">{errors.website}</p>
+                    <p className="text-sm text-red-500">{errors.website?.message}</p>
                   )}
                 </div>
 
@@ -296,12 +277,15 @@ const Page = () => {
           </Dialog>
         </div>
 
+        {/* Chargement */}
+        {isLoading && <BusinessCardSkeletonGrid />}
+
         {/* Liste des boutiques */}
-        {businesses.length > 0 ? (
+        {!isLoading && (businesses.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {businesses.map((business) => (
               <Card
-                key={business.id}
+                key={business._id}
                 className="transition-all hover:shadow-lg group relative"
               >
                 <CardHeader>
@@ -371,9 +355,6 @@ const Page = () => {
           </div>
         ) : (
           <div className="text-center py-16">
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-muted mb-6">
-              <Store className="w-10 h-10 text-muted-foreground" />
-            </div>
             <h2 className="text-2xl font-semibold text-foreground mb-3">
               Aucune boutique pour le moment
             </h2>
@@ -381,7 +362,7 @@ const Page = () => {
               Créez votre première boutique pour commencer à gérer votre stock et vos ventes.
             </p>
           </div>
-        )}
+        ))}
 
         {/* Dialog de confirmation de suppression */}
         <AlertDialog open={!!deletingId} onOpenChange={() => setDeletingId(null)}>
