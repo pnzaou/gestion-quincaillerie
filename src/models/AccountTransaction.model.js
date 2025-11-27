@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 
 const AccountTransactionSchema = new mongoose.Schema({
+  business: { type: mongoose.Schema.Types.ObjectId, ref: "Business", required: true },
   account: { type: mongoose.Schema.Types.ObjectId, ref: "ClientAccount", required: true },
   type: { type: String, enum: ["deposit", "withdrawal", "adjustment", "refund"], required: true },
   amount: { type: Number, required: true, min: 0 },

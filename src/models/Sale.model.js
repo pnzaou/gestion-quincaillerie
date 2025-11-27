@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 const SaleSchema = new mongoose.Schema(
   {
+    business: { type: mongoose.Schema.Types.ObjectId, ref: "Business", required: true },
     reference: { type: String, unique: true, required: true },
     client: { type: mongoose.Schema.Types.ObjectId, ref: "Client", required: false },
     items: [

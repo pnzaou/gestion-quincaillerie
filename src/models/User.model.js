@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
+    business: { type: mongoose.Schema.Types.ObjectId, ref: "Business", required: false },
     nom: {type: String, required: true},
     prenom: {type: String, required: true},
     email: {type: String, required: true, unique: true},

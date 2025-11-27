@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 const quoteSchema = new mongoose.Schema(
   {
+    business: { type: mongoose.Schema.Types.ObjectId, ref: "Business", required: true },
     client: { type: mongoose.Schema.Types.ObjectId, ref: "Client", required: false },
     items: [
       {
