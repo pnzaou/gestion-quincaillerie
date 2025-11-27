@@ -1,4 +1,5 @@
 import authOptions from "@/lib/auth";
+import dbConnection from "@/lib/db";
 import BusinessModel from "@/models/Business.model";
 import { withAuthAndRole } from "@/utils/withAuthAndRole";
 import { getServerSession } from "next-auth";
@@ -6,6 +7,8 @@ import { NextResponse } from "next/server";
 
 export const POST = withAuthAndRole(async (req) => {
     try {
+        await dbConnection();
+
         const body = await req.json()
         const { name, phone, email, address, website } = body
 
@@ -67,6 +70,8 @@ export const POST = withAuthAndRole(async (req) => {
 
 export const GET = withAuthAndRole(async (req) => {
     try {
+        await dbConnection();
+        
         const businesses = await BusinessModel.find({})
         if(!businesses || businesses.length === 0) {
             return NextResponse.json({
