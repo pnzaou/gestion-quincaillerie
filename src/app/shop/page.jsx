@@ -86,20 +86,20 @@ const Page = () => {
   const onSubmit = async (data) => {
 
     if (
-      !data.name ||
-      !data.name.trim() ||
-      !data.phone ||
-      !data.phone.trim() ||
-      !data.email ||
-      !data.email.trim()
+      !data.name?.trim() ||
+      !data.phone?.trim() ||
+      !data.email?.trim()
     ) {
       toast.error("Veuillez remplir tous les champs obligatoires.");
       return;
     }
 
+    const url = editingId ? `/api/shop/${editingId}` : "/api/shop";
+    const method = editingId ? "PUT" : "POST";
+
     try {
-      const rep = await fetch("/api/shop", {
-        method: "POST",
+      const rep = await fetch(url, {
+        method,
         headers: {
           "Content-Type": "application/json",
         },
@@ -110,17 +110,24 @@ const Page = () => {
       if (!rep.ok) {
         toast.error(
           repData?.message ||
-            "Erreur lors de la création de la boutique. Veuillez réessayer."
+            "Erreur lors de l’enregistrement."
         );
         return;
       }
 
-      if (rep.ok) {
-        toast.success(repData?.message || "Boutique créée avec succès.");
-        setBusinesses((prev) => [...prev, repData?.data]);
-        reset();
-        setOpen(false);
+      if (editingId) {
+        setBusinesses((prev) =>
+          prev.map((b) => (b._id === editingId ? repData.data : b))
+        );
+        toast.success("Boutique modifiée avec succès.");
+      } else {
+        setBusinesses((prev) => [...prev, repData.data]);
+        toast.success("Boutique créée avec succès.");
       }
+
+      reset();
+      setOpen(false);
+      setEditingId(null);
     } catch (error) {
       toast.error(
         "Erreur lors de la création de la boutique. Veuillez réessayer."
@@ -339,14 +346,14 @@ const Page = () => {
                   </div>
                   <CardTitle
                     className="text-xl group-hover:text-[#1166D4] transition-colors cursor-pointer"
-                    onClick={() => handleBusinessSelect(business.id)}
+                    onClick={() => handleBusinessSelect(business._id)}
                   >
                     {business.name}
                   </CardTitle>
                 </CardHeader>
                 <CardContent
                   className="space-y-3 cursor-pointer"
-                  onClick={() => handleBusinessSelect(business.id)}
+                  onClick={() => handleBusinessSelect(business._id)}
                 >
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Phone className="w-4 h-4" />
