@@ -125,7 +125,6 @@ const Page = () => {
       toast.error(
         "Erreur lors de la création de la boutique. Veuillez réessayer."
       );
-      console.error(error);
       return;
     }
   };
@@ -137,14 +136,34 @@ const Page = () => {
     reset({ name, phone, email, address, website });
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (deletingId) {
-      const business = businesses.find((b) => b.id === deletingId);
-      setBusinesses((prev) => prev.filter((b) => b.id !== deletingId));
-      
-      toast.success(`${business?.name} a été supprimée avec succès.`);
-      
-      setDeletingId(null);
+      const businessToDelete = businesses.find((b) => b._id === deletingId);
+      setBusinesses(prev => prev.filter(b => b._id !== deletingId))
+      try {
+        const rep = await fetch(`/api/shop/${deletingId}`, {
+          method: "DELETE",
+        });
+
+        const repData = await rep.json();
+
+        if (!rep.ok) {
+          setBusinesses(prev => [...prev, businessToDelete]);
+          toast.error(
+            repData?.message ||
+              "Erreur lors de la suppression de la boutique. Veuillez réessayer."
+          );
+          return;
+        }
+      } catch (error) {
+        setBusinesses(prev => [...prev, businessToDelete]);
+        toast.error(
+          "Erreur lors de la suppression de la boutique. Veuillez réessayer."
+        );
+        return;
+      } finally {
+        setDeletingId(null);
+      }
     }
   };
 
@@ -310,7 +329,7 @@ const Page = () => {
                         variant="ghost"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setDeletingId(business.id);
+                          setDeletingId(business._id);
                         }}
                         className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"
                       >
@@ -377,7 +396,7 @@ const Page = () => {
               <AlertDialogCancel>Annuler</AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDelete}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90 text-white"
               >
                 Supprimer
               </AlertDialogAction>
