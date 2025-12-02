@@ -4,6 +4,7 @@ import User from "@/models/User.model"
 import mongoose from "mongoose"
 import { NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
+import BusinessModel from "@/models/Business.model"
 
 export const GET = withAuthAndRole(async (req, { params }) => {
     try {
@@ -47,9 +48,9 @@ export const PUT = withAuthAndRole(async (req, { params }) => {
     try {
         await dbConnection()
         const { id } = await params
-        const { nom, prenom, email, role, password } = await req.json()
+        const { nom, prenom, email, role, password, business } = await req.json()
 
-        if(!id ||!mongoose.Types.ObjectId.isValid(id)) {
+        if(!id || !mongoose.Types.ObjectId.isValid(id)) {
             return NextResponse.json({
                 message: "Veuillez fournir un ID valide",
                 success: false,
@@ -66,10 +67,43 @@ export const PUT = withAuthAndRole(async (req, { params }) => {
             }, { status: 404 })
         }
 
+        // Validation: si le rôle est ou devient "gerant", la boutique est obligatoire
+        const newRole = role || user.role
+        if (newRole === "gerant" && !business && !user.business) {
+            return NextResponse.json({
+                message: "La boutique est obligatoire pour un gérant",
+                success: false,
+                error: true
+            }, { status: 400 })
+        }
+
+        // Vérifier que la boutique existe si fournie
+        if (business && mongoose.Types.ObjectId.isValid(business)) {
+            const businessExists = await BusinessModel.findById(business)
+            if (!businessExists) {
+                return NextResponse.json({
+                    message: "La boutique spécifiée n'existe pas",
+                    success: false,
+                    error: true
+                }, { status: 400 })
+            }
+        }
+
         user.nom = nom || user.nom
         user.prenom = prenom || user.prenom
         user.email = email || user.email
         user.role = role || user.role
+        
+        // Gérer la boutique en fonction du rôle
+        if (newRole === "gerant") {
+            // Si c'est un gérant, mettre à jour ou conserver la boutique
+            if (business) {
+                user.business = business
+            }
+        } else {
+            // Si ce n'est plus un gérant, supprimer la référence à la boutique
+            user.business = undefined
+        }
         
         if(password && password.trim() !== "") {
             const salt = await bcrypt.genSalt(10)

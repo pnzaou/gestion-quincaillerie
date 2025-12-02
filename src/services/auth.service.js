@@ -8,6 +8,7 @@ import jwt from "jsonwebtoken";
 import PasswordResetToken from "@/models/PasswordResetToken.model";
 import { resend } from "@/lib/resend";
 import ComfirmResetPassword from "@/components/email/Comfirm-reset-password";
+import BusinessModel from "@/models/Business.model";
 
 export const createUser = async (dto, sessionData) => {
   await dbConnection();
@@ -15,7 +16,7 @@ export const createUser = async (dto, sessionData) => {
   mongoSession.startTransaction();
 
   try {
-    const { nom, prenom, email, password, role } = dto;
+    const { nom, prenom, email, password, role, business } = dto;
     const { id: creatorId, name: creatorName } = sessionData.user;
 
     //Unicité de l'email
@@ -24,13 +25,34 @@ export const createUser = async (dto, sessionData) => {
       throw { status: 400, message: "Cet email est déjà utilisé." };
     }
 
+    // Validation de la boutique pour les gérants
+    if (role === "gerant" && business) {
+      const businessExists = await BusinessModel.findById(business).session(mongoSession);
+      if (!businessExists) {
+        throw { status: 400, message: "La boutique spécifiée n'existe pas." };
+      }
+    }
+
     // Hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    // Création de l'utilisateur avec business si gérant
+    const userData = { 
+      nom, 
+      prenom, 
+      email, 
+      password: hashedPassword, 
+      role 
+    };
+
+    if (role === "gerant" && business) {
+      userData.business = business;
+    }
+
     //Création de l'utilisateur
     const [newUser] = await User.create(
-      [{ nom, prenom, email, password: hashedPassword, role }],
+      [userData],
       { session: mongoSession }
     );
 

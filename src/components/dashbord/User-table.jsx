@@ -130,16 +130,25 @@ const UserTable = ({initialUsers, initialTotalPages, currentPage, search}) => {
                                 </div>
                                 <UserStatus status={user.status} />
                                 </div>
-                                <div className="flex items-center justify-between pt-4">
-                                <p className="text-sm text-gray-700">Rôle : {user.role}</p>
-                                <div className="flex gap-2">
-                                    <UpdateUser id={user._id} />
-                                    <DeleteUser 
-                                    id={user._id} 
-                                    deleteUser={handleDelete} 
-                                    isLoading={deletingUserId === user._id}
-                                    />
-                                </div>
+                                <div className="pt-4 space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <p className="text-sm text-gray-700">Rôle : {user.role}</p>
+                                    </div>
+                                    {user.role === "gerant" && user.business && (
+                                        <div className="flex items-center justify-between">
+                                            <p className="text-sm text-gray-700">
+                                                Boutique : <span className="font-medium">{user.business.name}</span>
+                                            </p>
+                                        </div>
+                                    )}
+                                    <div className="flex gap-2 justify-end pt-2">
+                                        <UpdateUser id={user._id} />
+                                        <DeleteUser 
+                                        id={user._id} 
+                                        deleteUser={handleDelete} 
+                                        isLoading={deletingUserId === user._id}
+                                        />
+                                    </div>
                                 </div>
                             </div>
                             ))}
@@ -153,6 +162,7 @@ const UserTable = ({initialUsers, initialTotalPages, currentPage, search}) => {
                                 <th className="px-3 py-5 font-medium">Nom</th>
                                 <th className="px-3 py-5 font-medium">Email</th>
                                 <th className="px-3 py-5 font-medium">Rôle</th>
+                                <th className="px-3 py-5 font-medium">Boutique</th>
                                 <th className="px-3 py-5 font-medium">Statut</th>
                                 <th className="py-5 pl-6 pr-3 text-right">
                                 <span className="sr-only">Actions</span>
@@ -169,6 +179,13 @@ const UserTable = ({initialUsers, initialTotalPages, currentPage, search}) => {
                                 <td className="whitespace-nowrap px-3 py-4">{user.nom}</td>
                                 <td className="whitespace-nowrap px-3 py-4">{user.email}</td>
                                 <td className="whitespace-nowrap px-3 py-4">{user.role}</td>
+                                <td className="whitespace-nowrap px-3 py-4">
+                                    {user.role === "gerant" && user.business ? (
+                                        <span className="text-sm">{user.business.name}</span>
+                                    ) : (
+                                        <span className="text-gray-400 text-sm">-</span>
+                                    )}
+                                </td>
                                 <td className="whitespace-nowrap px-3 py-4">
                                     <UserStatus status={user.status} />
                                 </td>

@@ -36,4 +36,9 @@ export const addUserSchema = (isEdit = false) =>
       .string()
       .oneOf(["admin", "gerant", "comptable"], "Rôle invalide — choisissez Admin, Gérant ou Comptable.")
       .required("Le rôle est obligatoire."),
+    business: yup.string().when("role", {
+      is: "gerant",
+      then: (schema) => schema.required("La boutique est obligatoire pour un gérant"),
+      otherwise: (schema) => schema.notRequired(),
+    })
   });

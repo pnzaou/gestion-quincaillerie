@@ -3,10 +3,15 @@ const emailRegex = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/;
 const roles = ["admin", "gerant", "comptable"];
 
 export const paseCreateUserDto = (body) => {
-  const { nom, prenom, email, password, role } = body;
+  const { nom, prenom, email, password, role, business } = body;
 
   if (![nom, prenom, email, password, role].every(Boolean)) {
     throw { status: 400, message: "Tous les champs sont obligatoires." };
+  }
+
+  // Validation spécifique pour le gérant
+  if (role === "gerant" && !business) {
+    throw { status: 400, message: "La boutique est obligatoire pour un gérant." };
   }
 
   if (!mdpRegex.test(password)) {
@@ -24,7 +29,7 @@ export const paseCreateUserDto = (body) => {
     throw { status: 400, message: "Rôle invalide." };
   }
 
-  return { nom, prenom, email, password, role };
+  return { nom, prenom, email, password, role, business };
 };
 
 export function parseForgotPasswordRequestDto(body) {

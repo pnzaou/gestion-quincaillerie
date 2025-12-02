@@ -28,6 +28,7 @@ export const GET = withAuthAndRole(async (req) => {
 
         const [users, total] = await Promise.all([
             User.find(query, { password: 0 })
+            .populate('business', 'name')
             .skip(skip)
             .limit(limit),
            User.countDocuments(query)

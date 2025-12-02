@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
 import { useForm, Controller } from "react-hook-form";
@@ -14,6 +14,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../ui/select";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Check, ChevronsUpDown } from "lucide-react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import Required from "@/components/Required";
@@ -22,6 +35,8 @@ import { addUserSchema } from "@/schemas";
 
 const AjoutUserForm = ({ className, initialData = null, ...props }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [businesses, setBusinesses] = useState([]);
+  const [openCombobox, setOpenCombobox] = useState(false);
   const router = useRouter();
   const isEdit = Boolean(initialData);
 
@@ -29,6 +44,7 @@ const AjoutUserForm = ({ className, initialData = null, ...props }) => {
     register,
     handleSubmit,
     control,
+    watch,
     formState: { errors },
   } = useForm({
     mode: "onChange",
@@ -37,9 +53,31 @@ const AjoutUserForm = ({ className, initialData = null, ...props }) => {
       prenom: initialData?.prenom || "",
       email: initialData?.email || "",
       role: initialData?.role || "",
+      business: initialData?.business || "",
     },
     resolver: yupResolver(addUserSchema(isEdit)),
   });
+
+  const selectedRole = watch("role");
+
+  // Récupérer les boutiques depuis la BD
+  useEffect(() => {
+    const fetchBusinesses = async () => {
+      try {
+        const response = await fetch("/api/business");
+        if (response.ok) {
+          const data = await response.json();
+          setBusinesses(data.businesses || []);
+        }
+      } catch (error) {
+        console.error("Erreur lors du chargement des boutiques:", error);
+      }
+    };
+
+    if (selectedRole === "gerant") {
+      fetchBusinesses();
+    }
+  }, [selectedRole]);
 
   const onSubmit = async (data) => {
     try {
@@ -88,11 +126,11 @@ const AjoutUserForm = ({ className, initialData = null, ...props }) => {
           <form onSubmit={handleSubmit(onSubmit)} noValidate>
             <div className="flex gap-2 mb-4">
               <div className="grid gap-3 flex-1/2">
-                <Label htmlFor="email">
+                <Label htmlFor="nom">
                   Nom
                   <Required />
                 </Label>
-                <Input id="nom" type="nom" {...register("nom")} />
+                <Input id="nom" type="text" {...register("nom")} />
                 {errors?.nom && (
                   <span className="mt-2 text-xs text-red-500">
                     {errors?.nom.message}
@@ -101,16 +139,12 @@ const AjoutUserForm = ({ className, initialData = null, ...props }) => {
               </div>
               <div className="grid gap-3 flex-1/2">
                 <div className="flex items-center">
-                  <Label htmlFor="password">
+                  <Label htmlFor="prenom">
                     Prénom
                     <Required />
                   </Label>
                 </div>
-                <Input
-                  id="prenom"
-                  type="prenom"
-                  {...register("prenom")}
-                />
+                <Input id="prenom" type="text" {...register("prenom")} />
                 {errors?.prenom && (
                   <span className="mt-2 text-xs text-red-500">
                     {errors?.prenom.message}
@@ -157,7 +191,7 @@ const AjoutUserForm = ({ className, initialData = null, ...props }) => {
               </div>
             </div>
             <div className="grid gap-3 mb-4">
-              <Label htmlFor="email">
+              <Label htmlFor="role">
                 Rôle
                 <Required />
               </Label>
@@ -183,10 +217,76 @@ const AjoutUserForm = ({ className, initialData = null, ...props }) => {
                 </span>
               )}
             </div>
+
+            {/* Champ Boutique conditionnel */}
+            {selectedRole === "gerant" && (
+              <div className="grid gap-3 mb-4">
+                <Label htmlFor="business">
+                  Boutique
+                  <Required />
+                </Label>
+                <Controller
+                  name="business"
+                  control={control}
+                  render={({ field }) => (
+                    <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={openCombobox}
+                          className="w-full justify-between"
+                        >
+                          {field.value
+                            ? businesses.find((b) => b._id === field.value)?.name
+                            : "Sélectionner une boutique..."}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0">
+                        <Command>
+                          <CommandInput placeholder="Rechercher une boutique..." />
+                          <CommandEmpty>Aucune boutique trouvée.</CommandEmpty>
+                          <CommandGroup>
+                            {businesses.map((business) => (
+                              <CommandItem
+                                key={business._id}
+                                value={business.name}
+                                onSelect={() => {
+                                  field.onChange(business._id);
+                                  setOpenCombobox(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    field.value === business._id
+                                      ? "opacity-100"
+                                      : "opacity-0"
+                                  )}
+                                />
+                                {business.name}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  )}
+                />
+                {errors?.business && (
+                  <span className="mt-2 text-xs text-red-500">
+                    {errors?.business.message}
+                  </span>
+                )}
+              </div>
+            )}
+
             <div className="flex flex-col gap-3">
               <Button
                 type="submit"
                 className="w-full bg-[#0084D1] hover:bg-[#0042d1] hover:cursor-pointer"
+                disabled={isLoading}
               >
                 {isLoading ? (
                   <>
