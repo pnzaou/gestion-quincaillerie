@@ -128,7 +128,7 @@ export function ForgottenPasswordChangeForm({ className, ...props }) {
                 )}
               </div>
               <div className="flex flex-col gap-3">
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Button type="submit" className="w-full bg-blue-600 text-white hover:bg-blue-700" disabled={isLoading}>
                   {isLoading ? (
                     <>
                       <span className="w-4 h-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></span>{" "}

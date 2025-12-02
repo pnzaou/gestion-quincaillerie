@@ -1,7 +1,7 @@
 import mongoose from "mongoose"
 
 const HistorySchema = new mongoose.Schema({
-    business: { type: mongoose.Schema.Types.ObjectId, ref: "Business", required: true },
+    business: { type: mongoose.Schema.Types.ObjectId, ref: "Business", required: false },
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     actions: {
         type: String,

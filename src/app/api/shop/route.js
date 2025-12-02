@@ -1,11 +1,12 @@
 import authOptions from "@/lib/auth";
 import dbConnection from "@/lib/db";
 import BusinessModel from "@/models/Business.model";
-import { withAuthAndRole } from "@/utils/withAuthAndRole";
+import { adminAndComptaAccess } from "@/utils/adminAndComptaAccess";
+
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
-export const POST = withAuthAndRole(async (req) => {
+export const POST = adminAndComptaAccess(async (req) => {
     try {
         await dbConnection();
 
@@ -68,7 +69,7 @@ export const POST = withAuthAndRole(async (req) => {
     }
 })
 
-export const GET = withAuthAndRole(async (req) => {
+export const GET = adminAndComptaAccess(async (req) => {
     try {
         await dbConnection();
         

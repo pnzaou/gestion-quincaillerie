@@ -25,14 +25,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import toast from "react-hot-toast";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { createShopSchema } from "@/schemas";
 import { BusinessCardSkeletonGrid } from "@/components/skeletons";
 
 const Page = () => {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);

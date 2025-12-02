@@ -48,7 +48,24 @@ export function LoginForm({className, ...props}) {
       toast.success("Connexion réussie !", {
         position: "top-center"
       })
-      router.push("/")
+      // Récupérer la session pour obtenir le rôle
+      const session = await fetch('/api/auth/session').then(res => res.json())
+
+      // Redirection selon le rôle
+      switch(session?.user?.role) {
+        case "admin":
+          router.push("/shop")
+          break
+        case "comptable":
+          router.push("/shop")
+          break
+        case "gerant":
+          router.push("/dashboard")
+          break
+        default:
+          router.push("/")
+          break
+      }
       return;
     } 
 
