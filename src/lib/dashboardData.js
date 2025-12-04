@@ -1,18 +1,21 @@
+// dashboardData.js
+
 import Sale from "@/models/Sale.model"
 import dbConnection from "./db"
 import Product from "@/models/Product.model"
 import Payment from "@/models/Payment.model"
 import Order from "@/models/Order.model"
 
-const computeStats = async (start, end) => {
+const computeStats = async (start, end, businessId) => {
   try {
     await dbConnection()
 
     const [res] = await Sale.aggregate([
-      // 1) on filtre sur la date
+      // 1) on filtre sur la date ET la boutique
       {
         $match: {
-          dateExacte: { $gte: start, $lt: end }
+          dateExacte: { $gte: start, $lt: end },
+          business: businessId
         }
       },
       // 2) on branche en 3 facettes
@@ -38,9 +41,7 @@ const computeStats = async (start, end) => {
                 as: "payments"
               }
             },
-            // garder les ventes partial même si aucun paiement enregistré (prévenir la perte par $unwind)
             { $unwind: { path: "$payments", preserveNullAndEmptyArrays: true } },
-            // sommer les montants (si pas de payment, prendre 0)
             { $group: { _id: null, sum: { $sum: { $ifNull: ["$payments.amount", 0] } } } }
           ]
         }
@@ -64,53 +65,52 @@ const computeStats = async (start, end) => {
   }
 }
 
-export const getTodayStats = async () => {
+export const getTodayStats = async (businessId) => {
   const now = new Date();
   const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const startOfNextDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-  return computeStats(startOfDay, startOfNextDay)
+  return computeStats(startOfDay, startOfNextDay, businessId)
 }
 
-export const getMonthRevenue = async (year = new Date().getFullYear(), month = new Date().getMonth()) => {
+export const getMonthRevenue = async (businessId, year = new Date().getFullYear(), month = new Date().getMonth()) => {
   const startOfMonth = new Date(year, month, 1);
   const startOfNextMonth = new Date(year, month + 1, 1);
-  return computeStats(startOfMonth, startOfNextMonth)
+  return computeStats(startOfMonth, startOfNextMonth, businessId)
 }
 
-export const getPreviousMonthRevenue = async () => {
+export const getPreviousMonthRevenue = async (businessId) => {
   const now = new Date();
-  // calcul du mois précédent (gère janvier correctement)
   const prevMonth = (now.getMonth() + 11) % 12;
   const yearOfPrevMonth = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
 
   const startOfPrevMonth = new Date(yearOfPrevMonth, prevMonth, 1);
   const startOfNextMonth = new Date(yearOfPrevMonth, prevMonth + 1, 1);
 
-  return computeStats(startOfPrevMonth, startOfNextMonth);
+  return computeStats(startOfPrevMonth, startOfNextMonth, businessId);
 }
 
-export const getYearRevenue = async (year = new Date().getFullYear()) => {
+export const getYearRevenue = async (businessId, year = new Date().getFullYear()) => {
   const startOfYear = new Date(year, 0, 1);
   const startOfNextYear = new Date(year + 1, 0, 1);
-  return computeStats(startOfYear, startOfNextYear);
+  return computeStats(startOfYear, startOfNextYear, businessId);
 }
 
-export const getStockAlerts = async () => {
+export const getStockAlerts = async (businessId) => {
     try {
         await dbConnection()
 
         const [result] = await Product.aggregate([
+            // Filtrer par boutique
+            { $match: { business: businessId } },
             {
                 $facet: {
                     soon: [
                         {
-                            // QteStock === QteAlerte
                             $match: { $expr: { $eq: ["$QteStock", "$QteAlerte"] }}
                         },
                         { $count: "count" }
                     ],
                     outOfStock: [
-                        // QteStock === 0
                         { $match: { QteStock: 0 } },
                         { $count: "count" }
                     ]
@@ -128,12 +128,13 @@ export const getStockAlerts = async () => {
     }
 }
 
-export const countOrdersToReceive = async () => {
+export const countOrdersToReceive = async (businessId) => {
   try {
     await dbConnection()
 
     const count = await Order.countDocuments({
-      status: { $in: ["confirmed", "partially_received"] }
+      status: { $in: ["confirmed", "partially_received"] },
+      business: businessId
     })
 
     return count;
@@ -143,12 +144,7 @@ export const countOrdersToReceive = async () => {
   }
 }
 
-/**
- * Top produits vendus (quantité & revenu) entre start et end.
- * Compte uniquement les ventes ayant status "paid" ou "partial".
- * Retourne un tableau trié desc par quantité vendue.
- */
-export const getTopProducts = async (start, end, limit = 10) => {
+export const getTopProducts = async (start, end, businessId, limit = 10) => {
   try {
     await dbConnection();
 
@@ -156,7 +152,8 @@ export const getTopProducts = async (start, end, limit = 10) => {
       {
         $match: {
           dateExacte: { $gte: start, $lt: end },
-          status: { $in: ["paid", "partial"] }, // on considère uniquement les ventes payées ou partiellement payées
+          status: { $in: ["paid", "partial"] },
+          business: businessId
         },
       },
       { $unwind: "$items" },
@@ -167,7 +164,6 @@ export const getTopProducts = async (start, end, limit = 10) => {
           revenue: { $sum: { $multiply: ["$items.quantity", "$items.price"] } },
         },
       },
-      // récupérer les details du produit
       {
         $lookup: {
           from: Product.collection.name,
@@ -199,18 +195,12 @@ export const getTopProducts = async (start, end, limit = 10) => {
   }
 };
 
-/**
- * Pour un mois donné (start, end) on réutilise la logique de computeStats:
- * - somme des 'paid' : sum of $total
- * - somme des paiements pour 'partial' (lookup Payments)
- *
- * On retourne la somme totale revenue (paid + partialPayments)
- */
-const computeStatsForMonthRange = async (start, end) => {
+const computeStatsForMonthRange = async (start, end, businessId) => {
   const [res] = await Sale.aggregate([
     {
       $match: {
-        dateExacte: { $gte: start, $lt: end }
+        dateExacte: { $gte: start, $lt: end },
+        business: businessId
       }
     },
     {
@@ -241,11 +231,7 @@ const computeStatsForMonthRange = async (start, end) => {
   return paidSum + partialPaymentsSum
 }
 
-/**
- * Renvoie un objet contenant les mois (Jan..Dec) et les revenues correspondants pour l'année passée.
- * Les mois avant le démarrage de l'activité sont à 0. Les mois futurs sont aussi inclus mais mis à 0.
- */
-export const getYearlyMonthlyRevenue = async (year = new Date().getFullYear()) => {
+export const getYearlyMonthlyRevenue = async (businessId, year = new Date().getFullYear()) => {
   try {
     await dbConnection()
 
@@ -259,15 +245,13 @@ export const getYearlyMonthlyRevenue = async (year = new Date().getFullYear()) =
       const startOfMonth = new Date(year, m, 1)
       const startOfNextMonth = new Date(year, m + 1, 1)
 
-      // si la période est future (après le mois courant de la même année), on met 0
       const now = new Date()
       if (year > now.getFullYear() || (year === now.getFullYear() && m > now.getMonth())) {
         revenues.push(0)
         continue
       }
 
-      // calcul du revenu du mois (paid totals + paiements des partial)
-      const monthRevenue = await computeStatsForMonthRange(startOfMonth, startOfNextMonth)
+      const monthRevenue = await computeStatsForMonthRange(startOfMonth, startOfNextMonth, businessId)
       revenues.push(monthRevenue)
     }
 
@@ -276,7 +260,7 @@ export const getYearlyMonthlyRevenue = async (year = new Date().getFullYear()) =
     return {
       year,
       months,
-      revenues, // tableau de 12 nombres (Jan -> Dec)
+      revenues,
       total
     }
   } catch (error) {
@@ -285,14 +269,15 @@ export const getYearlyMonthlyRevenue = async (year = new Date().getFullYear()) =
   }
 }
 
-export const getTotalDebts = async () => {
+export const getTotalDebts = async (businessId) => {
   try {
     await dbConnection();
 
     const [res] = await Sale.aggregate([
       {
         $match: {
-          status: { $in: ["pending", "partial"] }, // ventes non totalement réglées
+          status: { $in: ["pending", "partial"] },
+          business: businessId
         },
       },
       {
@@ -323,7 +308,7 @@ export const getTotalDebts = async () => {
       },
       {
         $addFields: {
-          remaining: { $max: ["$remainingRaw", 0] }, // éviter négatifs (surpaiement)
+          remaining: { $max: ["$remainingRaw", 0] },
         },
       },
       {

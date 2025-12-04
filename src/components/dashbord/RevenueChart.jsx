@@ -6,7 +6,7 @@ import { Calendar } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
-const RevenueChart = ({ initialData }) => {
+const RevenueChart = ({ initialData, shopId }) => {
     const currentYear = new Date().getFullYear();
     const [selectedYear, setSelectedYear] = useState(initialData?.year || currentYear);
     const [revenueData, setRevenueData] = useState(initialData || null);
@@ -27,7 +27,7 @@ const RevenueChart = ({ initialData }) => {
         setLoading(true);
         try {
           const res = await fetch(
-            `/api/sale/yearly-revenue?year=${selectedYear}`,
+            `/api/sale/yearly-revenue?year=${selectedYear}&businessId=${shopId}`,
             { signal: controller.signal }
           );
           if (!res.ok) throw new Error("Erreur réseau");

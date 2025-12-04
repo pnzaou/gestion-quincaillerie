@@ -2,6 +2,7 @@ import { countOrdersToReceive, getMonthRevenue, getYearRevenue, getStockAlerts, 
 import { TrendingUp, Calendar, ChevronLeft, ShoppingCart, Truck, ArrowUpRight, Package, BanknoteArrowUp, BanknoteArrowDown } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import mongoose from "mongoose";
 
 const StatItem = ({ icon: Icon, label, value, currency = false, href, linkAriaLabel, soonCount = null, outOfStockCount = null }) => {
   const hasLink = Boolean(href);
@@ -57,15 +58,16 @@ const StatItem = ({ icon: Icon, label, value, currency = false, href, linkAriaLa
   );
 }
 
-const StatItemWrapper = async () => {
-  const { salesCount, totalRevenue } = await getTodayStats();
-  const { totalRevenue: totalMonthRevenue } = await getMonthRevenue();
-  const { totalRevenue: totalPreviousMonthRevenue } =
-    await getPreviousMonthRevenue();
-  const { totalRevenue: totalYearRevenue } = await getYearRevenue();
-  const { outOfStockCount, soonCount } = await getStockAlerts();
-  const ordersToReceiveCount = await countOrdersToReceive();
-  const totalDebts = await getTotalDebts()
+const StatItemWrapper = async ({ businessId }) => {
+  const objectId = new mongoose.Types.ObjectId(businessId);
+  
+  const { salesCount, totalRevenue } = await getTodayStats(objectId);
+  const { totalRevenue: totalMonthRevenue } = await getMonthRevenue(objectId);
+  const { totalRevenue: totalPreviousMonthRevenue } = await getPreviousMonthRevenue(objectId);
+  const { totalRevenue: totalYearRevenue } = await getYearRevenue(objectId);
+  const { outOfStockCount, soonCount } = await getStockAlerts(objectId);
+  const ordersToReceiveCount = await countOrdersToReceive(objectId);
+  const totalDebts = await getTotalDebts(objectId);
 
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -124,7 +126,7 @@ const StatItemWrapper = async () => {
         value={totalDebts}
         currency
         linkAriaLabel="Voir le total des dettes"
-        href="/dashboard/vente/historique-vente?status=pending,partial"
+        href={`/shop/${businessId}/dashboard/vente/historique-vente?status=pending,partial`}
       />
     </div>
   );

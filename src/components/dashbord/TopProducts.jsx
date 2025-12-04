@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Package, TrendingUp } from 'lucide-react';
  
-const TopProducts = ({ initialData }) => {
+const TopProducts = ({ initialData, shopId }) => {
   const [selectedPeriod, setSelectedPeriod] = useState("30");
   const [topProducts, setTopProducts] = useState(initialData || []);
   const [loading, setLoading] = useState(false);
@@ -36,7 +36,7 @@ const TopProducts = ({ initialData }) => {
 
         // Use the API route we created
         const res = await fetch(
-          `/api/product/top-products?start=${start.toISOString()}&end=${end.toISOString()}&limit=10`,
+          `/api/product/top-products?start=${start.toISOString()}&end=${end.toISOString()}&limit=10&businessId=${shopId}`,
           { signal: controller.signal }
         );
         if (!res.ok) throw new Error("Network error");
