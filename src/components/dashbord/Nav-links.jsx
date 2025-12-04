@@ -1,12 +1,12 @@
 "use client"
 
-import { links } from "@/utils/dashboardLinks"
+import { getLinks } from "@/utils/dashboardLinks"
 import clsx from "clsx"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState } from "react"
 
-const NavLinks = ({ session }) => {
+const NavLinks = ({ session, shopId }) => {
   const pathName = usePathname()
   const role = session?.user?.role
   const [openDropdown, setOpenDropdown] = useState(null)
@@ -15,6 +15,7 @@ const NavLinks = ({ session }) => {
     setOpenDropdown(openDropdown === name ? null : name)
   }
 
+  const links = getLinks(shopId)
   const filteredLinks = links.filter(link => link.roles.includes(role))
 
   return (

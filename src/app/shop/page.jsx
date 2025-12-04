@@ -29,13 +29,14 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { createShopSchema } from "@/schemas";
 import { BusinessCardSkeletonGrid } from "@/components/skeletons";
+import { useRouter } from "next/navigation";
 
 const Page = () => {
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
 
-  const { register, handleSubmit, formState: { errors }, reset, setValue } = useForm({
+  const { register, handleSubmit, formState: { errors }, reset } = useForm({
     defaultValues: {
       name: "",
       phone: "",
@@ -49,6 +50,8 @@ const Page = () => {
 
   const [businesses, setBusinesses] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const router = useRouter()
 
   useEffect(() => {
     const fetchBusinesses = async () => {
@@ -180,7 +183,7 @@ const Page = () => {
   };
 
   const handleBusinessSelect = (businessId) => {
-    router.push(`/dashboard/${businessId}`);
+    router.push(`/shop/${businessId}/dashboard`);
   };
 
   return (

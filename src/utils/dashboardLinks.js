@@ -7,86 +7,84 @@ import {
 } from "@heroicons/react/24/outline"
 import { FileText, LayoutDashboard, Truck } from "lucide-react"
 
-export const links = [
+export const getLinks = (shopId = null) => {
+  if (!shopId) {
+    return [];
+  }
+
+  return [
     {
       name: "Dashboard",
-      href: "/dashboard",
+      href: `/shop/${shopId}/dashboard`,
       icon: AdjustmentsHorizontalIcon,
-      roles: ["admin", "comptable"],
+      roles: ["admin", "gerant", "comptable"],
       subLinks: [],
     },
     {
       name: "Catégories",
-      href: "/dashboard/categorie",
+      href: `/shop/${shopId}/dashboard/categorie`,
       icon: LayoutDashboard,
-      roles: ["admin"],
+      roles: ["admin", "gerant"],
       subLinks: [
-        { name: "Ajouter", href: "/dashboard/categorie/ajouter" },
-        { name: "Liste", href: "/dashboard/categorie/liste" }
+        { name: "Ajouter", href: `/shop/${shopId}/dashboard/categorie/ajouter` },
+        { name: "Liste", href: `/shop/${shopId}/dashboard/categorie/liste` }
       ],
     },
     {
       name: "Articles",
-      href: "/dashboard/article",
+      href: `/shop/${shopId}/dashboard/article`,
       icon: ListBulletIcon,
-      roles: ["admin"],
+      roles: ["admin", "gerant"],
       subLinks: [
-        { name: "Ajouter", href: "/dashboard/article/ajouter" },
-        { name: "Stock", href: "/dashboard/article/stock" }
+        { name: "Ajouter", href: `/shop/${shopId}/dashboard/article/ajouter` },
+        { name: "Stock", href: `/shop/${shopId}/dashboard/article/stock` }
       ],
     },
     {
       name: "Clients",
-      href: "/dashboard/client",
+      href: `/shop/${shopId}/dashboard/client`,
       icon: UserGroupIcon,
       roles: ["admin", "gerant"],
       subLinks: [],
     },
     {
       name: "Ventes",
-      href: "/dashboard/vente",
+      href: `/shop/${shopId}/dashboard/vente`,
       icon: BanknotesIcon,
       roles: ["admin", "gerant"],
       subLinks: [
-        { name: "Effectuer une vente", href: "/dashboard/vente/vendre" },
-        { name: "Historique des ventes", href: "/dashboard/vente/historique-vente" },
+        { name: "Effectuer une vente", href: `/shop/${shopId}/dashboard/vente/vendre` },
+        { name: "Historique des ventes", href: `/shop/${shopId}/dashboard/vente/historique-vente` },
       ],
     },
     {
       name: "Commandes",
-      href: "/dashboard/commande",
+      href: `/shop/${shopId}/dashboard/commande`,
       icon: FileText,
-      roles: ["admin", "comptable"],
+      roles: ["admin", "gerant", "comptable"],
       subLinks: [
-        { name: "Nouvelle commande", href: "/dashboard/commande/ajouter" },
-        { name: "Liste", href: "/dashboard/commande/liste" },
+        { name: "Nouvelle commande", href: `/shop/${shopId}/dashboard/commande/ajouter` },
+        { name: "Liste", href: `/shop/${shopId}/dashboard/commande/liste` },
       ],
     },
     {
       name: "Fournisseurs",
-      href: "/dashboard/fournisseurs",
+      href: `/shop/${shopId}/dashboard/fournisseurs`,
       icon: Truck,
-      roles: ["admin", "comptable"],
+      roles: ["admin", "gerant", "comptable"],
       subLinks: [
-        { name: "Ajouter", href: "/dashboard/fournisseurs/ajouter" },
-        { name: "Liste", href: "/dashboard/fournisseurs/liste" },
-      ],
-    },
-    {
-      name: "Utilisateurs",
-      href: "/dashboard/utilisateur",
-      icon: UserGroupIcon,
-      roles: ["admin"],
-      subLinks: [
-        { name: "Créer", href: "/dashboard/utilisateur/creer" },
-        { name: "Tous", href: "/dashboard/utilisateur/liste" },
+        { name: "Ajouter", href: `/shop/${shopId}/dashboard/fournisseurs/ajouter` },
+        { name: "Liste", href: `/shop/${shopId}/dashboard/fournisseurs/liste` },
       ],
     },
     {
       name: "Réglages",
-      href: "/dashboard/réglages",
+      href: `/shop/${shopId}/dashboard/reglages`,
       icon: Cog6ToothIcon,
-      roles: ["admin"],
+      roles: ["admin", "gerant"],
       subLinks: [],
     }
-]
+  ];
+}; 
+
+export const links = getLinks();
