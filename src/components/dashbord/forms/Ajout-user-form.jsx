@@ -102,7 +102,7 @@ const AjoutUserForm = ({ className, initialData = null, ...props }) => {
           rep.message ||
             `Utilisateur ${isEdit ? "modifié" : "enregistré"} avec succès.`
         );
-        router.push("/dashboard/utilisateur/liste");
+        router.push("/utilisateur/liste");
       } else {
         toast.error(rep.message || "Erreur. Veuillez réessayer.");
       }

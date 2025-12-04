@@ -15,7 +15,7 @@ const Page = async ({ searchParams }) => {
     const { data, totalPages, currentPage } = await rep.json()
     
     return (
-        <div className="flow-root">
+        <div className="flow-root md:flex md:flex-col md:items-center md:justify-center md:h-screen">
             <div className="mb-6">
                 <h2 className="text-2xl font-bold text-gray-900">Utilisateurs</h2>
                 <p className="mt-2 text-sm text-gray-500">

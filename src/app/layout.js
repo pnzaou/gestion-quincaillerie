@@ -1,6 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/Providers";
+import ConditionalFloatingNav from "@/components/conditional-floating-nav";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,6 +26,7 @@ export default function RootLayout({ children }) {
       >
         <Providers>
           {children}
+          <ConditionalFloatingNav />
         </Providers>
       </body>
     </html>

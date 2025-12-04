@@ -191,7 +191,9 @@ const Page = () => {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#1166D4]/10 mb-4">
             <Store className="w-8 h-8 text-[#1166D4]" />
           </div>
-          <h1 className="text-4xl font-bold text-foreground mb-3">Mes Boutiques</h1>
+          <h1 className="text-4xl font-bold text-foreground mb-3">
+            Mes Boutiques
+          </h1>
           <p className="text-muted-foreground text-lg">
             Sélectionnez une boutique pour accéder au tableau de bord
           </p>
@@ -201,7 +203,10 @@ const Page = () => {
         <div className="flex justify-center mb-8">
           <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
-              <Button size="lg" className="gap-2 bg-sky-600 hover:bg-sky-700 shadow-md hover:shadow-lg transition-all hover:cursor-pointer">
+              <Button
+                size="lg"
+                className="gap-2 bg-sky-600 hover:bg-sky-700 shadow-md hover:shadow-lg transition-all hover:cursor-pointer"
+              >
                 <Plus className="w-5 h-5" />
                 Nouvelle Boutique
               </Button>
@@ -209,13 +214,20 @@ const Page = () => {
             <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
                 <DialogTitle>
-                  {editingId ? "Modifier la boutique" : "Créer une nouvelle boutique"}
+                  {editingId
+                    ? "Modifier la boutique"
+                    : "Créer une nouvelle boutique"}
                 </DialogTitle>
                 <DialogDescription>
-                  Renseignez les informations de votre boutique. Les champs marqués d'un * sont obligatoires.
+                  Renseignez les informations de votre boutique. Les champs
+                  marqués d'un * sont obligatoires.
                 </DialogDescription>
               </DialogHeader>
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+              <form
+                onSubmit={handleSubmit(onSubmit)}
+                className="space-y-4"
+                noValidate
+              >
                 <div className="space-y-2">
                   <Label htmlFor="name">
                     Nom <span className="text-destructive">*</span>
@@ -227,7 +239,9 @@ const Page = () => {
                     className={errors.name ? "border-red-500" : ""}
                   />
                   {errors.name && (
-                    <p className="text-sm text-red-500">{errors.name?.message}</p>
+                    <p className="text-sm text-red-500">
+                      {errors.name?.message}
+                    </p>
                   )}
                 </div>
 
@@ -242,7 +256,9 @@ const Page = () => {
                     className={errors.phone ? "border-red-500" : ""}
                   />
                   {errors.phone && (
-                    <p className="text-sm text-red-500">{errors.phone?.message}</p>
+                    <p className="text-sm text-red-500">
+                      {errors.phone?.message}
+                    </p>
                   )}
                 </div>
 
@@ -257,7 +273,9 @@ const Page = () => {
                     className={errors.email ? "border-red-500" : ""}
                   />
                   {errors.email && (
-                    <p className="text-sm text-red-500">{errors.email?.message}</p>
+                    <p className="text-sm text-red-500">
+                      {errors.email?.message}
+                    </p>
                   )}
                 </div>
 
@@ -279,7 +297,9 @@ const Page = () => {
                     {...register("website")}
                   />
                   {errors.website && (
-                    <p className="text-sm text-red-500">{errors.website?.message}</p>
+                    <p className="text-sm text-red-500">
+                      {errors.website?.message}
+                    </p>
                   )}
                 </div>
 
@@ -292,7 +312,10 @@ const Page = () => {
                   >
                     Annuler
                   </Button>
-                  <Button type="submit" className="flex-1 bg-sky-600 hover:bg-sky-700">
+                  <Button
+                    type="submit"
+                    className="flex-1 bg-sky-600 hover:bg-sky-700"
+                  >
                     {editingId ? "Modifier" : "Créer la boutique"}
                   </Button>
                 </div>
@@ -305,96 +328,102 @@ const Page = () => {
         {isLoading && <BusinessCardSkeletonGrid />}
 
         {/* Liste des boutiques */}
-        {!isLoading && (businesses.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {businesses.map((business) => (
-              <Card
-                key={business._id}
-                className="transition-all hover:shadow-lg group relative"
-              >
-                <CardHeader>
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-[#1166D4]/10 group-hover:bg-[#1166D4]/20 transition-colors">
-                      <Store className="w-6 h-6 text-[#1166D4]" />
+        {!isLoading &&
+          (businesses.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {businesses.map((business) => (
+                <Card
+                  key={business._id}
+                  className="transition-all hover:shadow-lg group relative"
+                >
+                  <CardHeader>
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-[#1166D4]/10 group-hover:bg-[#1166D4]/20 transition-colors">
+                        <Store className="w-6 h-6 text-[#1166D4]" />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEdit(business);
+                          }}
+                          className="h-8 w-8"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeletingId(business._id);
+                          }}
+                          className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex gap-2">
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEdit(business);
-                        }}
-                        className="h-8 w-8"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDeletingId(business._id);
-                        }}
-                        className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                  <CardTitle
-                    className="text-xl group-hover:text-[#1166D4] transition-colors cursor-pointer"
+                    <CardTitle
+                      className="text-xl group-hover:text-[#1166D4] transition-colors cursor-pointer"
+                      onClick={() => handleBusinessSelect(business._id)}
+                    >
+                      {business.name}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent
+                    className="space-y-3 cursor-pointer"
                     onClick={() => handleBusinessSelect(business._id)}
                   >
-                    {business.name}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent
-                  className="space-y-3 cursor-pointer"
-                  onClick={() => handleBusinessSelect(business._id)}
-                >
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Phone className="w-4 h-4" />
-                    <span>{business.phone}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Mail className="w-4 h-4" />
-                    <span className="truncate">{business.email}</span>
-                  </div>
-                  {business.address && (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <MapPin className="w-4 h-4" />
-                      <span className="truncate">{business.address}</span>
+                      <Phone className="w-4 h-4" />
+                      <span>{business.phone}</span>
                     </div>
-                  )}
-                  {business.website && (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Globe className="w-4 h-4" />
-                      <span className="truncate">{business.website}</span>
+                      <Mail className="w-4 h-4" />
+                      <span className="truncate">{business.email}</span>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-16">
-            <h2 className="text-2xl font-semibold text-foreground mb-3">
-              Aucune boutique pour le moment
-            </h2>
-            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              Créez votre première boutique pour commencer à gérer votre stock et vos ventes.
-            </p>
-          </div>
-        ))}
+                    {business.address && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <MapPin className="w-4 h-4" />
+                        <span className="truncate">{business.address}</span>
+                      </div>
+                    )}
+                    {business.website && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Globe className="w-4 h-4" />
+                        <span className="truncate">{business.website}</span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16">
+              <h2 className="text-2xl font-semibold text-foreground mb-3">
+                Aucune boutique pour le moment
+              </h2>
+              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                Créez votre première boutique pour commencer à gérer votre stock
+                et vos ventes.
+              </p>
+            </div>
+          ))}
 
         {/* Dialog de confirmation de suppression */}
-        <AlertDialog open={!!deletingId} onOpenChange={() => setDeletingId(null)}>
+        <AlertDialog
+          open={!!deletingId}
+          onOpenChange={() => setDeletingId(null)}
+        >
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
               <AlertDialogDescription>
-                Cette action est irréversible. La boutique et toutes ses données seront définitivement supprimées.
+                Cette action est irréversible. La boutique et toutes ses données
+                seront définitivement supprimées.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

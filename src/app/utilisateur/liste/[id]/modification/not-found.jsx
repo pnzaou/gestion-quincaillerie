@@ -3,7 +3,7 @@ import ResourceNotFound from "@/components/dashbord/Resource-not-found";
 const NotFound = () => {
     const props = {
         message: "Les données de l'utilisateur sont inexistantes ou introuvables.",
-        backUrl: "/dashboard/utilisateur/liste"
+        backUrl: "/utilisateur/liste"
     };
     
     return (

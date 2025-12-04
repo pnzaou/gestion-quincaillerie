@@ -96,7 +96,7 @@ const UserTable = ({initialUsers, initialTotalPages, currentPage, search}) => {
                     />
                 </div>
                 <div className="mb-4 ml-4 md:ml-0">
-                    <Link href="/dashboard/utilisateur/creer">
+                    <Link href="/utilisateur/creer">
                         <button className="hidden md:block bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 hover:cursor-pointer">
                             Ajouter un utilisateur
                         </button>
