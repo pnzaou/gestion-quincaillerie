@@ -9,8 +9,12 @@ import { PlusIcon } from "@heroicons/react/24/outline";
 import SearchLoader from "./Search-loader";
 import ExcelExportButton from "./ExcelExportButton";
 import { Button } from "../ui/button";
+import { useParams } from "next/navigation";
+import { LayoutDashboard } from "lucide-react";
 
 const CategoryTable = ({initialCat, initialTotalPages, currentPage, search}) => {
+    const params = useParams();
+    const shopId = params?.shopId;
 
     const [categories, setCategories] = useState(initialCat)
     const [totalPages, setTotalPages] = useState(initialTotalPages)
@@ -45,7 +49,7 @@ const CategoryTable = ({initialCat, initialTotalPages, currentPage, search}) => 
         const activeSearch = debouncedSearch
 
         setIsLoading(true)
-        fetch(`/api/category?page=${page}&limit=5&search=${activeSearch}`)
+        fetch(`/api/category?page=${page}&limit=5&search=${activeSearch}&businessId=${shopId}`)
           .then(response => response.json())
           .then(({ data, totalPages: tp, currentPage: cp }) => {
             setCategories(data)
@@ -56,7 +60,7 @@ const CategoryTable = ({initialCat, initialTotalPages, currentPage, search}) => 
             toast.error("Une erreur s'est produite! Veuillez réessayer.")
         }).finally(() => setIsLoading(false))
 
-    },[page, debouncedSearch])
+    },[page, debouncedSearch, shopId])
 
     const handleSearchChange = e => {
         setSearchTerm(e.target.value)
@@ -88,7 +92,6 @@ const CategoryTable = ({initialCat, initialTotalPages, currentPage, search}) => 
 
     return (
         <>
-            {/* Barre de recherche, bouton exporter et bouton ajouter */}
             <div className="flex justify-between items-center">
                 <div className="mb-4 flex flex-col md:flex-row md:items-center gap-2 flex-1/2">
                     <input
@@ -100,10 +103,10 @@ const CategoryTable = ({initialCat, initialTotalPages, currentPage, search}) => 
                     />
                 </div>
                 <div className="hidden mb-4 mr-4 md:block">
-                    <ExcelExportButton initUrl={"/api/category/export-excel"}/>
+                    <ExcelExportButton initUrl={`/api/category/export-excel?businessId=${shopId}`}/>
                 </div>
                 <div className="mb-4 ml-4 md:ml-0">
-                    <Link href="/dashboard/categorie/ajouter">
+                    <Link href={`/shop/${shopId}/dashboard/categorie/ajouter`}>
                         <Button className="hidden md:block bg-[#0084D1] text-white px-4 py-2 rounded hover:bg-[#0042d1] hover:cursor-pointer">
                             Ajouter une catégorie
                         </Button>
@@ -114,60 +117,46 @@ const CategoryTable = ({initialCat, initialTotalPages, currentPage, search}) => 
                 </div>
             </div>
 
-            {/* Loader */}
-            {isLoading && (
-                <SearchLoader/>
-            )}
+            {isLoading && <SearchLoader/>}
 
            <div className={isLoading ? "opacity-50 pointer-events-none" : ""}>
-                <div className="inline-block min-w-full align-middle">
-                    <div className="rounded-lg bg-gray-50 p-2 md:pt-0">
-
-                        {/* Mobile */}
-                        <div className="md:hidden space-y-2">
-                            {categories?.map((cat) => (
-                                <div key={cat._id} className="rounded-md bg-white p-4 shadow-sm">
-                                    <div className="flex justify-between items-start border-b pb-4">
-                                    <p className="text-base font-semibold">{cat.nom}</p>
-                                    </div>
-                                    <div className="pt-4">
-                                    <p className="text-sm text-gray-700">{cat.description}</p>
-                                    </div>
-                                    <div className="flex justify-end gap-2 mt-4">
-                                        <DetailsCategory id={cat._id}/>
-                                        <UpdateCategory id={cat._id}/>
-                                        <DeleteCategory
-                                          id={cat._id}
-                                          open={modalCatToDelete === cat._id}
-                                          onOpenChange={setModalCatToDelete}
-                                          onConfirm={handleDelete}
-                                          loading={deleting.id === cat._id && deleting.loading}
-                                        />
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Desktop */}
-                        <table className="hidden min-w-full text-gray-900 md:table">
-                            <thead className="text-left text-sm font-normal">
-                            <tr>
-                                <th className="px-4 py-5 font-medium sm:pl-6">Nom</th>
-                                <th className="px-3 py-5 font-medium">Description</th>
-                                <th className="py-5 pl-6 pr-3 text-right">
-                                <span className="sr-only">Actions</span>
-                                </th>
-                            </tr>
-                            </thead>
-                            <tbody className="bg-white">
-                                {categories.map((cat) => (
-                                    <tr key={cat._id} className="border-b last:border-none text-sm">
-                                    <td className="whitespace-nowrap py-4 pl-6 pr-3">{cat.nom}</td>
-                                    <td className="whitespace-nowrap px-3 py-4">{cat.description}</td>
-                                    <td className="whitespace-nowrap py-4 pl-6 pr-3 text-right">
-                                        <div className="flex justify-end gap-2">
-                                            <DetailsCategory id={cat._id}/>
-                                            <UpdateCategory id={cat._id}/>
+                {categories.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-12 px-4 bg-gray-50 rounded-lg">
+                        <LayoutDashboard className="w-16 h-16 text-gray-300 mb-4" />
+                        <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                            Aucune catégorie trouvée
+                        </h3>
+                        <p className="text-sm text-gray-500 text-center mb-6">
+                            {searchTerm 
+                                ? "Aucune catégorie ne correspond à votre recherche."
+                                : "Commencez par ajouter votre première catégorie pour organiser vos produits."
+                            }
+                        </p>
+                        {!searchTerm && (
+                            <Link href={`/shop/${shopId}/dashboard/categorie/ajouter`}>
+                                <Button className="bg-[#0084D1] hover:bg-[#0042d1] text-white">
+                                    <PlusIcon className="w-5 h-5 mr-2" />
+                                    Ajouter une catégorie
+                                </Button>
+                            </Link>
+                        )}
+                    </div>
+                ) : (
+                    <div className="inline-block min-w-full align-middle">
+                        <div className="rounded-lg bg-gray-50 p-2 md:pt-0">
+                            {/* Mobile */}
+                            <div className="md:hidden space-y-2">
+                                {categories?.map((cat) => (
+                                    <div key={cat._id} className="rounded-md bg-white p-4 shadow-sm">
+                                        <div className="flex justify-between items-start border-b pb-4">
+                                        <p className="text-base font-semibold">{cat.nom}</p>
+                                        </div>
+                                        <div className="pt-4">
+                                        <p className="text-sm text-gray-700">{cat.description}</p>
+                                        </div>
+                                        <div className="flex justify-end gap-2 mt-4">
+                                            <DetailsCategory id={cat._id} shopId={shopId}/>
+                                            <UpdateCategory id={cat._id} shopId={shopId}/>
                                             <DeleteCategory
                                               id={cat._id}
                                               open={modalCatToDelete === cat._id}
@@ -176,21 +165,55 @@ const CategoryTable = ({initialCat, initialTotalPages, currentPage, search}) => 
                                               loading={deleting.id === cat._id && deleting.loading}
                                             />
                                         </div>
-                                    </td>
-                                    </tr>
+                                    </div>
                                 ))}
-                            </tbody>
-                        </table>
+                            </div>
+
+                            {/* Desktop */}
+                            <table className="hidden min-w-full text-gray-900 md:table">
+                                <thead className="text-left text-sm font-normal">
+                                <tr>
+                                    <th className="px-4 py-5 font-medium sm:pl-6">Nom</th>
+                                    <th className="px-3 py-5 font-medium">Description</th>
+                                    <th className="py-5 pl-6 pr-3 text-right">
+                                    <span className="sr-only">Actions</span>
+                                    </th>
+                                </tr>
+                                </thead>
+                                <tbody className="bg-white">
+                                    {categories.map((cat) => (
+                                        <tr key={cat._id} className="border-b last:border-none text-sm">
+                                        <td className="whitespace-nowrap py-4 pl-6 pr-3">{cat.nom}</td>
+                                        <td className="whitespace-nowrap px-3 py-4">{cat.description}</td>
+                                        <td className="whitespace-nowrap py-4 pl-6 pr-3 text-right">
+                                            <div className="flex justify-end gap-2">
+                                                <DetailsCategory id={cat._id} shopId={shopId}/>
+                                                <UpdateCategory id={cat._id} shopId={shopId}/>
+                                                <DeleteCategory
+                                                  id={cat._id}
+                                                  open={modalCatToDelete === cat._id}
+                                                  onOpenChange={setModalCatToDelete}
+                                                  onConfirm={handleDelete}
+                                                  loading={deleting.id === cat._id && deleting.loading}
+                                                />
+                                            </div>
+                                        </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
+                )}
            </div> 
 
-           {/* Pagination */}
-           <Pagination
-            page={page}
-            totalPages={totalPages}
-            onPageChange={setPage}
-           />
+           {categories.length > 0 && (
+               <Pagination
+                page={page}
+                totalPages={totalPages}
+                onPageChange={setPage}
+               />
+           )}
         </>
     );
 }

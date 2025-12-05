@@ -17,7 +17,20 @@ export const POST = withAuthAndRole(async (req) => {
         const session = await getServerSession(authOptions)
         const { name, id } = session.user
 
-        const { nom, description } = await req.json()
+        const { nom, description, businessId } = await req.json()
+
+        if (!businessId) {
+            await mongoSession.abortTransaction()
+            mongoSession.endSession()
+            return NextResponse.json(
+                {
+                    message: "ID de la boutique manquant.",
+                    success: false,
+                    error: true
+                }, 
+                { status: 400 }
+            )
+        }
 
         if(!nom || !nom.trim()) {
             await mongoSession.abortTransaction()
@@ -32,13 +45,20 @@ export const POST = withAuthAndRole(async (req) => {
             )
         }
 
-        const existingCategory = await Category.findOne({ nom }).session(mongoSession)
+        const businessObjectId = new mongoose.Types.ObjectId(businessId)
+
+        // Vérifier si la catégorie existe déjà DANS CETTE BOUTIQUE
+        const existingCategory = await Category.findOne({ 
+            nom, 
+            business: businessObjectId 
+        }).session(mongoSession)
+        
         if (existingCategory) {
             await mongoSession.abortTransaction()
             mongoSession.endSession()
             return NextResponse.json(
                 { 
-                    message: "Cette catégorie existe déjà.",
+                    message: "Cette catégorie existe déjà dans cette boutique.",
                     success: false,
                     error: true
                 },
@@ -47,15 +67,17 @@ export const POST = withAuthAndRole(async (req) => {
         }
 
         const [rep] = await Category.create(
-            [{ nom, description }],
+            [{ nom, description, business: businessObjectId }],
             { session: mongoSession }
         )
+        
         await History.create([{
             user: id,
             actions: "create",
             resource: "category",
             resourceId: rep._id,
-            description: `${name} a créé la catégorie ${rep.nom}`
+            description: `${name} a créé la catégorie ${rep.nom}`,
+            business: businessObjectId
         }], { session: mongoSession })
 
         await mongoSession.commitTransaction()
@@ -96,11 +118,26 @@ export const GET = withAuth(async (req) => {
         const page = parseInt(searchParams.get("page") || "1")
         const limit = parseInt(searchParams.get("limit") || "0")
         const search = searchParams.get("search") || ""
+        const businessId = searchParams.get("businessId")
         const skip = (page - 1) * limit
 
-        const query = search
-        ? { nom: { $regex: search, $options: "i" } }
-        : {}
+        if (!businessId) {
+            return NextResponse.json(
+                {
+                    message: "ID de la boutique manquant.",
+                    success: false,
+                    error: true
+                },
+                { status: 400 }
+            )
+        }
+
+        const businessObjectId = new mongoose.Types.ObjectId(businessId)
+
+        const query = {
+            business: businessObjectId,
+            ...(search && { nom: { $regex: search, $options: "i" } })
+        }
 
         const [categories, total] = await Promise.all([
             Category.find(query)

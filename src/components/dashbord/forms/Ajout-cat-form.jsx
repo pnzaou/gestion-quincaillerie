@@ -7,7 +7,7 @@ import { Textarea } from "../../ui/textarea";
 import { Button } from "../../ui/button";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { Label } from "../../ui/label";
 import toast from "react-hot-toast";
 import EIBCat from "../ExelImportButtons/EIBCat";
@@ -18,6 +18,8 @@ import { addCategorySchema } from "@/schemas";
 const AjoutCatForm = ({ className, initialData = null, ...props }) => {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const params = useParams();
+  const shopId = params?.shopId;
 
   const {
     register,
@@ -40,24 +42,26 @@ const AjoutCatForm = ({ className, initialData = null, ...props }) => {
       const url = isEdit ? `/api/category/${initialData._id}` : "/api/category";
       const method = isEdit ? "PUT" : "POST";
 
+      const payload = isEdit ? data : { ...data, businessId: shopId };
+
       const response = await fetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
       const rep = await response.json();
 
       if (response.ok) {
-        router.push("/dashboard/categorie/liste");
+        router.push(`/shop/${shopId}/dashboard/categorie/liste`);
         toast.success(rep.message);
       } else {
         toast.error(rep.message);
       }
     } catch (error) {
       toast.error(
-        "Erreur lors de l'ajout de l'utilisateur. Veuillez réessayer."
+        "Erreur lors de l'ajout de la catégorie. Veuillez réessayer."
       );
       console.error(error);
     } finally {
@@ -78,7 +82,7 @@ const AjoutCatForm = ({ className, initialData = null, ...props }) => {
           <form onSubmit={handleSubmit(onSubmit)} noValidate>
             <div className="flex gap-2 mb-4">
               <div className="grid gap-3 flex-1/2">
-                <Label htmlFor="email">
+                <Label htmlFor="nom">
                   Nom
                   <Required />
                 </Label>

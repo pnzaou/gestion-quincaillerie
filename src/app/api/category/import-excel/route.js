@@ -19,7 +19,20 @@ export const POST = withAuthAndRole(async (req) => {
         const { name, id } = session.user
         const data = await req.formData()
         const file = data.get("file")
+        const businessId = data.get("businessId")
 
+        if (!businessId) {
+            await mongoSession.abortTransaction()
+            mongoSession.endSession()
+            return NextResponse.json(
+                {
+                    message: "ID de la boutique manquant.",
+                    success: false,
+                    error: true
+                },
+                { status: 400 }
+            )
+        }
 
         if (!file) {
             await mongoSession.abortTransaction()
@@ -33,6 +46,8 @@ export const POST = withAuthAndRole(async (req) => {
                 { status: 400 }
             )
         }
+
+        const businessObjectId = new mongoose.Types.ObjectId(businessId)
 
         const bytes = await file.arrayBuffer()
         const buffer = Buffer.from(bytes)
@@ -51,13 +66,22 @@ export const POST = withAuthAndRole(async (req) => {
 
             if (!nom) continue
 
-            const existingCat = await Category.findOne({ nom }).session(mongoSession);
+            // Vérifier si existe dans CETTE boutique
+            const existingCat = await Category.findOne({ 
+                nom, 
+                business: businessObjectId 
+            }).session(mongoSession);
+            
             if (existingCat) {
                 doublons.push(nom)
                 continue
             }
 
-            const [newCat] = await Category.create([{ nom, description }], { session: mongoSession })
+            const [newCat] = await Category.create([{ 
+                nom, 
+                description, 
+                business: businessObjectId 
+            }], { session: mongoSession })
             inserted.push(newCat)
         }
 
@@ -66,6 +90,7 @@ export const POST = withAuthAndRole(async (req) => {
             actions: "create",
             resource: "category",
             description: `${name} a importé ${inserted.length} catégories depuis Excel.`,
+            business: businessObjectId
         }], { session: mongoSession })
 
         await mongoSession.commitTransaction()

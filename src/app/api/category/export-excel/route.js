@@ -3,12 +3,26 @@ import { withAuthAndRole } from "@/utils/withAuthAndRole"
 import Category from "@/models/Category.model"
 import * as XLSX from "xlsx"
 import { NextResponse } from "next/server"
+import mongoose from "mongoose"
 
-export const GET = withAuthAndRole(async () => {
+export const GET = withAuthAndRole(async (req) => {
     try {
         await dbConnection()
 
-        const categories = await Category.find().lean()
+        const { searchParams } = new URL(req.url)
+        const businessId = searchParams.get("businessId")
+
+        if (!businessId) {
+            return NextResponse.json({
+                message: "ID de la boutique manquant.",
+                success: false,
+                error: true
+            }, { status: 400 })
+        }
+
+        const businessObjectId = new mongoose.Types.ObjectId(businessId)
+
+        const categories = await Category.find({ business: businessObjectId }).lean()
 
         if (!categories || categories.length === 0) {
             return NextResponse.json({

@@ -94,12 +94,14 @@ export const PUT = withAuthAndRole(async (req, {params}) => {
               { status: 404 }
             );
         }
+        
         await History.create([{
             user: userId,
             actions: "update",
             resource: "category",
             resourceId: id,
-            description: `${name} a modifié la catégorie ${updatedCategory.nom}`
+            description: `${name} a modifié la catégorie ${updatedCategory.nom}`,
+            business: updatedCategory.business
         }], { session: mongoSession })
 
         await mongoSession.commitTransaction()
@@ -143,7 +145,6 @@ export const DELETE = withAuthAndRole(async (req, { params }) => {
 
         const deletedCategory = await Category.findByIdAndDelete(id, { session: mongoSession  });
 
-
         if (!deletedCategory) {
             await mongoSession.abortTransaction();
             mongoSession.endSession();
@@ -153,14 +154,19 @@ export const DELETE = withAuthAndRole(async (req, { params }) => {
             );
         }
 
-        await Product.deleteMany({ category_id: id }, { session: mongoSession  });
+        // Supprimer les produits liés à cette catégorie DANS LA MÊME BOUTIQUE
+        await Product.deleteMany({ 
+            category_id: id,
+            business: deletedCategory.business 
+        }, { session: mongoSession });
 
         await History.create([{
             user: userId,
             actions: "delete",
             resource: "category",
             resourceId: id,
-            description: `${name} a supprimé la catégorie ${deletedCategory.nom}`
+            description: `${name} a supprimé la catégorie ${deletedCategory.nom}`,
+            business: deletedCategory.business
         }], { session: mongoSession });
 
         await mongoSession.commitTransaction();

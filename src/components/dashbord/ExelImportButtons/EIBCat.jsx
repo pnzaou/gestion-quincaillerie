@@ -1,12 +1,14 @@
 "use client"
 
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import BoutonImp from "./BoutonImp";
 
 const EIBCat = () => {
     const router = useRouter()
+    const params = useParams()
+    const shopId = params?.shopId
     const [isLoading, setIsLoading] = useState(false)
 
     const handleChange = async (e) => {
@@ -15,6 +17,7 @@ const EIBCat = () => {
 
         const formData = new FormData();
         formData.append("file", file);
+        formData.append("businessId", shopId); // Ajout du businessId
 
         try {
             setIsLoading(true)
@@ -32,7 +35,7 @@ const EIBCat = () => {
             }
 
             toast.success(data.message || "Importation réussie.", {duration: 6000})
-            router.push("/dashboard/categorie/liste")
+            router.push(`/shop/${shopId}/dashboard/categorie/liste`) // Mise à jour de la redirection
 
         } catch (error) {
             console.error("Erreur lors de l'importation :", error)

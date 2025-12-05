@@ -6,10 +6,10 @@ import Link from "next/link"
 import { Button } from "../ui/button"
 import ConfirmDialog from "./ConfirmDialog"
 
-export function DetailsCategory({ id }) {
+export function DetailsCategory({ id, shopId }) {
     return (
       <Link
-        href={`/dashboard/categorie/liste/${id}/details`}
+        href={`/shop/${shopId}/dashboard/categorie/liste/${id}/modification`}
         className="rounded-md border p-2 hover:bg-gray-100"
       >
         <EyeIcon className="w-5" />
@@ -17,10 +17,10 @@ export function DetailsCategory({ id }) {
     )
 }
 
-export function UpdateCategory({ id }) {
+export function UpdateCategory({ id, shopId }) {
     return (
       <Link
-        href={`/dashboard/categorie/liste/${id}/modification`}
+        href={`/shop/${shopId}/dashboard/categorie/liste/${id}/modification`}
         className="rounded-md border p-2 hover:bg-gray-100"
       >
         <PencilIcon className="w-5" />
