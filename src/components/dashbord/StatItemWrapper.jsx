@@ -4,7 +4,16 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import mongoose from "mongoose";
 
-const StatItem = ({ icon: Icon, label, value, currency = false, href, linkAriaLabel, soonCount = null, outOfStockCount = null }) => {
+const StatItem = ({
+  icon: Icon,
+  label,
+  value,
+  currency = false,
+  href,
+  linkAriaLabel,
+  soonCount = null,
+  outOfStockCount = null,
+}) => {
   const hasLink = Boolean(href);
 
   return (
@@ -13,25 +22,29 @@ const StatItem = ({ icon: Icon, label, value, currency = false, href, linkAriaLa
         {Icon ? <Icon className="w-6 h-6 text-[#004871]" /> : null}
       </div>
 
-      {label === "Alertes stock" && soonCount && outOfStockCount ? (
+      {label === "Alertes stock" &&
+      soonCount !== null &&
+      outOfStockCount !== null ? (
         <div>
           <div className="text-xs text-muted-foreground truncate">{label}</div>
           <div className="flex items-center space-x-2">
             <div className="text-lg font-semibold text-sky-600 truncate">
               {soonCount + outOfStockCount}
             </div>
-            <div className="flex space-x-1">
-              {outOfStockCount > 0 && (
-                <Badge variant="destructive" className="text-xs">
-                  {outOfStockCount} rupture
-                </Badge>
-              )}
-              {soonCount > 0 && (
-                <Badge variant="outline" className="text-xs">
-                  {soonCount} bientôt
-                </Badge>
-              )}
-            </div>
+            {(outOfStockCount > 0 || soonCount > 0) && (
+              <div className="flex space-x-1">
+                {outOfStockCount > 0 && (
+                  <Badge variant="destructive" className="text-xs">
+                    {outOfStockCount} rupture
+                  </Badge>
+                )}
+                {soonCount > 0 && (
+                  <Badge variant="outline" className="text-xs">
+                    {soonCount} bientôt
+                  </Badge>
+                )}
+              </div>
+            )}
           </div>
         </div>
       ) : (
@@ -56,7 +69,7 @@ const StatItem = ({ icon: Icon, label, value, currency = false, href, linkAriaLa
       )}
     </div>
   );
-}
+};
 
 const StatItemWrapper = async ({ businessId }) => {
   const objectId = new mongoose.Types.ObjectId(businessId);
