@@ -7,7 +7,7 @@ const ConditionalFloatingNav = () => {
   const pathname = usePathname();
   
   // Afficher seulement sur /shop ou /utilisateur/liste (et leurs sous-routes)
-  const shouldShow = pathname.startsWith("/shop") || pathname.startsWith("/utilisateur/liste") || pathname.startsWith("/utilisateur/creer");
+  const shouldShow = pathname.startsWith("/shop") || pathname.startsWith("/utilisateur/liste") || pathname.startsWith("/utilisateur/creer") || pathname.startsWith("/historique");
   
   if (!shouldShow) return null;
   

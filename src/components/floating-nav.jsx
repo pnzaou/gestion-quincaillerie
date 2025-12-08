@@ -20,7 +20,7 @@ const navItems = [
     roles: ["admin"],
   },
   {
-    href: "/history",
+    href: "/historique",
     icon: History,
     label: "Historique",
     roles: ["admin"],
