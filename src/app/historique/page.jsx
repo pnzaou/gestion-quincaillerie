@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
@@ -8,61 +8,71 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-  History as HistoryIcon, 
-  Eye, 
-  Plus, 
-  Pencil, 
-  Trash2, 
-  LogIn, 
-  LogOut, 
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  History as HistoryIcon,
+  Eye,
+  Plus,
+  Pencil,
+  Trash2,
+  LogIn,
+  LogOut,
   Download,
   Store,
   User,
   Package,
   CalendarIcon,
-  Globe
+  Globe,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
 
 const actionConfig = {
-  read: { 
-    icon: Eye, 
-    label: "Lecture", 
-    color: "bg-slate-500/10 text-slate-600 border-slate-500/20" 
+  read: {
+    icon: Eye,
+    label: "Lecture",
+    color: "bg-slate-500/10 text-slate-600 border-slate-500/20",
   },
-  create: { 
-    icon: Plus, 
-    label: "Création", 
-    color: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" 
+  create: {
+    icon: Plus,
+    label: "Création",
+    color: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
   },
-  update: { 
-    icon: Pencil, 
-    label: "Modification", 
-    color: "bg-blue-500/10 text-blue-600 border-blue-500/20" 
+  update: {
+    icon: Pencil,
+    label: "Modification",
+    color: "bg-blue-500/10 text-blue-600 border-blue-500/20",
   },
-  delete: { 
-    icon: Trash2, 
-    label: "Suppression", 
-    color: "bg-red-500/10 text-red-600 border-red-500/20" 
+  delete: {
+    icon: Trash2,
+    label: "Suppression",
+    color: "bg-red-500/10 text-red-600 border-red-500/20",
   },
-  login: { 
-    icon: LogIn, 
-    label: "Connexion", 
-    color: "bg-violet-500/10 text-violet-600 border-violet-500/20" 
+  login: {
+    icon: LogIn,
+    label: "Connexion",
+    color: "bg-violet-500/10 text-violet-600 border-violet-500/20",
   },
-  logout: { 
-    icon: LogOut, 
-    label: "Déconnexion", 
-    color: "bg-orange-500/10 text-orange-600 border-orange-500/20" 
+  logout: {
+    icon: LogOut,
+    label: "Déconnexion",
+    color: "bg-orange-500/10 text-orange-600 border-orange-500/20",
   },
-  download: { 
-    icon: Download, 
-    label: "Téléchargement", 
-    color: "bg-cyan-500/10 text-cyan-600 border-cyan-500/20" 
+  download: {
+    icon: Download,
+    label: "Téléchargement",
+    color: "bg-cyan-500/10 text-cyan-600 border-cyan-500/20",
   },
 };
 
@@ -79,12 +89,12 @@ const resourceIcons = {
 
 const formatDate = (dateString) => {
   const date = new Date(dateString);
-  return new Intl.DateTimeFormat('fr-FR', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
+  return new Intl.DateTimeFormat("fr-FR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   }).format(date);
 };
 
@@ -118,7 +128,7 @@ const HistoryPage = () => {
     try {
       const params = new URLSearchParams();
       params.append("limit", "50");
-      
+
       if (startDate) {
         params.append("startDate", startDate.toISOString());
       }
@@ -294,7 +304,12 @@ const HistoryPage = () => {
       <Card className="mb-6">
         <CardHeader className="pb-4">
           <CardTitle className="text-lg">
-            Activité récente {isLoading && <span className="text-muted-foreground font-normal">(Chargement...)</span>}
+            Activité récente{" "}
+            {isLoading && (
+              <span className="text-muted-foreground font-normal">
+                (Chargement...)
+              </span>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
@@ -307,10 +322,9 @@ const HistoryPage = () => {
                     {isLoading ? "Chargement..." : "Aucune activité"}
                   </h3>
                   <p className="text-muted-foreground">
-                    {isLoading 
+                    {isLoading
                       ? "Récupération de l'historique en cours..."
-                      : "Aucune activité trouvée pour cette période"
-                    }
+                      : "Aucune activité trouvée pour cette période"}
                   </p>
                 </div>
               ) : (
