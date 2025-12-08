@@ -6,10 +6,15 @@ import SearchLoader from "./Search-loader";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { Button } from "../ui/button";
-import { DeleteSupplier, DetailsSupplier, UpdateSupplier } from "./button-supplier";
+import { DeleteSupplier, UpdateSupplier } from "./button-supplier";
 import toast from "react-hot-toast";
+import { useParams } from "next/navigation";
+import { Truck } from "lucide-react";
 
 const SupplierTable = ({initialSup, initialTotalPages, currentPage, search}) => {
+    const params = useParams();
+    const shopId = params?.shopId;
+
     const [suppliers, setSuppliers] = useState(initialSup)
     const [totalPages, setTotalPages] = useState(initialTotalPages)
     const [page, setPage] = useState(currentPage)
@@ -39,7 +44,7 @@ const SupplierTable = ({initialSup, initialTotalPages, currentPage, search}) => 
         const activeSearch = debouncedSearch
 
         setIsLoading(true)
-        fetch(`/api/supplier?page=${page}&limit=5&search=${activeSearch}`)
+        fetch(`/api/supplier?page=${page}&limit=5&search=${activeSearch}&businessId=${shopId}`)
          .then(response => response.json())
          .then(({ data, totalPages: tp, currentPage: cp }) => {
             setSuppliers(data)
@@ -50,7 +55,7 @@ const SupplierTable = ({initialSup, initialTotalPages, currentPage, search}) => 
             toast.error("Une erreur s'est produite! Veuillez réessayer.")
         }).finally(() => setIsLoading(false))
 
-    },[page, debouncedSearch])
+    },[page, debouncedSearch, shopId])
 
     const handleSearchChange = e => {
         setSearchTerm(e.target.value)
@@ -70,7 +75,7 @@ const SupplierTable = ({initialSup, initialTotalPages, currentPage, search}) => 
 
             if(response.ok) {
                 toast.success(data.message)
-                setSuppliers(prev => prev.filter(sup => sup._id!== id))
+                setSuppliers(prev => prev.filter(sup => sup._id !== id))
             } else {
                 toast.error(data.message)
             }
@@ -84,8 +89,7 @@ const SupplierTable = ({initialSup, initialTotalPages, currentPage, search}) => 
 
     return (
         <>
-
-            {/* Barre de recherche, bouton exporter et bouton ajouter */}
+            {/* Barre de recherche et bouton ajouter */}
             <div className="flex justify-between items-center">
                 <div className="mb-4 flex flex-col md:flex-row md:items-center gap-2 flex-1/2">
                     <input
@@ -96,11 +100,8 @@ const SupplierTable = ({initialSup, initialTotalPages, currentPage, search}) => 
                     className="w-full md:w-1/2 px-4 py-2 border rounded-md"
                     />
                 </div>
-                {/* <div className="hidden mb-4 mr-4 md:block">
-                    <ExcelExportButton initUrl={"/api/category/export-excel"}/>
-                </div> */}
                 <div className="mb-4 ml-4 md:ml-0">
-                    <Link href="/dashboard/fournisseurs/ajouter">
+                    <Link href={`/shop/${shopId}/dashboard/fournisseurs/ajouter`}>
                         <Button className="hidden md:block bg-[#0084D1] text-white px-4 py-2 rounded hover:bg-[#0042d1] hover:cursor-pointer">
                             Ajouter un fournisseur
                         </Button>
@@ -111,86 +112,108 @@ const SupplierTable = ({initialSup, initialTotalPages, currentPage, search}) => 
                 </div>
             </div>
 
-
             {/* Loader */}
-            {isLoading && (
-                <SearchLoader/>
-            )}
+            {isLoading && <SearchLoader/>}
 
           {/* Table */}
           <div className={isLoading ? "opacity-50 pointer-events-none" : ""}>
-            <div className="inline-block min-w-full align-middle">
-                <div className="rounded-lg bg-gray-50 p-2 md:pt-0">
-                    
-                    {/* Mobile */}
-                    <div className="md:hidden space-y-2">
-                        {suppliers?.map((sup) => (
-                        <div key={sup._id} className="rounded-md bg-white p-4 shadow-sm">
-                            <div className="flex justify-between items-start border-b pb-4">
-                            <p className="text-base font-semibold">{sup.nom}</p>
-                            </div>
-                            <div className="pt-4 space-y-2">
-                            <p className="text-sm text-gray-700">Adresse: {sup.adresse}</p>
-                            <p className="text-sm text-gray-700">Tel: {sup.telephone}</p>
-                            <p className="text-sm text-gray-700">Email: {sup.email}</p>
-                            </div>
-                            <div className="flex justify-end gap-2 mt-4">
-                            <UpdateSupplier id={sup._id} />
-                            <DeleteSupplier
-                                id={sup._id}
-                                deleteSupplier={handleDeleteClick}
-                                isLoading={deletingSupplierId === sup._id}
-                            />
-                            </div>
-                        </div>
-                        ))}
-                    </div>
-
-                    {/* Desktop */}
-                    <table className="hidden min-w-full text-gray-900 md:table">
-                        <thead className="text-left text-sm font-normal">
-                            <tr>
-                                <th className="px-4 py-5 font-medium sm:pl-6">Nom</th>
-                                <th className="px-3 py-5 font-medium">Adresse</th>
-                                <th className="px-3 py-5 font-medium">Téléphone</th>
-                                <th className="px-3 py-5 font-medium">Email</th>
-                                <th className="py-5 pl-6 pr-3 text-right">
-                                    <span className="sr-only">Actions</span>
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white">
-                            {suppliers?.map((sup) => (
-                                <tr key={sup._id} className="border-b last:border-none text-sm">
-                                    <td className="whitespace-nowrap py-4 pl-6 pr-3">{sup.nom}</td>
-                                    <td className="whitespace-nowrap px-3 py-4">{sup.adresse}</td>
-                                    <td className="whitespace-nowrap px-3 py-4">{sup.telephone}</td>
-                                    <td className="whitespace-nowrap px-3 py-4">{sup.email}</td>
-                                    <td className="whitespace-nowrap py-4 pl-6 pr-3 text-right">
-                                        <div className="flex justify-end gap-2">
-                                        <UpdateSupplier id={sup._id} />
-                                        <DeleteSupplier
-                                            id={sup._id}
-                                            deleteSupplier={handleDeleteClick}
-                                            isLoading={deletingSupplierId === sup._id}
-                                        />
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-
+            {suppliers.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 px-4 bg-gray-50 rounded-lg">
+                    <Truck className="w-16 h-16 text-gray-300 mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                        Aucun fournisseur trouvé
+                    </h3>
+                    <p className="text-sm text-gray-500 text-center mb-6">
+                        {searchTerm 
+                            ? "Aucun fournisseur ne correspond à votre recherche."
+                            : "Commencez par ajouter votre premier fournisseur pour gérer vos commandes."
+                        }
+                    </p>
+                    {!searchTerm && (
+                        <Link href={`/shop/${shopId}/dashboard/fournisseurs/ajouter`}>
+                            <Button className="bg-[#0084D1] hover:bg-[#0042d1] text-white">
+                                <PlusIcon className="w-5 h-5 mr-2" />
+                                Ajouter un fournisseur
+                            </Button>
+                        </Link>
+                    )}
                 </div>
-            </div>
+            ) : (
+                <div className="inline-block min-w-full align-middle">
+                    <div className="rounded-lg bg-gray-50 p-2 md:pt-0">
+                        
+                        {/* Mobile */}
+                        <div className="md:hidden space-y-2">
+                            {suppliers?.map((sup) => (
+                            <div key={sup._id} className="rounded-md bg-white p-4 shadow-sm">
+                                <div className="flex justify-between items-start border-b pb-4">
+                                <p className="text-base font-semibold">{sup.nom}</p>
+                                </div>
+                                <div className="pt-4 space-y-2">
+                                <p className="text-sm text-gray-700">Adresse: {sup.adresse}</p>
+                                <p className="text-sm text-gray-700">Tel: {sup.telephone}</p>
+                                <p className="text-sm text-gray-700">Email: {sup.email}</p>
+                                </div>
+                                <div className="flex justify-end gap-2 mt-4">
+                                <UpdateSupplier id={sup._id} />
+                                <DeleteSupplier
+                                    id={sup._id}
+                                    deleteSupplier={handleDeleteClick}
+                                    isLoading={deletingSupplierId === sup._id}
+                                />
+                                </div>
+                            </div>
+                            ))}
+                        </div>
+
+                        {/* Desktop */}
+                        <table className="hidden min-w-full text-gray-900 md:table">
+                            <thead className="text-left text-sm font-normal">
+                                <tr>
+                                    <th className="px-4 py-5 font-medium sm:pl-6">Nom</th>
+                                    <th className="px-3 py-5 font-medium">Adresse</th>
+                                    <th className="px-3 py-5 font-medium">Téléphone</th>
+                                    <th className="px-3 py-5 font-medium">Email</th>
+                                    <th className="py-5 pl-6 pr-3 text-right">
+                                        <span className="sr-only">Actions</span>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white">
+                                {suppliers?.map((sup) => (
+                                    <tr key={sup._id} className="border-b last:border-none text-sm">
+                                        <td className="whitespace-nowrap py-4 pl-6 pr-3">{sup.nom}</td>
+                                        <td className="whitespace-nowrap px-3 py-4">{sup.adresse}</td>
+                                        <td className="whitespace-nowrap px-3 py-4">{sup.telephone}</td>
+                                        <td className="whitespace-nowrap px-3 py-4">{sup.email}</td>
+                                        <td className="whitespace-nowrap py-4 pl-6 pr-3 text-right">
+                                            <div className="flex justify-end gap-2">
+                                            <UpdateSupplier id={sup._id} />
+                                            <DeleteSupplier
+                                                id={sup._id}
+                                                deleteSupplier={handleDeleteClick}
+                                                isLoading={deletingSupplierId === sup._id}
+                                            />
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+
+                    </div>
+                </div>
+            )}
           </div> 
 
           {/* Pagination */}
-           <Pagination
-            page={page}
-            totalPages={totalPages}
-            onPageChange={setPage}
-           /> 
+          {suppliers.length > 0 && (
+              <Pagination
+                page={page}
+                totalPages={totalPages}
+                onPageChange={setPage}
+              /> 
+          )}
         </>
     );
 }

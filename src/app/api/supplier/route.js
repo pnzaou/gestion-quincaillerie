@@ -1,16 +1,39 @@
 import dbConnection from "@/lib/db"
 import Supplier from "@/models/Supplier.model"
+import History from "@/models/History.model"
 import { NextResponse } from "next/server"
 import { withAuthAndRole } from "@/utils/withAuthAndRole"
+import { getServerSession } from "next-auth"
+import authOptions from "@/lib/auth"
+import mongoose from "mongoose"
 
+export const POST = withAuthAndRole(async (req) => {
+    await dbConnection()
+    const mongoSession = await mongoose.startSession()
+    mongoSession.startTransaction()
 
-export const POST = withAuthAndRole( async (req) => {
     try {
-        await dbConnection()
+        const session = await getServerSession(authOptions)
+        const { name, id: userId } = session.user
 
-        const { nom, adresse, telephone, email } = await req.json()
+        const { nom, adresse, telephone, email, businessId } = await req.json()
+
+        if (!businessId) {
+            await mongoSession.abortTransaction()
+            mongoSession.endSession()
+            return NextResponse.json(
+                {
+                    message: "ID de la boutique manquant.",
+                    success: false,
+                    error: true
+                },
+                { status: 400 }
+            )
+        }
 
         if(!nom.trim() || !telephone.trim()) {
+            await mongoSession.abortTransaction()
+            mongoSession.endSession()
             return NextResponse.json(
                 {
                     message: "Veuillez renseigner le nom et le numéro de téléphone du fournisseur.",
@@ -21,14 +44,23 @@ export const POST = withAuthAndRole( async (req) => {
             )
         }
 
+        const businessObjectId = new mongoose.Types.ObjectId(businessId)
         const nomNormalise = nom.trim().toLowerCase()
         const emailNormalise = email?.trim().toLowerCase()
 
-        const existingSupplier = await Supplier.findOne({ nom: nomNormalise })
+        const existingSupplier = await Supplier.findOne({ 
+            nom: nomNormalise,
+            business: businessObjectId
+        }).session(mongoSession)
+
+        console.log(existingSupplier)
+        
         if(existingSupplier) {
+            await mongoSession.abortTransaction()
+            mongoSession.endSession()
             return NextResponse.json(
                 {
-                    message: "Ce fournisseur existe déjà.",
+                    message: "Ce fournisseur existe déjà dans cette boutique.",
                     success: false,
                     error: true
                 },
@@ -37,11 +69,17 @@ export const POST = withAuthAndRole( async (req) => {
         }
 
         if(telephone.trim()) {
-            const existingTelephone = await Supplier.findOne({ telephone })
+            const existingTelephone = await Supplier.findOne({ 
+                telephone,
+                business: businessObjectId
+            }).session(mongoSession)
+            
             if(existingTelephone) {
+                await mongoSession.abortTransaction()
+                mongoSession.endSession()
                 return NextResponse.json(
                     {
-                        message: "Ce numéro de téléphone est déjà utilisé.",
+                        message: "Ce numéro de téléphone est déjà utilisé dans cette boutique.",
                         success: false,
                         error: true
                     }, { status: 400 }
@@ -53,14 +91,21 @@ export const POST = withAuthAndRole( async (req) => {
             nom: nomNormalise,
             adresse,
             telephone: telephone.trim(),
+            business: businessObjectId
         }
 
         if(emailNormalise) {
-            const existingEmail = await Supplier.findOne({ email: emailNormalise })
+            const existingEmail = await Supplier.findOne({ 
+                email: emailNormalise,
+                business: businessObjectId
+            }).session(mongoSession)
+            
             if(existingEmail) {
+                await mongoSession.abortTransaction()
+                mongoSession.endSession()
                 return NextResponse.json(
                     {
-                        message: "Cet email est déjà utilisé.",
+                        message: "Cet email est déjà utilisé dans cette boutique.",
                         success: false,
                         error: true
                     }, { status: 400 }
@@ -69,7 +114,20 @@ export const POST = withAuthAndRole( async (req) => {
             data.email = emailNormalise
         }
 
-        const rep = await Supplier.create(data)
+        const [rep] = await Supplier.create([data], { session: mongoSession })
+
+        // Création de l'historique
+        await History.create([{
+            user: userId,
+            actions: "create",
+            resource: "supplier",
+            resourceId: rep._id,
+            description: `${name} a créé le fournisseur ${rep.nom}`,
+            business: businessObjectId
+        }], { session: mongoSession })
+
+        await mongoSession.commitTransaction()
+        mongoSession.endSession()
 
         return NextResponse.json({
             message: "Fournisseur créé avec succès.",
@@ -79,6 +137,8 @@ export const POST = withAuthAndRole( async (req) => {
         }, { status: 201 })
 
     } catch (error) {
+        await mongoSession.abortTransaction()
+        mongoSession.endSession()
         console.error("Erreur lors de la création d'un fournisseur: ", error)
 
         let errorMessage = "Erreur! Veuillez réessayer."
@@ -94,9 +154,9 @@ export const POST = withAuthAndRole( async (req) => {
         }, { status: 500 }
         )
     }
-} )
+})
 
-export const GET = withAuthAndRole( async (req) => {
+export const GET = withAuthAndRole(async (req) => {
     try {
         await dbConnection()
 
@@ -104,11 +164,26 @@ export const GET = withAuthAndRole( async (req) => {
         const page = parseInt(searchParams.get("page") || "1")
         const limit = parseInt(searchParams.get("limit") || "5")
         const search = searchParams.get("search") || ""
+        const businessId = searchParams.get("businessId")
         const skip = (page - 1) * limit
 
-        const query = search
-        ? { nom: { $regex: search, $options: "i" } }
-        : {}
+        if (!businessId) {
+            return NextResponse.json(
+                {
+                    message: "ID de la boutique manquant.",
+                    success: false,
+                    error: true
+                },
+                { status: 400 }
+            )
+        }
+
+        const businessObjectId = new mongoose.Types.ObjectId(businessId)
+
+        const query = {
+            business: businessObjectId,
+            ...(search && { nom: { $regex: search, $options: "i" } })
+        }
 
         const [fournisseurs, total] = await Promise.all([
             Supplier.find(query)

@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { addSupplierSchema } from "@/schemas";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -16,6 +16,8 @@ import toast from "react-hot-toast";
 const AjoutSupplierForm = ({ className, initialData = null, ...props }) => {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const params = useParams();
+  const shopId = params?.shopId;
   const isEdit = Boolean(initialData);
 
   const {
@@ -39,18 +41,20 @@ const AjoutSupplierForm = ({ className, initialData = null, ...props }) => {
       const url = isEdit ? `/api/supplier/${initialData._id}` : "/api/supplier";
       const method = isEdit ? "PUT" : "POST";
 
+      const payload = isEdit ? data : { ...data, businessId: shopId };
+
       const response = await fetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
       const rep = await response.json();
 
       if (response.ok) {
         toast.success(rep.message);
-        router.push("/dashboard/fournisseurs/liste");
+        router.push(`/shop/${shopId}/dashboard/fournisseurs/liste`);
       } else {
         toast.error(rep.message);
       }
@@ -58,7 +62,7 @@ const AjoutSupplierForm = ({ className, initialData = null, ...props }) => {
       toast.error(
         `Erreur lors de ${
           isEdit ? "la modification" : "l'ajout"
-        } de l'utilisateur. Veuillez réessayer.`
+        } du fournisseur. Veuillez réessayer.`
       );
       console.error(error);
     } finally {
@@ -125,6 +129,7 @@ const AjoutSupplierForm = ({ className, initialData = null, ...props }) => {
               <Button
                 type="submit"
                 className="w-full bg-[#0084D1] hover:bg-[#0042d1] hover:cursor-pointer"
+                disabled={isLoading}
               >
                 {isLoading ? (
                   <>

@@ -5,7 +5,7 @@ import mongoose from "mongoose";
 import { notFound } from "next/navigation";
 
 const Page = async ({ params }) => {
-    const { id } = await params
+    const { id, shopId } = await params
     await dbConnection()
 
     if(!id || !mongoose.Types.ObjectId.isValid(id)) {
@@ -13,12 +13,18 @@ const Page = async ({ params }) => {
         return;
     }
 
-    const data = await Supplier.findById(id,).lean()
-    const initialData = {...data, _id: data._id.toString()}
+    const data = await Supplier.findById(id).lean()
 
     if (!data) {
         notFound()
         return;
+    }
+
+    // Convertir tous les ObjectId en string
+    const initialData = {
+        ...data, 
+        _id: data._id.toString(),
+        business: data.business?.toString()
     }
 
     return (

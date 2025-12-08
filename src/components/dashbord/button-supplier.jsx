@@ -1,24 +1,17 @@
 "use client"
 
-import { EyeIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/outline"
+import { PencilIcon, TrashIcon } from "@heroicons/react/24/outline"
 import clsx from "clsx"
 import Link from "next/link"
-
-export function DetailsSupplier({ id }) {
-    return (
-      <Link
-        href={`/dashboard/`}
-        className="rounded-md border p-2 hover:bg-gray-100"
-      >
-        <EyeIcon className="w-5" />
-      </Link>
-    )
-}
+import { useParams } from "next/navigation"
 
 export function UpdateSupplier({ id }) {
+    const params = useParams()
+    const shopId = params?.shopId
+
     return (
       <Link
-        href={`/dashboard/fournisseurs/liste/${id}`}
+        href={`/shop/${shopId}/dashboard/fournisseurs/liste/${id}`}
         className="rounded-md border p-2 hover:bg-gray-100"
       >
         <PencilIcon className="w-5" />
@@ -26,7 +19,7 @@ export function UpdateSupplier({ id }) {
     )
 }
   
-  export function DeleteSupplier({ id, deleteSupplier, isLoading }) {
+export function DeleteSupplier({ id, deleteSupplier, isLoading }) {
     return (
       <button
         type="button" 
@@ -62,6 +55,4 @@ export function UpdateSupplier({ id }) {
         )}
       </button>
     )
-  }
-  
-  
+}
