@@ -1,5 +1,6 @@
 import UserTable from "@/components/dashbord/User-table";
 import { preparingServerSideRequest } from "@/utils/preparingServerSideRequest";
+import { Users } from "lucide-react";
 
 
 const Page = async ({ searchParams }) => {
@@ -15,21 +16,30 @@ const Page = async ({ searchParams }) => {
     const { data, totalPages, currentPage } = await rep.json()
     
     return (
-        <div className="flow-root md:flex md:flex-col md:items-center md:justify-center md:h-screen">
-            <div className="mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">Utilisateurs</h2>
-                <p className="mt-2 text-sm text-gray-500">
-                    Gestion des utilisateurs
-                </p>
+      <div className="flow-root md:flex md:flex-col md:items-center md:justify-center md:h-screen">
+        <div className="mb-6 flex items-center gap-2">
+          <div>
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#1166D4]/10 mb-4">
+              <Users className="w-8 h-8 text-[#1166D4]" />
             </div>
-
-            <UserTable
-              initialUsers={data}
-              initialTotalPages={totalPages} 
-              currentPage={currentPage} 
-              search={search1}
-            />
+          </div>
+          <div>
+            <h1 className="text-4xl font-bold text-foreground mb-3">
+              Utilisateurs
+            </h1>
+            <p className="mt-2 text-sm text-gray-500">
+              Gestion des utilisateurs
+            </p>
+          </div>
         </div>
+
+        <UserTable
+          initialUsers={data}
+          initialTotalPages={totalPages}
+          currentPage={currentPage}
+          search={search1}
+        />
+      </div>
     );
 }
 
