@@ -27,7 +27,6 @@ export const getProductById = async (productId) => {
 
 /**
  * Calcule le montant total dépensé pour acheter le produit
- * QteInitial × (prixAchatDetail si présent, sinon prixAchatEnGros)
  */
 export const getTotalDepense = (product) => {
   if (!product) return 0
@@ -38,7 +37,6 @@ export const getTotalDepense = (product) => {
 
 /**
  * Calcule le montant total qu'on prétend gagner avec ce produit
- * QteInitial × (prixVenteDetail si présent, sinon prixVenteEnGros)
  */
 export const getTotalAttendu = (product) => {
   if (!product) return 0
@@ -47,14 +45,11 @@ export const getTotalAttendu = (product) => {
   return product.QteInitial * prixVente
 }
 
-
 /**
  * Calcule le montant qu'on a déjà gagné grâce à ce produit
- * - Somme des revenus des ventes avec statut "paid"
- * - Somme des paiements pour ventes "partial" qui contiennent UNIQUEMENT ce produit
- * (quantité × prix) pour chaque item de vente contenant ce produit
+ * Filtré par boutique
  */
-export const getTotalVendu = async (productId) => {
+export const getTotalVendu = async (productId, businessId) => {
   try {
     await dbConnection()
     
@@ -64,7 +59,8 @@ export const getTotalVendu = async (productId) => {
       {
         $match: {
           status: { $in: ["paid", "partial"] },
-          "items.product": productId
+          "items.product": productId,
+          business: businessId // Filtrer par boutique
         }
       },
       {
@@ -74,7 +70,6 @@ export const getTotalVendu = async (productId) => {
       },
       {
         $facet: {
-          // Ventes totalement payées
           paid: [
             { $match: { status: "paid" } },
             { $unwind: "$items" },
@@ -90,12 +85,11 @@ export const getTotalVendu = async (productId) => {
               }
             }
           ],
-          // Ventes partielles avec un seul produit
           partial: [
             { 
               $match: { 
                 status: "partial",
-                itemsCount: 1 // Uniquement les ventes avec un seul produit
+                itemsCount: 1
               } 
             },
             {
@@ -134,16 +128,12 @@ export const getTotalVendu = async (productId) => {
 
 /**
  * Calcule la marge bénéficiaire du produit
- * Marge = Total vendu - (Coût d'achat × quantité vendue)
- * 
- * Note: On calcule la marge réelle en prenant en compte le coût d'achat
- * des unités effectivement vendues
  */
 export const getMarge = async (product) => {
   if (!product) return 0
   
   try {
-    const totalVendu = await getTotalVendu(product._id)
+    const totalVendu = await getTotalVendu(product._id, product.business)
     const qteVendue = product.QteInitial - product.QteStock
     const prixAchat = product.prixAchatDetail || product.prixAchatEnGros
     const coutAchatVendu = qteVendue * prixAchat
@@ -155,16 +145,14 @@ export const getMarge = async (product) => {
   }
 }
 
-
 /**
  * Calcule le pourcentage d'avancement vers l'objectif
- * (Total vendu / Total attendu) × 100
  */
 export const getProgressPercentage = async (product) => {
   if (!product) return 0
   
   try {
-    const totalVendu = await getTotalVendu(product._id)
+    const totalVendu = await getTotalVendu(product._id, product.business)
     const totalAttendu = getTotalAttendu(product)
     
     if (totalAttendu === 0) return 0
@@ -178,7 +166,6 @@ export const getProgressPercentage = async (product) => {
 
 /**
  * Récupère toutes les analytics de rentabilité d'un produit
- * Fonction principale à appeler depuis la page
  */
 export const getProductAnalytics = async (productId) => {
   try {
@@ -192,7 +179,7 @@ export const getProductAnalytics = async (productId) => {
     
     const totalDepense = getTotalDepense(product)
     const totalAttendu = getTotalAttendu(product)
-    const totalVendu = await getTotalVendu(product._id)
+    const totalVendu = await getTotalVendu(product._id, product.business)
     const marge = await getMarge(product)
     const progressPercentage = await getProgressPercentage(product)
     

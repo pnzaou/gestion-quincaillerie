@@ -6,18 +6,25 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { getProductAnalytics } from "@/lib/productDetailsData";
 
-const page = async ({ params }) => {
-  const { id } = await params;
+const Page = async ({ params }) => {
+  const { id, shopId } = await params;
 
-  // Récupération des données du produit et analytics
   const data = await getProductAnalytics(id);
+
+  if (!data) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-red-500">Produit introuvable</p>
+      </div>
+    );
+  }
 
   const { product, analytics } = data;
 
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
-        <Link href="/dashboard/article/stock">
+        <Link href={`/shop/${shopId}/dashboard/article/stock`}>
           <Button variant="ghost" className="mb-6">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Retour à la liste
@@ -26,9 +33,7 @@ const page = async ({ params }) => {
 
         <div className="space-y-8">
           <ProductHeader product={product} />
-          
           <MarginAnalyticsCard analytics={analytics} />
-          
           <ProductInfoCard product={product} />
         </div>
       </div>
@@ -36,4 +41,4 @@ const page = async ({ params }) => {
   );
 };
 
-export default page;
+export default Page;

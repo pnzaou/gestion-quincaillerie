@@ -19,9 +19,24 @@ export const POST = withAuthAndRole(async (req) => {
         const { name, id } = session.user
         const data = await req.formData()
         const file = data.get("file")
+        const businessId = data.get("businessId")
+
+        if (!businessId) {
+            await mongoSession.abortTransaction()
+            mongoSession.endSession()
+            return NextResponse.json(
+                {
+                    message: "ID de la boutique manquant.",
+                    success: false,
+                    error: true
+                },
+                { status: 400 }
+            )
+        }
 
         if (!file) {
             await mongoSession.abortTransaction()
+            mongoSession.endSession()
             return NextResponse.json(
                 {
                     message: "Aucun fichier reçu.",
@@ -31,6 +46,8 @@ export const POST = withAuthAndRole(async (req) => {
                 { status: 400 }
             )
         }
+
+        const businessObjectId = new mongoose.Types.ObjectId(businessId)
 
         const bytes = await file.arrayBuffer()
         const buffer = Buffer.from(bytes)
@@ -57,7 +74,12 @@ export const POST = withAuthAndRole(async (req) => {
 
             if (!nom || prixAchatEnGros === undefined || prixVenteEnGros === undefined || QteInitial === undefined || QteStock === undefined || QteAlerte === undefined) continue
 
-            const existingProd = await Product.findOne({ nom }).session(mongoSession)
+            // Vérifier si existe dans CETTE boutique
+            const existingProd = await Product.findOne({ 
+                nom,
+                business: businessObjectId 
+            }).session(mongoSession)
+            
             if (existingProd) {
                 doublons.push(nom)
                 continue
@@ -76,7 +98,8 @@ export const POST = withAuthAndRole(async (req) => {
                 QteAlerte,
                 reference,
                 description,
-                statut
+                statut,
+                business: businessObjectId
             }], { session: mongoSession })
             inserted.push(newProd)
         }
@@ -86,9 +109,11 @@ export const POST = withAuthAndRole(async (req) => {
             actions: "create",
             resource: "product",
             description: `${name} a importé ${inserted.length} articles depuis Excel.`,
+            business: businessObjectId
         }], { session: mongoSession })
 
         await mongoSession.commitTransaction()
+        mongoSession.endSession()
 
         let message = ""
 
@@ -112,6 +137,7 @@ export const POST = withAuthAndRole(async (req) => {
 
     } catch (error) {
         await mongoSession.abortTransaction()
+        mongoSession.endSession()
         console.error("Erreur lors de l'importation des articles: ", error)
 
         return NextResponse.json({
@@ -119,7 +145,5 @@ export const POST = withAuthAndRole(async (req) => {
             success: false,
             error: true
         }, { status: 500 })
-    } finally {
-        mongoSession.endSession()
     }
 })

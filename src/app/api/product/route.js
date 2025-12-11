@@ -16,16 +16,33 @@ export const POST = withAuth(async (req) => {
         const session = await getServerSession(authOptions)
         const { name, id: userId } = session.user
 
-        const { nom, prixAchatEnGros, prixVenteEnGros, prixAchatDetail, prixVenteDetail, QteInitial, QteStock, QteAlerte, image, reference, description, dateExpiration, category_id, supplier_id } = await req.json()
+        const { 
+            nom, prixAchatEnGros, prixVenteEnGros, prixAchatDetail, prixVenteDetail, 
+            QteInitial, QteStock, QteAlerte, image, reference, description, 
+            dateExpiration, category_id, supplier_id, businessId 
+        } = await req.json()
+
+        if (!businessId) {
+            await mongoSession.abortTransaction()
+            mongoSession.endSession()
+            return NextResponse.json({
+                message: "ID de la boutique manquant.",
+                success: false,
+                error: true
+            }, { status: 400 })
+        }
 
         if(!nom || prixAchatEnGros === undefined || prixVenteEnGros === undefined || QteInitial === undefined || QteStock === undefined || QteAlerte === undefined || !category_id || !supplier_id) {
             await mongoSession.abortTransaction()
+            mongoSession.endSession()
             return NextResponse.json({
                 message: "Veuillez renseigner les champs obligatoires.",
                 success: false,
                 error: true
             }, { status: 400 })
         }
+
+        const businessObjectId = new mongoose.Types.ObjectId(businessId)
 
         const parsedAchatEnGros = Number(prixAchatEnGros)
         const parsedVenteEnGros = Number(prixVenteEnGros)
@@ -42,6 +59,7 @@ export const POST = withAuth(async (req) => {
             isNaN(parsedVenteEnGros) || parsedVenteEnGros <= 0
         ) {
             await mongoSession.abortTransaction()
+            mongoSession.endSession()
             return NextResponse.json({
                 message: "Les prix d'achat et de vente en gros doivent être des nombres positifs.",
                 success: false,
@@ -54,6 +72,7 @@ export const POST = withAuth(async (req) => {
             (prixVenteDetail && (isNaN(parsedVenteDetail) || parsedVenteDetail <= 0))
         ) {
             await mongoSession.abortTransaction()
+            mongoSession.endSession()
             return NextResponse.json({
                 message: "Les prix d'achat et de vente en détail doivent être des nombres positifs.",
                 success: false,
@@ -67,6 +86,7 @@ export const POST = withAuth(async (req) => {
             isNaN(parsedQteAlerte) || parsedQteAlerte < 0
         ) {
             await mongoSession.abortTransaction()
+            mongoSession.endSession()
             return NextResponse.json({
                 message: "Les quantités doivent être des nombres entiers positifs ou nuls.",
                 success: false,
@@ -76,6 +96,7 @@ export const POST = withAuth(async (req) => {
 
         if (category_id && !mongoose.Types.ObjectId.isValid(category_id)) {
             await mongoSession.abortTransaction()
+            mongoSession.endSession()
             return NextResponse.json({
                 message: "L'ID de la catégorie est invalide.",
                 success: false,
@@ -85,6 +106,7 @@ export const POST = withAuth(async (req) => {
 
         if (supplier_id && !mongoose.Types.ObjectId.isValid(supplier_id)) {
             await mongoSession.abortTransaction()
+            mongoSession.endSession()
             return NextResponse.json({
                 message: "L'ID du fournisseur est invalide.",
                 success: false,
@@ -94,6 +116,7 @@ export const POST = withAuth(async (req) => {
 
         if (dateExpiration && isNaN(Date.parse(dateExpiration))) {
             await mongoSession.abortTransaction()
+            mongoSession.endSession()
             return NextResponse.json({
                 message: "La date d'expiration est invalide.",
                 success: false,
@@ -101,18 +124,24 @@ export const POST = withAuth(async (req) => {
             }, { status: 400 });
         }
 
-        const existingProduct = await Product.findOne({ nom }).session(mongoSession)
+        const existingProduct = await Product.findOne({ 
+            nom,
+            business: businessObjectId 
+        }).session(mongoSession)
+        
         if(existingProduct) {
             await mongoSession.abortTransaction()
+            mongoSession.endSession()
             return NextResponse.json(
                 { 
-                    message: "Ce produit existe déjà.",
+                    message: "Ce produit existe déjà dans cette boutique.",
                     success: false,
                     error: true
                 },
                 { status: 400 }
             );
         }
+
         const data = {
             nom,
             prixAchatEnGros: parsedAchatEnGros,
@@ -127,7 +156,8 @@ export const POST = withAuth(async (req) => {
             dateExpiration,
             category_id,
             supplier_id,
-            statut
+            statut,
+            business: businessObjectId
         }
 
         if(image && typeof image === "string" && image.startsWith("data:image/")) {
@@ -146,10 +176,12 @@ export const POST = withAuth(async (req) => {
             actions: "create",
             resource: "product",
             description: `${name} a créé le produit ${rep.nom}.`,
-            resourceId: rep._id
+            resourceId: rep._id,
+            business: businessObjectId
         }], { session: mongoSession })
 
         await mongoSession.commitTransaction()
+        mongoSession.endSession()
 
         return NextResponse.json({
             message: "Produit ajouté avec succès.",
@@ -161,6 +193,7 @@ export const POST = withAuth(async (req) => {
         
     } catch (error) {
         await mongoSession.abortTransaction()
+        mongoSession.endSession()
         console.error("Erreur lors de l'ajout d'un produit: ", error)
 
         let errorMessage = "Erreur! Veuillez réessayer."
@@ -174,8 +207,6 @@ export const POST = withAuth(async (req) => {
             success: false,
             error: true
         }, { status: 500 })
-    } finally {
-        mongoSession.endSession()
     }
 })
 
@@ -188,13 +219,25 @@ export const GET = withAuth(async (req) => {
         const limit = parseInt(searchParams.get("limit") || "10")
         const search = searchParams.get("search") || ""
         const categories = searchParams.get("categories") || ""
+        const businessId = searchParams.get("businessId")
         const skip = (page - 1) * limit
+
+        if (!businessId) {
+            return NextResponse.json({
+                message: "ID de la boutique manquant.",
+                success: false,
+                error: true
+            }, { status: 400 })
+        }
+
+        const businessObjectId = new mongoose.Types.ObjectId(businessId)
 
         const selectedCategories = categories
         ? categories.split(",").filter(Boolean).map((cat) => new mongoose.Types.ObjectId(cat))
         : []
 
         const query = {
+            business: businessObjectId,
             ...(search 
                 ? {
                    $or: [
@@ -238,4 +281,3 @@ export const GET = withAuth(async (req) => {
         }, { status: 500 })
     }
 })
-

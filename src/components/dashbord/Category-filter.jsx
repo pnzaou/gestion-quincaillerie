@@ -11,17 +11,20 @@ import {
   CommandItem,
 } from "../ui/command";
 import { Checkbox } from "../ui/checkbox";
+import { useParams } from "next/navigation";
 
 export default function CategoryFilter({ selected, toggleCategory }) {
   const [categories, setCategories] = useState([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const params = useParams();
+  const shopId = params?.shopId;
 
   useEffect(() => {
     async function fetchCategories() {
       setLoading(true);
       try {
-        const res = await fetch("/api/category");
+        const res = await fetch(`/api/category?businessId=${shopId}`);
         const body = await res.json();
 
         if (!res.ok) {
@@ -41,7 +44,7 @@ export default function CategoryFilter({ selected, toggleCategory }) {
     }
 
     fetchCategories();
-  }, []);
+  }, [shopId]);
 
   if (loading) {
     return (

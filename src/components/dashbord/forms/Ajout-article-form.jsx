@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -24,6 +24,9 @@ const AjoutArticleForm = ({
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const params = useParams();
+  const shopId = params?.shopId;
+
   const {
     register,
     handleSubmit,
@@ -52,7 +55,7 @@ const AjoutArticleForm = ({
       const url = isEdit ? `/api/product/${initialData._id}` : "/api/product";
       const method = isEdit ? "PUT" : "POST";
 
-      const data = { ...formData };
+      const data = isEdit ? { ...formData } : { ...formData, businessId: shopId };
 
       if (formData.image?.length > 0 && formData.image[0]) {
         data.image = await toBase64(formData.image[0]);
@@ -68,7 +71,7 @@ const AjoutArticleForm = ({
 
       const res = await rep.json();
       if (rep.ok) {
-        router.push("/dashboard/article/stock");
+        router.push(`/shop/${shopId}/dashboard/article/stock`);
         toast.success(res.message);
       } else {
         toast.error(res.message);
@@ -104,7 +107,6 @@ const AjoutArticleForm = ({
             }}
             encType="multipart/form-data"
           >
-            {/* Etape 1 */}
             {step === 1 && (
               <AriticleFormStep1
                 cats={cats}
@@ -114,7 +116,6 @@ const AjoutArticleForm = ({
               />
             )}
 
-            {/* Etape 2 */}
             {step === 2 && (
               <ArticleFormStep2
                 control={control}
@@ -124,7 +125,6 @@ const AjoutArticleForm = ({
               />
             )}
 
-            {/* Etape 3 */}
             {step === 3 && <ArticleFormStep3 register={register} />}
 
             <AjoutArticleFormBtn

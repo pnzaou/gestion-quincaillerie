@@ -5,22 +5,29 @@ import clsx from "clsx"
 import Link from "next/link"
 import ConfirmDialog from "./ConfirmDialog"
 import { Button } from "../ui/button"
+import { useParams } from "next/navigation"
 
 export function DetailsArticle({ id }) {
-    return (
-      <Link
-        href={`/dashboard/article/stock/${id}/details`}
-        className="rounded-md border p-2 hover:bg-gray-100"
-      >
-        <EyeIcon className="w-5" />
-      </Link>
-    )
+  const params = useParams();
+  const shopId = params?.shopId;
+
+  return (
+    <Link
+      href={`/shop/${shopId}/dashboard/article/stock/${id}/details`}
+      className="rounded-md border p-2 hover:bg-gray-100"
+    >
+      <EyeIcon className="w-5" />
+    </Link>
+  );
 }
 
 export function UpdateArticle({ id }) {
+    const params = useParams();
+    const shopId = params?.shopId;
+    
     return (
       <Link
-        href={`/dashboard/article/stock/${id}/modification`}
+        href={`/shop/${shopId}/dashboard/article/stock/${id}/modification`}
         className="rounded-md border p-2 hover:bg-gray-100"
       >
         <PencilIcon className="w-5" />

@@ -4,13 +4,27 @@ import Category from "@/models/Category.model"
 import Supplier from "@/models/Supplier.model"
 import { withAuth } from "@/utils/withAuth"
 import { NextResponse } from "next/server"
+import mongoose from "mongoose"
 import * as XLSX from "xlsx"
 
-export const GET = withAuth(async () => {
+export const GET = withAuth(async (req) => {
     try {
         await dbConnection()
 
-        const articles = await Product.find()
+        const { searchParams } = new URL(req.url)
+        const businessId = searchParams.get("businessId")
+
+        if (!businessId) {
+            return NextResponse.json({
+                message: "ID de la boutique manquant.",
+                success: false,
+                error: true
+            }, { status: 400 })
+        }
+
+        const businessObjectId = new mongoose.Types.ObjectId(businessId)
+
+        const articles = await Product.find({ business: businessObjectId })
             .populate('category_id', 'nom')
             .populate('supplier_id', 'nom')
 
