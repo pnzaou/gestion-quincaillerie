@@ -1,7 +1,8 @@
 import ArticlesListVente from "@/components/dashbord/Articles-list-vente";
 import { preparingServerSideRequest } from "@/utils/preparingServerSideRequest";
 
-const Page = async ({ searchParams }) => {
+const Page = async ({ searchParams, params }) => {
+  const { shopId } = await params;
   const { cookie, host, protocol } = await preparingServerSideRequest();
 
   const { page, search } = await searchParams;
@@ -9,7 +10,7 @@ const Page = async ({ searchParams }) => {
   const search1 = search || "";
 
   const rep = await fetch(
-    `${protocol}://${host}/api/product?page=${page1}&limit=8&search=${search1}`,
+    `${protocol}://${host}/api/product?page=${page1}&limit=8&search=${search1}&businessId=${shopId}`,
     {
       headers: { Cookie: cookie },
     }

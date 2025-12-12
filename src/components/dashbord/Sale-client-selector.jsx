@@ -1,96 +1,131 @@
-"use client";
+"use client"
 
 import { useEffect } from "react";
-import AddClientPopup from "./Add-client-popup";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { Button } from "../ui/button";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { useParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import {
   Command,
   CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
-  CommandList,
-} from "../ui/command";
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { Check, ChevronsUpDown, UserPlus, X } from "lucide-react";
 import { useSaleStore } from "@/stores/useSaleStore";
+import AddClientPopup from "./Add-client-popup";
 
 const SaleClientSelector = () => {
-  const loading = useSaleStore((state) => state.loading);
-  const clientsData = useSaleStore((state) => state.clientsData);
+  const params = useParams();
+  const shopId = params?.shopId;
+
   const selectClientOpen = useSaleStore((state) => state.selectClientOpen);
-  const setSelectClientOpen = useSaleStore(
-    (state) => state.setSelectClientOpen
-  );
+  const setSelectClientOpen = useSaleStore((state) => state.setSelectClientOpen);
+  const clientsData = useSaleStore((state) => state.clientsData);
+  const getClientsData = useSaleStore((state) => state.getClientsData);
   const client = useSaleStore((state) => state.client);
   const setClient = useSaleStore((state) => state.setClient);
-  const getClientsData = useSaleStore((state) => state.getClientsData);
+  const handleDeleteSelectedClient = useSaleStore((state) => state.handleDeleteSelectedClient);
+  const handleUpdateNewClient = useSaleStore((state) => state.handleUpdateNewClient);
+  const setShopId = useSaleStore((state) => state.setShopId);
 
+  // ✅ Initialiser shopId puis charger les clients
   useEffect(() => {
-    getClientsData();
-  }, []);
+    if (shopId) {
+      setShopId(shopId);
+      getClientsData();
+    }
+  }, [shopId, setShopId, getClientsData]);
 
-  if (loading) {
-    return (
-      <div
-        className="w-36 h-10 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse"
-        role="status"
-        aria-label="Chargement des clients"
-      />
-    );
-  }
+  const handleSelectClient = (selectedClient) => {
+    setClient(selectedClient);
+    setSelectClientOpen(false);
+  };
 
   return (
-    <Popover open={selectClientOpen} onOpenChange={setSelectClientOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={selectClientOpen}
-          className="justify-between min-w-[140px]"
-        >
-          <span className="truncate max-w-[160px]">
-            {client?.nomComplet ?? "Choisir client"}
-          </span>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-full sm:w-64 p-0" align="start">
-        <Command>
-          <CommandInput placeholder="Rechercher un client..." className="h-9" />
-          <CommandList>
-            <CommandEmpty>Aucun client trouvé</CommandEmpty>
-            <CommandGroup>
-              <CommandItem
-                value="reset"
-                onSelect={() => {
-                  setClient(null);
-                  setSelectClientOpen(false);
-                }}
-              >
-                Aucun client
-                <Check className={cn('ml-auto h-4 w-4', !client ? 'opacity-100' : 'opacity-0')} />
-              </CommandItem>
-              {clientsData?.map((clt) => (
+    <div className="flex items-center gap-2">
+      <Popover open={selectClientOpen} onOpenChange={setSelectClientOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={selectClientOpen}
+            className={cn(
+              "w-full sm:w-[300px] justify-between",
+              !client && "text-muted-foreground"
+            )}
+          >
+            {client ? (
+              <div className="flex items-center gap-2 overflow-hidden">
+                <span className="truncate">{client.nomComplet}</span>
+              </div>
+            ) : (
+              <>
+                <UserPlus className="w-4 h-4 mr-2" />
+                Sélectionner un client
+              </>
+            )}
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+
+        <PopoverContent className="w-full sm:w-[300px] p-0">
+          <Command>
+            <CommandInput placeholder="Rechercher un client..." />
+            <CommandEmpty>Aucun client trouvé.</CommandEmpty>
+            <CommandGroup className="max-h-[200px] overflow-y-auto">
+              {clientsData?.map((c) => (
                 <CommandItem
-                  key={clt._id}
-                  value={clt.nomComplet.toLowerCase()}
-                  onSelect={() => {
-                    setClient(clt);
-                    setSelectClientOpen(false);
-                  }}
+                  key={c._id}
+                  value={c.nomComplet}
+                  onSelect={() => handleSelectClient(c)}
+                  className="cursor-pointer"
                 >
-                  {clt.nomComplet}
-                  <Check className={cn('ml-auto h-4 w-4', client?._id === clt._id ? 'opacity-100' : 'opacity-0')} />
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      client?._id === c._id ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                  <div className="flex-1">
+                    <div className="font-medium">{c.nomComplet}</div>
+                    <div className="text-xs text-muted-foreground">{c.tel}</div>
+                  </div>
                 </CommandItem>
               ))}
             </CommandGroup>
-          </CommandList>
-        </Command>
-        <AddClientPopup />
-      </PopoverContent>
-    </Popover>
+          </Command>
+          <AddClientPopup />
+        </PopoverContent>
+      </Popover>
+
+      {client && (
+        <div className="flex items-center gap-1 px-3 py-2 bg-secondary rounded-md">
+          <span className="text-sm font-medium">{client.nomComplet}</span>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 ml-2"
+            onClick={handleUpdateNewClient}
+          >
+            <UserPlus className="h-3 w-3" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6"
+            onClick={handleDeleteSelectedClient}
+          >
+            <X className="h-3 w-3" />
+          </Button>
+        </div>
+      )}
+    </div>
   );
 };
 

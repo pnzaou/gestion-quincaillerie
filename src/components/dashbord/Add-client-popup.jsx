@@ -1,5 +1,6 @@
 "use client"
 
+import { useParams } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
@@ -9,22 +10,35 @@ import toast from "react-hot-toast";
 import { useSaleStore } from "@/stores/useSaleStore";
 
 const AddClientPopup = () => {
+    const params = useParams();
+    const shopId = params?.shopId;
 
-    const newClientDrawerOpen = useSaleStore((state) => state.newClientDrawerOpen)
-    const setNewClientDrawerOpen = useSaleStore((state) => state.setNewClientDrawerOpen)
-    const newClient = useSaleStore((state) => state.newClient)
-    const setNewClient = useSaleStore((state) => state.setNewClient)
-    const setClient = useSaleStore((state) => state.setClient)
-    const setSelectClientOpen = useSaleStore((state) => state.setSelectClientOpen)
+    const newClientDrawerOpen = useSaleStore((state) => state.newClientDrawerOpen);
+    const setNewClientDrawerOpen = useSaleStore((state) => state.setNewClientDrawerOpen);
+    const newClient = useSaleStore((state) => state.newClient);
+    const setNewClient = useSaleStore((state) => state.setNewClient);
+    const setClient = useSaleStore((state) => state.setClient);
+    const setSelectClientOpen = useSaleStore((state) => state.setSelectClientOpen);
 
     const handleAddClient = () => {
+        if (!shopId) {
+            toast.error("ID de boutique manquant");
+            return;
+        }
+
         if (newClient.nomComplet.trim() === "" || newClient.tel.trim() === "") {
             toast.error("Le nom et numéro du client sont obligatoires");  
             return;
         }
-        setClient(newClient);
+
+        // ✅ Ajouter businessId au client temporaire
+        setClient({
+            ...newClient,
+            businessId: shopId
+        });
+        
         setNewClientDrawerOpen(false);
-        setSelectClientOpen(false)
+        setSelectClientOpen(false);
         setNewClient({
             nomComplet: "",
             tel: "",

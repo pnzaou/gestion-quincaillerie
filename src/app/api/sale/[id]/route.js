@@ -49,10 +49,9 @@ export const GET = withAuth(async (req, { params }) => {
       .sort({ createdAt: 1 })
       .lean();
 
-    // Optionnel : garantir que chaque item a bien un objet product (si produit supprimé côté catalogue)
+    // Garantir que chaque item a bien un objet product
     sale.items = sale.items.map((it) => {
       if (!it.product) {
-        // si product supprimé, garder l'info minimale déjà présente dans l'item (si tu en as stocké une copie)
         return it;
       }
       return it;
@@ -90,6 +89,8 @@ export const POST = withAuth(async (req, { params }) => {
     
     // Validation de l'ID
     if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      await mongoSession.abortTransaction();
+      mongoSession.endSession();
       return NextResponse.json(
         { message: "ID de vente invalide", success: false, error: true },
         { status: 400 }
@@ -203,8 +204,9 @@ export const POST = withAuth(async (req, { params }) => {
       });
     }
 
-    // Créer le paiement
+    // ✅ Créer le paiement avec business
     const [payment] = await Payment.create([{
+      business: sale.business, // ✅ Ajouter le business
       sale: sale._id,
       amount,
       method
@@ -230,7 +232,7 @@ export const POST = withAuth(async (req, { params }) => {
     sale.status = newStatus;
     await sale.save({ session: mongoSession });
 
-    // Créer l'historique
+    // ✅ Créer l'historique avec business
     const description = `Paiement de ${amount} FCFA (${method}) pour la vente ${sale.reference}. Nouveau statut: ${newStatus}. Reste à payer: ${newAmountDue} FCFA`;
     
     await createHistory({
@@ -238,7 +240,8 @@ export const POST = withAuth(async (req, { params }) => {
       action: "update",
       resource: "sale",
       resourceId: sale._id,
-      description
+      description,
+      businessId: sale.business // ✅ Passer le businessId
     }, mongoSession);
 
     // Commit

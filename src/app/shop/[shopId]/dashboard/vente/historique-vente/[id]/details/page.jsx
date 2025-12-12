@@ -36,7 +36,9 @@ import { PaymentDialog } from "@/components/dashbord/Payment-dialog";
 const Page = () => {
   const params = useParams();
   const router = useRouter();
-  const id = params.id;
+  const id = params?.id;
+  const shopId = params?.shopId;
+
   const [isLoading, setIsLoading] = useState(true);
   const [sale, setSale] = useState(null);
   const [payments, setPayments] = useState([]);
@@ -269,7 +271,7 @@ const Page = () => {
                 variant="outline"
                 size="icon"
                 className="shrink-0"
-                onClick={() => router.back()}
+                onClick={() => router.push(`/shop/${shopId}/dashboard/vente/historique-vente`)}
               >
                 <ArrowLeft className="w-4 h-4" />
               </Button>
@@ -374,7 +376,7 @@ const Page = () => {
                     {sale.remise && sale.remise > 0 && (
                       <div className="flex justify-between text-[#1CCA5B]">
                         <span>Remise</span>
-                        <span>- {formatCurrency(sale.remise)}</span>
+                        <span>- {sale.remise} %</span>
                       </div>
                     )}
                     <Separator />

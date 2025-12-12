@@ -9,31 +9,49 @@ import User from "@/models/User.model"
 import { validateSalePayload } from "@/dtos/sale.dto"
 import { createSale } from "@/services/sale.service"
 import { HttpError } from "@/services/errors.service"
+import mongoose from "mongoose"
 
 export const POST = withAuth(async (req) => {
     await dbConnection();
-    const raw = await req.json()
-    const { valid, errors, payload } = validateSalePayload(raw)
-    if (!valid) return NextResponse.json({message: "Données invalides", errors, success: false, error: true,},{ status: 400 });
+    const raw = await req.json();
 
-    const session = await getServerSession(authOptions)
+    // ✅ Vérifier businessId avant validation
+    if (!raw.businessId) {
+        return NextResponse.json({
+            message: "ID de la boutique manquant.",
+            success: false,
+            error: true
+        }, { status: 400 });
+    }
+
+    const { valid, errors, payload } = validateSalePayload(raw);
+    if (!valid) {
+        return NextResponse.json({
+            message: "Données invalides",
+            errors,
+            success: false,
+            error: true,
+        }, { status: 400 });
+    }
+
+    const session = await getServerSession(authOptions);
     try {
-        const sale = await createSale({ payload, user: session?.user })
+        const sale = await createSale({ payload, user: session?.user });
         return NextResponse.json({
             message: "Vente enregistrée avec succès.",
             success: true,
             error: false,
             data: sale
-        }, { status: 201 })
+        }, { status: 201 });
 
     } catch (err) {
-        console.error("Erreur route POST /sales :", err)
+        console.error("Erreur route POST /sales :", err);
         if (err instanceof HttpError || (err.status && err.message)) {
-        return NextResponse.json({ message: err.message, success: false, error: true }, { status: err.status || 400 })
+            return NextResponse.json({ message: err.message, success: false, error: true }, { status: err.status || 400 });
         }
-        return NextResponse.json({ message: "Erreur! Veuillez réessayer.", success: false, error: true }, { status: 500 })
+        return NextResponse.json({ message: "Erreur! Veuillez réessayer.", success: false, error: true }, { status: 500 });
     }
-})
+});
 
 export const GET = withAuth(async (req) => {
     try {
@@ -46,6 +64,18 @@ export const GET = withAuth(async (req) => {
       const limit = parseInt(searchParams.get("limit") || "10");
       const search = searchParams.get("search") || "";
       const statusParam = searchParams.get("status") || "";
+      const businessId = searchParams.get("businessId");
+
+      // ✅ Vérifier businessId
+      if (!businessId) {
+        return NextResponse.json({
+          message: "ID de la boutique manquant.",
+          success: false,
+          error: true
+        }, { status: 400 });
+      }
+
+      const businessObjectId = new mongoose.Types.ObjectId(businessId);
 
       // 1) Filtre status
       const statuses = statusParam
@@ -55,7 +85,7 @@ export const GET = withAuth(async (req) => {
             .filter(Boolean)
         : [];
 
-      // 2) Construction des clauses $or (reference, dateExacte, client, et pour l’admin vendeur)
+      // 2) Construction des clauses $or (reference, dateExacte, client, et pour l'admin vendeur)
       const orClauses = [];
       if (search) {
         const regex = new RegExp(search, "i");
@@ -73,9 +103,10 @@ export const GET = withAuth(async (req) => {
           orClauses.push({ dateExacte: { $gte: start, $lt: end } });
         }
 
-        // c) Recherche par client (nomComplet)
+        // c) Recherche par client (nomComplet) - filtré par business
         const clientIds = await Client.find({
           nomComplet: { $regex: regex },
+          business: businessObjectId
         }).distinct("_id");
         if (clientIds.length) {
           orClauses.push({ client: { $in: clientIds } });
@@ -93,7 +124,10 @@ export const GET = withAuth(async (req) => {
       }
 
       // 3) Construction de la requête finale
-      const filter = {};
+      const filter = {
+        business: businessObjectId // ✅ Filtrer par boutique
+      };
+
       if (orClauses.length) {
         filter.$or = orClauses;
       }
@@ -108,7 +142,7 @@ export const GET = withAuth(async (req) => {
         filter.vendeur = userId;
       }
 
-      // 5) Pagination + recupération des données
+      // 5) Pagination + récupération des données
       const skip = (page - 1) * limit;
       const [sales, total] = await Promise.all([
         Sale.find(filter, {
@@ -153,4 +187,4 @@ export const GET = withAuth(async (req) => {
         { status: 500 }
       );
     }
-})
+});

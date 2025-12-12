@@ -6,6 +6,7 @@ import useArticles from "@/hooks/useArticles";
 import { cn } from "@/lib/utils";
 import { Plus, Minus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useParams } from "next/navigation";
 import ArticlesFooter from "./ArticlesFooter";
 import SearchLoader from "./Search-loader";
 import ArticlesHeader from "./ArticlesHeader";
@@ -23,6 +24,17 @@ const ArticlesListVente = ({
   currentPage,
   search,
 }) => {
+  const params = useParams();
+  const shopId = params?.shopId;
+  const setShopId = useSaleStore((state) => state.setShopId);
+
+  // ✅ Initialiser shopId dans le store
+  useEffect(() => {
+    if (shopId) {
+      setShopId(shopId);
+    }
+  }, [shopId, setShopId]);
+
   const {
     articles,
     handleSearchChange,
@@ -112,7 +124,7 @@ const ArticlesListVente = ({
                   <CardContent className="flex flex-col space-y-3 mt-2">
                     <div className="text-center">
                       <span className="text-lg text-black font-semibold">
-                        {article.prixVenteDetail ?? article.prixVenteEnGros} fcfa
+                        {article.prixVenteDetail || article.prixVenteEnGros} fcfa
                       </span>
                     </div>
 
@@ -181,4 +193,4 @@ const ArticlesListVente = ({
   );
 };
 
-export default ArticlesListVente
+export default ArticlesListVente;

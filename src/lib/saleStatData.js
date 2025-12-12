@@ -1,27 +1,36 @@
 import Sale from "@/models/Sale.model";
+import mongoose from "mongoose";
 
 /**
  * Récupère les statistiques des ventes
  * @param {Object} options - Options de filtrage
  * @param {string} options.userId - ID de l'utilisateur (pour filtrer par vendeur)
  * @param {string} options.role - Rôle de l'utilisateur ('admin' ou autre)
+ * @param {string} options.businessId - ID de la boutique (obligatoire)
  * @param {Date} options.startDate - Date de début (optionnel)
  * @param {Date} options.endDate - Date de fin (optionnel)
  * @returns {Promise<Object>} Statistiques des ventes
  */
-export async function getSalesStatistics({ userId, role, startDate, endDate } = {}) {
-  // Filtre de base pour limiter au vendeur si pas admin
-  const userFilter = role !== "admin" ? { vendeur: userId } : {};
-  
-  // Filtre de date optionnel
-  const dateFilter = {};
-  if (startDate || endDate) {
-    dateFilter.dateExacte = {};
-    if (startDate) dateFilter.dateExacte.$gte = startDate;
-    if (endDate) dateFilter.dateExacte.$lte = endDate;
+export async function getSalesStatistics({ userId, role, businessId, startDate, endDate } = {}) {
+  // ✅ Vérification businessId obligatoire
+  if (!businessId) {
+    throw new Error("businessId est obligatoire pour getSalesStatistics");
   }
 
-  const baseFilter = { ...userFilter, ...dateFilter };
+  const businessObjectId = new mongoose.Types.ObjectId(businessId);
+
+  // Filtre de base : boutique + vendeur (si pas admin)
+  const baseFilter = {
+    business: businessObjectId, // ✅ Filtrer par boutique
+    ...(role !== "admin" && { vendeur: userId })
+  };
+  
+  // Filtre de date optionnel
+  if (startDate || endDate) {
+    baseFilter.dateExacte = {};
+    if (startDate) baseFilter.dateExacte.$gte = startDate;
+    if (endDate) baseFilter.dateExacte.$lte = endDate;
+  }
 
   // Exécution de toutes les requêtes en parallèle
   const [revenueStats, totalSalesCount, debtStats, paidStats, pendingCount, partialCount, cancelledCount] = 
@@ -138,9 +147,10 @@ export async function getSalesStatistics({ userId, role, startDate, endDate } = 
  * @param {string} options.period - Période ('today', 'week', 'month', 'year')
  * @param {string} options.userId - ID de l'utilisateur
  * @param {string} options.role - Rôle de l'utilisateur
+ * @param {string} options.businessId - ID de la boutique (obligatoire)
  * @returns {Promise<Object>} Statistiques des ventes
  */
-export async function getSalesStatisticsByPeriod({ period = 'all', userId, role } = {}) {
+export async function getSalesStatisticsByPeriod({ period = 'all', userId, role, businessId } = {}) {
   const now = new Date();
   let startDate, endDate;
 
@@ -173,7 +183,7 @@ export async function getSalesStatisticsByPeriod({ period = 'all', userId, role 
       endDate = null;
   }
 
-  return getSalesStatistics({ userId, role, startDate, endDate });
+  return getSalesStatistics({ userId, role, businessId, startDate, endDate });
 }
 
 /**
@@ -185,6 +195,7 @@ export async function getSalesStatisticsByPeriod({ period = 'all', userId, role 
  * @param {Date} options.previousEnd - Fin période précédente
  * @param {string} options.userId - ID de l'utilisateur
  * @param {string} options.role - Rôle de l'utilisateur
+ * @param {string} options.businessId - ID de la boutique (obligatoire)
  * @returns {Promise<Object>} Statistiques comparatives
  */
 export async function getComparativeSalesStatistics({
@@ -193,11 +204,12 @@ export async function getComparativeSalesStatistics({
   previousStart,
   previousEnd,
   userId,
-  role
+  role,
+  businessId
 } = {}) {
   const [currentStats, previousStats] = await Promise.all([
-    getSalesStatistics({ userId, role, startDate: currentStart, endDate: currentEnd }),
-    getSalesStatistics({ userId, role, startDate: previousStart, endDate: previousEnd })
+    getSalesStatistics({ userId, role, businessId, startDate: currentStart, endDate: currentEnd }),
+    getSalesStatistics({ userId, role, businessId, startDate: previousStart, endDate: previousEnd })
   ]);
 
   // Calcul des variations en pourcentage

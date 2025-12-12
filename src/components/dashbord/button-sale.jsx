@@ -5,11 +5,15 @@ import clsx from "clsx"
 import Link from "next/link"
 import { Button } from "../ui/button"
 import ConfirmDialog from "./ConfirmDialog"
+import { useParams } from "next/navigation"
 
 export function DetailsSale({ id }) {
+    const params = useParams();
+    const shopId = params?.shopId;
+
     return (
       <Link
-        href={`/dashboard/vente/historique-vente/${id}/details`}
+        href={`/shop/${shopId}/dashboard/vente/historique-vente/${id}/details`}
         className="rounded-md border p-2 hover:bg-gray-100"
       >
         <EyeIcon className="w-5" />

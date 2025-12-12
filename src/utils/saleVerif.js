@@ -32,9 +32,9 @@ export const saleVerif = (cart, saleStatus, payments, total, client) => {
   }
 
   // Pending => client requis
-  if (saleStatus === "pending" && !client) {
-    toast.error("Sélectionner un client pour enregistrer une dette.");
-    throw new SaleValidationError("CLIENT_REQUIRED_FOR_PENDING");
+  if ((saleStatus === "pending" || saleStatus === "partial") && !client) {
+    toast.error("Sélectionner un client pour enregistrer une dette ou une avance.");
+    throw new SaleValidationError("CLIENT_REQUIRED_FOR_PENDING_OR_PARTIAL");
   }
 
   // Somme des paiements ne doit pas dépasser total

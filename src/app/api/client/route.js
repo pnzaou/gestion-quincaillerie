@@ -15,10 +15,22 @@ export const POST = withAuth(async (req) => {
         const session = await getServerSession(authOptions)
         const { name, id: userId } = session.user
 
-        const { nomComplet = "", tel = "", email = "", adresse = "" } = await req.json()
+        const { nomComplet = "", tel = "", email = "", adresse = "", businessId } = await req.json()
         
+        // ✅ Validation businessId
+        if (!businessId) {
+            await mongoSession.abortTransaction()
+            mongoSession.endSession()
+            return NextResponse.json({
+                message: "ID de la boutique manquant.",
+                success: false,
+                error: true
+            }, { status: 400 })
+        }
+
         if (!nomComplet.trim() || !tel.trim()) {
-            await mongoSession.abortTransaction();
+            await mongoSession.abortTransaction()
+            mongoSession.endSession()
             return NextResponse.json({
                 message: "Le nom et le numéro de téléphone du client sont obligatoires.",
                 success: false,
@@ -26,23 +38,37 @@ export const POST = withAuth(async (req) => {
             }, { status: 400 })
         }
 
+        const businessObjectId = new mongoose.Types.ObjectId(businessId)
+
+        // ✅ Vérifier email unique par boutique
         if(email && email.trim()) {
-            const existingEmail = await Client.findOne({ email }).session(mongoSession)
+            const existingEmail = await Client.findOne({ 
+                email: email.trim(),
+                business: businessObjectId 
+            }).session(mongoSession)
+            
             if (existingEmail) {
-                await mongoSession.abortTransaction();
+                await mongoSession.abortTransaction()
+                mongoSession.endSession()
                 return NextResponse.json({
-                    message: "Cet email est déjà utilisé.",
+                    message: "Cet email est déjà utilisé dans cette boutique.",
                     success: false,
                     error: true
                 }, { status: 400 })
             }
         }
 
-        const existingTel = await Client.findOne({ tel }).session(mongoSession)
+        // ✅ Vérifier téléphone unique par boutique
+        const existingTel = await Client.findOne({ 
+            tel: tel.trim(),
+            business: businessObjectId 
+        }).session(mongoSession)
+        
         if (existingTel) {
-            await mongoSession.abortTransaction();
+            await mongoSession.abortTransaction()
+            mongoSession.endSession()
             return NextResponse.json({
-                message: "Ce numéro de téléphone est déjà utilisé.",
+                message: "Ce numéro de téléphone est déjà utilisé dans cette boutique.",
                 success: false,
                 error: true
             }, { status: 400 })
@@ -51,8 +77,10 @@ export const POST = withAuth(async (req) => {
         const clientData = {
             nomComplet: nomComplet.trim(),
             tel: tel.trim(),
-            adresse: adresse.trim() || ""
+            adresse: adresse.trim() || "",
+            business: businessObjectId // ✅ Ajout du business
         }
+        
         if(email && email.trim()) {
             clientData.email = email.trim()
         }
@@ -66,10 +94,13 @@ export const POST = withAuth(async (req) => {
             actions: "create",
             resource: "client",
             description: `${name} a créé le client ${newClient.nomComplet}.`,
-            resourceId: newClient._id
+            resourceId: newClient._id,
+            business: businessObjectId // ✅ Ajout du business
         }], { session: mongoSession })
 
         await mongoSession.commitTransaction()
+        mongoSession.endSession()
+        
         return NextResponse.json({
             message: "Client créé avec succès.",
             success: true,
@@ -79,6 +110,7 @@ export const POST = withAuth(async (req) => {
         
     } catch (error) {
         await mongoSession.abortTransaction()
+        mongoSession.endSession()
         console.error("Erreur lors de la création d'un client: ", error)
 
         return NextResponse.json({
@@ -86,8 +118,6 @@ export const POST = withAuth(async (req) => {
             success: false,
             error: true
         }, { status: 500 })
-    } finally {
-        mongoSession.endSession()
     }
 })
 
@@ -99,22 +129,36 @@ export const GET = withAuth(async (req) => {
         const page = parseInt(searchParams.get("page") || "1")
         const limit = parseInt(searchParams.get("limit") || "0")
         const search = searchParams.get("search") || ""
+        const businessId = searchParams.get("businessId")
         const skip = (page - 1) * limit
 
-        const query = search
-        ? { nomComplet: { $regex: search, $options: "i" } }
-        : {}
+        // ✅ Vérifier businessId
+        if (!businessId) {
+            return NextResponse.json({
+                message: "ID de la boutique manquant.",
+                success: false,
+                error: true
+            }, { status: 400 })
+        }
+
+        const businessObjectId = new mongoose.Types.ObjectId(businessId)
+
+        // ✅ Filtrer par boutique + recherche
+        const query = {
+            business: businessObjectId,
+            ...(search && { nomComplet: { $regex: search, $options: "i" } })
+        }
 
         const [clients, total] = await Promise.all([
             Client.find(query)
-            .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(limit),
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit),
             Client.countDocuments(query)
         ])
 
         return NextResponse.json({
-            message: clients.length === 0? "Aucun client enregistré." : "Clients récupérés avec succès.",
+            message: clients.length === 0 ? "Aucun client enregistré." : "Clients récupérés avec succès.",
             data: clients,
             total,
             currentPage: page,
@@ -122,6 +166,7 @@ export const GET = withAuth(async (req) => {
             success: true,
             error: false,
         }, { status: 200, headers: { "Cache-Control": "no-store" } })
+        
     } catch (error) {
         console.error("Erreur lors de la récupération des clients: ", error)
 

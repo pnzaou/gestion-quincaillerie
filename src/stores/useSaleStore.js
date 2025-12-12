@@ -6,17 +6,25 @@ import { create } from "zustand";
 
 export const useSaleStore = create((set, get) => ({
   loading: false,
+  shopId: null, // ✅ Ajout du shopId
+  setShopId: (id) => set({ shopId: id }), // ✅ Setter pour shopId
 
   //gestion de la date de vente
   saleDate: new Date(),
   setSaleDate: (newDate) => set({ saleDate: newDate }),
 
-  //gesttion des clients provenants de la bd pour les afficher dans le combobox client
+  //gestion des clients provenants de la bd pour les afficher dans le combobox client
   clientsData: [],
   getClientsData: async () => {
+    const shopId = get().shopId;
+    if (!shopId) {
+      console.error("shopId manquant pour getClientsData");
+      return;
+    }
+
     set({ loading: true });
     try {
-      const res = await fetch("/api/client");
+      const res = await fetch(`/api/client?businessId=${shopId}`);
       const body = await res.json();
 
       if (!res.ok) {
@@ -143,7 +151,7 @@ export const useSaleStore = create((set, get) => ({
     const discount = get().discount;
     return (
       cart.reduce((sum, item) => {
-        const prix = item.prixVenteDetail ?? item.prixVenteEnGros;
+        const prix = item.prixVenteDetail || item.prixVenteEnGros;
         return sum + prix * item.quantity;
       }, 0) *
       (1 - discount / 100)
@@ -161,9 +169,7 @@ export const useSaleStore = create((set, get) => ({
   payments: [], // tableau { method, amount }
 
   addPayment: (payment) => {
-    // payment = { method, amount }
     set((state) => {
-      // on peut aussi fusionner si même méthode existe, mais on laisse multiples lignes pour traçabilité
       return { payments: [...state.payments, payment] };
     });
   },
@@ -200,16 +206,25 @@ export const useSaleStore = create((set, get) => ({
       discount,
       saleStatus,
       payments,
-      clearPayments
+      clearPayments,
+      shopId // ✅ Récupérer shopId
     } = get();
     const total = get().total();
+
+    if (!shopId) {
+      toast.error("ID de boutique manquant");
+      set({ loading: false });
+      return;
+    }
+
     try {
       saleVerif(cart, saleStatus, payments, total, client);
       const data = {
+        businessId: shopId, // ✅ Ajout du businessId
         items: cart.map((item) => ({
           product: item._id,
           quantity: item.quantity,
-          price: item.prixVenteDetail ?? item.prixVenteEnGros,
+          price: item.prixVenteDetail || item.prixVenteEnGros,
         })),
         dateExacte: saleDate,
         remise: discount,
@@ -252,4 +267,4 @@ export const useSaleStore = create((set, get) => ({
       set({ loading: false });
     }
   },
-})); 
+}));

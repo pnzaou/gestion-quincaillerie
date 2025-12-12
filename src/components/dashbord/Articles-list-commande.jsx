@@ -74,7 +74,7 @@ const ArticlesListCommande = ({ initialArt, currentPage, initialTotalPages, sear
                                     <CardContent className="flex flex-col space-y-3 mt-2">
                                         <div className="text-center">
                                             <span className="text-lg text-black font-semibold">
-                                                {article.prixVenteDetail ?? article.prixVenteEnGros} fcfa
+                                                {article.prixVenteDetail || article.prixVenteEnGros} fcfa
                                             </span>
                                         </div>
 

@@ -1,11 +1,17 @@
 import Client from "@/models/Client.model";
+import mongoose from "mongoose";
 import { HttpError } from "./errors.service";
 
-export async function getOrCreateClientForSale(clientData, session = null) {
+export async function getOrCreateClientForSale(clientData, businessId, session = null) {
   if (!clientData) return null;
 
+  // Si c'est un ID (string MongoDB), on le retourne directement
+  if (typeof clientData === 'string' && mongoose.Types.ObjectId.isValid(clientData)) {
+    return new mongoose.Types.ObjectId(clientData);
+  }
+
   if (clientData._id) {
-    return clientData._id;
+    return new mongoose.Types.ObjectId(clientData._id);
   }
 
   const nomComplet = String(clientData.nomComplet || "").trim();
@@ -18,15 +24,25 @@ export async function getOrCreateClientForSale(clientData, session = null) {
   }
 
   if (email) {
-    const existingEmail = await Client.findOne({ email }).session(session);
-    if (existingEmail) throw new HttpError(400, "L'email du client est déjà utilisé.");
+    const existingEmail = await Client.findOne({ 
+      email, 
+      business: businessId 
+    }).session(session);
+    
+    if (existingEmail) {
+      throw new HttpError(400, "L'email du client est déjà utilisé dans cette boutique.");
+    }
   }
 
-  const existingTel = await Client.findOne({ tel }).session(session);
+  const existingTel = await Client.findOne({ tel, business: businessId }).session(session);
   if (existingTel) throw new HttpError(400, "Le numéro de téléphone du client est déjà utilisé.");
 
   const [newClient] = await Client.create([{
-    nomComplet, tel, email, adresse
+    business: businessId,
+    nomComplet,
+    tel,
+    email: email || undefined, // undefined pour ne pas créer le champ si vide
+    adresse: adresse || undefined
   }], { session });
 
   return newClient._id;

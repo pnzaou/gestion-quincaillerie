@@ -104,7 +104,7 @@ export const ReceiptPrint = ({ sale, payments }) => {
         {sale.remise && sale.remise > 0 && (
           <div className="flex justify-between mb-1">
             <span>Remise:</span>
-            <span>- {formatCurrency(sale.remise)}</span>
+            <span>- {sale.remise} %</span>
           </div>
         )}
         <div className="border-t-2 border-gray-800 pt-1 mt-1 flex justify-between text-sm font-bold">

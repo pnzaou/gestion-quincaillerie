@@ -14,8 +14,8 @@ const formatCurrency = (amount) => {
   }).format(amount || 0);
 };
 
-const Page = async ({ searchParams }) => {
-
+const Page = async ({ searchParams, params }) => {
+    const { shopId } = await params;
     const session = await getServerSession(authOptions)
     const { id: userId, role } = session?.user;
     
@@ -28,12 +28,13 @@ const Page = async ({ searchParams }) => {
 
     const stats = await getSalesStatistics({ 
       userId, 
-      role 
+      role,
+      businessId: shopId
     });
 
     const statusParam = status1 ? `&status=${status1}` : ""
 
-    const rep = await fetch(`${protocol}://${host}/api/sale?page=${page1}&limit=10&search=${search1}${statusParam}`, {
+    const rep = await fetch(`${protocol}://${host}/api/sale?page=${page1}&limit=10&search=${search1}${statusParam}&businessId=${shopId}`, {
         headers: { 'Cookie': cookie }
     })
     

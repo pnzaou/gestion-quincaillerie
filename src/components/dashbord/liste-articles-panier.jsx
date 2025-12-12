@@ -22,7 +22,7 @@ const ListeArticlesPanier = ({ localStocks, setLocalStocks }) => {
           <div className="flex-1 pr-4">
             <div className="font-medium truncate">{item.nom}</div>
             <div className="text-xs text-gray-500">
-              {(item.prixVenteDetail ?? item.prixVenteEnGros) + " fcfa"}
+              {(item.prixVenteDetail || item.prixVenteEnGros) + " fcfa"}
             </div>
           </div>
           <div className="flex items-center space-x-3">

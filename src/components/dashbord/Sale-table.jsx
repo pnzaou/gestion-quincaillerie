@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
 import ExcelExportButton from "./ExcelExportButton"
 import SearchLoader from "./Search-loader"
 import { DeleteSale, DetailsSale, UpdateSale } from "./button-sale"
@@ -12,6 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Filter } from "lucide-react"
+import toast from "react-hot-toast"
 
 const dateOptions = {
   day: '2-digit',
@@ -32,7 +33,8 @@ const STATUS_OPTIONS = [
 const SaleTable = ({ initialSales, initialTotalPages, currentPage, search, initialStatus = [] }) => {
     const router = useRouter()
     const searchParams = useSearchParams()
-    
+    const params = useParams()
+    const shopId = params?.shopId // ✅ Récupérer shopId
     
     const [sales, setSales] = useState(initialSales)
     const [totalPages, setTotalPages] = useState(initialTotalPages)
@@ -59,11 +61,14 @@ const SaleTable = ({ initialSales, initialTotalPages, currentPage, search, initi
 
         if(debouncedSearch.length > 0 && debouncedSearch.length < 3) return;
 
+        if (!shopId) return; // ✅ Vérifier shopId
+
         setIsLoading(true)
         
         const statusParam = selectedStatus.length > 0 ? `&status=${selectedStatus.join(",")}` : ""
         
-        fetch(`/api/sale?page=${page}&limit=10&search=${debouncedSearch}${statusParam}`)
+        // ✅ Ajouter businessId à la requête
+        fetch(`/api/sale?page=${page}&limit=10&search=${debouncedSearch}${statusParam}&businessId=${shopId}`)
             .then(res => res.json())
             .then(({ data, totalPages: tp, currentPage: cp }) => {
                 setSales(data)
@@ -74,7 +79,7 @@ const SaleTable = ({ initialSales, initialTotalPages, currentPage, search, initi
                 console.error(error)
                 toast.error("Une erreur s'est produite! Veuillez réessayer.")
             }).finally(() => setIsLoading(false))
-    }, [debouncedSearch, page, selectedStatus])
+    }, [debouncedSearch, page, selectedStatus, shopId])
 
     const handleSearchChange = (e) => {
         setSearchTerm(e.target.value)
@@ -187,7 +192,7 @@ const SaleTable = ({ initialSales, initialTotalPages, currentPage, search, initi
           </div>
 
           <div className="hidden md:block">
-            <ExcelExportButton initUrl={""} />
+            <ExcelExportButton initUrl={`/api/sale/export-excel?businessId=${shopId}`} />
           </div>
         </div>
 
