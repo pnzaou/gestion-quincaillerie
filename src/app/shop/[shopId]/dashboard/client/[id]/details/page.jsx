@@ -8,7 +8,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "react-hot-toast";
 import TransactionTypeBadge from "@/components/transaction-type-badge";
-import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import ClientAccountInfoCard from "@/components/dashbord/client-account-info-card";
 
@@ -16,6 +15,8 @@ const Page = () => {
   const params = useParams();
   const router = useRouter();
   const id = params.id;
+  const shopId = params?.shopId; // ✅ Récupérer shopId
+
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingTransactions, setIsLoadingTransactions] = useState(false);
   const [client, setClient] = useState(null);
@@ -59,7 +60,6 @@ const Page = () => {
         const res = await fetch(
           `/api/client/${id}/client-account/transactions?page=${currentPage}&limit=${itemsPerPage}`
         );
-        console.log(res)
         const data = await res.json();
         
         if(!res.ok) {
@@ -120,9 +120,13 @@ const Page = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 p-4 md:p-8">
         <div className="max-w-7xl mx-auto space-y-6">
-            <Button variant="outline" size="icon" onClick={() => router.back()}>
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
+          <Button 
+            variant="outline" 
+            size="icon" 
+            onClick={() => router.push(`/shop/${shopId}/dashboard/client`)}
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
           <Card>
             <CardContent className="py-12 text-center">
               <p className="text-muted-foreground">Client non trouvé</p>
@@ -138,7 +142,11 @@ const Page = () => {
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" onClick={() => router.back()}>
+          <Button 
+            variant="outline" 
+            size="icon" 
+            onClick={() => router.push(`/shop/${shopId}/dashboard/client`)}
+          >
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <h1 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">

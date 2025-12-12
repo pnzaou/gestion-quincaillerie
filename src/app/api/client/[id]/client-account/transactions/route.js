@@ -1,7 +1,8 @@
 import { listTransactions } from "@/services/account.service";
+import { withAuth } from "@/utils/withAuth";
 import { NextResponse } from "next/server";
 
-export async function GET( req, { params } ) {
+export const GET = withAuth(async (req, { params }) => {
   try {
     const { id: clientId } = await params;
     const { searchParams } = new URL(req.url);
@@ -24,9 +25,7 @@ export async function GET( req, { params } ) {
         transactions,
         pagination: {
           page,
-          limit,
-          // total,
-          // totalPages: Math.ceil(total / limit)
+          limit
         }
       },
       success: true,
@@ -34,11 +33,11 @@ export async function GET( req, { params } ) {
     }, { status: 200 });
     
   } catch (error) {
-    console.error("Erreur lors la récupération de l'historique des transactions: ", error)
+    console.error("Erreur lors de la récupération de l'historique des transactions:", error);
     return NextResponse.json({
-        message: "Erreur! Veuillez réessayer.",
-        success: false,
-        error: true
-    }, { status: 500 })
+      message: error.message || "Erreur! Veuillez réessayer.",
+      success: false,
+      error: true
+    }, { status: 500 });
   }
-}
+});

@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { DeleteCategory, UpdateCategory, DetailsClient } from "./button-client";
 import Pagination from "./Pagination";
@@ -11,6 +12,8 @@ import ExcelExportButton from "./ExcelExportButton";
 import { Button } from "../ui/button";
 
 const ClientTable = ({initialClient, initialTotalPages, currentPage, search}) => {
+    const params = useParams();
+    const shopId = params?.shopId; // ✅ Récupérer shopId
 
     const [clients, setClients] = useState(initialClient)
     const [totalPages, setTotalPages] = useState(initialTotalPages)
@@ -42,10 +45,13 @@ const ClientTable = ({initialClient, initialTotalPages, currentPage, search}) =>
             return;
         }
 
+        if (!shopId) return; // ✅ Vérifier shopId
+
         const activeSearch = debouncedSearch
 
         setIsLoading(true)
-        fetch(`/api/client?page=${page}&limit=5&search=${activeSearch}`)
+        // ✅ Ajouter businessId à la requête
+        fetch(`/api/client?page=${page}&limit=5&search=${activeSearch}&businessId=${shopId}`)
           .then(response => response.json())
           .then(({ data, totalPages: tp, currentPage: cp }) => {
             setClients(data)
@@ -56,7 +62,7 @@ const ClientTable = ({initialClient, initialTotalPages, currentPage, search}) =>
             toast.error("Une erreur s'est produite! Veuillez réessayer.")
         }).finally(() => setIsLoading(false))
 
-    },[page, debouncedSearch])
+    },[page, debouncedSearch, shopId]) // ✅ Ajouter shopId aux dépendances
 
     const handleSearchChange = e => {
         setSearchTerm(e.target.value)
@@ -68,12 +74,12 @@ const ClientTable = ({initialClient, initialTotalPages, currentPage, search}) =>
     const handleDelete = async (id) => {
         setDeleting({ id, loading: true })
         try {
-            const response = await fetch(`/api/category/${id}`, { method: "DELETE" })
+            const response = await fetch(`/api/client/${id}`, { method: "DELETE" })
             const data = await response.json();
 
             if(response.ok) {
                 toast.success(data.message)
-                setCategories(prev => prev.filter(cat => cat._id !== id))
+                setClients(prev => prev.filter(client => client._id !== id))
                 setModalCatToDelete(null)
             } else {
                 toast.error(data.message)
@@ -100,12 +106,12 @@ const ClientTable = ({initialClient, initialTotalPages, currentPage, search}) =>
             />
           </div>
           <div className="hidden mb-4 mr-4 md:block">
-            <ExcelExportButton initUrl={"/api/category/export-excel"} />
+            <ExcelExportButton initUrl={`/api/client/export-excel?businessId=${shopId}`} />
           </div>
           <div className="mb-4 ml-4 md:ml-0">
-            <Link href="/dashboard/categorie/ajouter">
+            <Link href={`/shop/${shopId}/dashboard/client/ajouter`}>
               <Button className="hidden md:block bg-[#0084D1] text-white px-4 py-2 rounded hover:bg-[#0042d1] hover:cursor-pointer">
-                Ajouter une catégorie
+                Ajouter un client
               </Button>
               <Button className="md:hidden rounded-md border p-2 flex items-center justify-center gap-1 bg-blue-500 text-white hover:bg-blue-600 hover:cursor-pointer">
                 <PlusIcon className="w-5" />
@@ -149,7 +155,7 @@ const ClientTable = ({initialClient, initialTotalPages, currentPage, search}) =>
                       </div>
 
                       <div className="flex justify-end gap-2 mt-4">
-                        <DetailsClient id={client._1d ?? client._id} />
+                        <DetailsClient id={client._id} />
                         <UpdateCategory id={client._id} />
                         <DeleteCategory
                           id={client._id}
@@ -198,10 +204,10 @@ const ClientTable = ({initialClient, initialTotalPages, currentPage, search}) =>
                         {client.tel}
                       </td>
                       <td className="whitespace-nowrap px-3 py-4">
-                        {client.email}
+                        {client.email || "—"}
                       </td>
                       <td className="whitespace-nowrap px-3 py-4">
-                        {client.adresse}
+                        {client.adresse || "—"}
                       </td>
                       <td className="whitespace-nowrap py-4 pl-6 pr-3 text-right">
                         <div className="flex justify-end gap-2">

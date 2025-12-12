@@ -11,15 +11,28 @@ export async function getAccountByClientId(clientId, session = null) {
   return ClientAccountModel.findOne({ client: clientId }).session(session);
 }
 
-export async function ensureAccountForClient(clientId, session = null) {
+export async function ensureAccountForClient(clientId, businessId, session = null) {
   if (!mongoose.Types.ObjectId.isValid(clientId)) {
     throw new HttpError(400, "clientId invalide");
   }
 
-  // On utilise upsert pour créer le compte si absent
+  if (!mongoose.Types.ObjectId.isValid(businessId)) {
+    throw new HttpError(400, "businessId invalide");
+  }
+
+  const businessObjectId = new mongoose.Types.ObjectId(businessId);
+
+  // ✅ On utilise upsert pour créer le compte si absent avec businessId
   const account = await ClientAccountModel.findOneAndUpdate(
-    { client: clientId },
-    { $setOnInsert: { client: clientId, balance: 0, lastUpdated: new Date() } },
+    { client: clientId, business: businessObjectId },
+    { 
+      $setOnInsert: { 
+        client: clientId, 
+        business: businessObjectId, // ✅ Ajout du business
+        balance: 0, 
+        lastUpdated: new Date() 
+      } 
+    },
     { new: true, upsert: true, session }
   );
 
@@ -35,29 +48,44 @@ export async function deposit(clientId, amount, {
   reference = null,
   description = "Dépôt",
   createdBy = null,
+  businessId = null, // ✅ Ajout du businessId
   meta = {}
 } = {}) {
   if (!Number.isFinite(amount) || amount <= 0) {
     throw new HttpError(400, "Le montant du dépôt doit être un nombre positif.");
   }
 
-  // vérifier que le client existe (optionnel mais recommandé)
-  const clientExists = await Client.exists({ _id: clientId });
-  if (!clientExists) throw new HttpError(404, "Client introuvable.");
+  // ✅ Vérifier businessId
+  if (!businessId) {
+    throw new HttpError(400, "businessId est requis pour le dépôt.");
+  }
 
-  // upsert + $inc atomique pour créer ou incrémenter le solde
+  const businessObjectId = new mongoose.Types.ObjectId(businessId);
+
+  // vérifier que le client existe et appartient à cette boutique
+  const client = await Client.findOne({ 
+    _id: clientId, 
+    business: businessObjectId 
+  }).session(session);
+  
+  if (!client) {
+    throw new HttpError(404, "Client introuvable dans cette boutique.");
+  }
+
+  // ✅ upsert + $inc atomique avec businessId
   const updatedAccount = await ClientAccountModel.findOneAndUpdate(
-    { client: clientId },
+    { client: clientId, business: businessObjectId },
     {
       $inc: { balance: amount },
       $set: { lastUpdated: new Date() },
-      $setOnInsert: { client: clientId }
+      $setOnInsert: { client: clientId, business: businessObjectId }
     },
     { new: true, upsert: true, session }
   );
 
-  // créer la transaction (ledger)
+  // ✅ créer la transaction avec businessId
   const trans = {
+    business: businessObjectId, // ✅ Ajout du business
     account: updatedAccount._id,
     type: "deposit",
     amount: amount,
@@ -86,6 +114,7 @@ export async function debit(clientId, amount, {
   relatedSaleId = null,
   allowNegative = false,
   createdBy = null,
+  businessId = null, // ✅ Ajout du businessId (optionnel car peut venir du context)
   meta = {}
 } = {}) {
   if (!Number.isFinite(amount) || amount <= 0) {
@@ -93,7 +122,12 @@ export async function debit(clientId, amount, {
   }
 
   // Vérifier existence client/account
-  const account = await ClientAccountModel.findOne({ client: clientId }).session(session);
+  const query = { client: clientId };
+  if (businessId) {
+    query.business = new mongoose.Types.ObjectId(businessId);
+  }
+
+  const account = await ClientAccountModel.findOne(query).session(session);
   if (!account) {
     throw new HttpError(404, "Compte client introuvable.");
   }
@@ -102,14 +136,14 @@ export async function debit(clientId, amount, {
   if (allowNegative) {
     // simple décrément atomique (autorise solde négatif)
     updatedAccount = await ClientAccountModel.findOneAndUpdate(
-      { client: clientId },
+      query,
       { $inc: { balance: -amount }, $set: { lastUpdated: new Date() } },
       { new: true, session }
     );
   } else {
     // décrément atomique seulement si balance >= amount
     updatedAccount = await ClientAccountModel.findOneAndUpdate(
-      { client: clientId, balance: { $gte: amount } },
+      { ...query, balance: { $gte: amount } },
       { $inc: { balance: -amount }, $set: { lastUpdated: new Date() } },
       { new: true, session }
     );
@@ -118,8 +152,9 @@ export async function debit(clientId, amount, {
     }
   }
 
-  // créer transaction ledger
+  // ✅ créer transaction ledger avec businessId
   const trans = {
+    business: account.business, // ✅ Utiliser le business du compte
     account: updatedAccount._id,
     type: "withdrawal",
     amount: amount,

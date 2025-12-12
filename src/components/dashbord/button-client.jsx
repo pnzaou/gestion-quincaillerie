@@ -3,13 +3,17 @@
 import { EyeIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/outline"
 import clsx from "clsx"
 import Link from "next/link"
+import { useParams } from "next/navigation"
 import { Button } from "../ui/button"
 import ConfirmDialog from "./ConfirmDialog"
 
 export function DetailsClient({ id }) {
+    const params = useParams();
+    const shopId = params?.shopId;
+
     return (
       <Link
-        href={`/dashboard/client/${id}/details`}
+        href={`/shop/${shopId}/dashboard/client/${id}/details`}
         className="rounded-md border p-2 hover:bg-gray-100"
       >
         <EyeIcon className="w-5" />
@@ -18,9 +22,12 @@ export function DetailsClient({ id }) {
 }
 
 export function UpdateCategory({ id }) {
+    const params = useParams();
+    const shopId = params?.shopId;
+
     return (
       <Link
-        href={`/dashboard/categorie/liste/${id}/modification`}
+        href={`/shop/${shopId}/dashboard/client/${id}/modification`}
         className="rounded-md border p-2 hover:bg-gray-100"
       >
         <PencilIcon className="w-5" />
@@ -55,12 +62,10 @@ export function DeleteCategory({ id, open, onOpenChange, onConfirm, loading }) {
           open={open}
           onOpenChange={(isOpen) => onOpenChange(isOpen ? id : null)}
           title="Confirmation de suppression"
-          description="La suppression d'une catégorie entraînera celle de tous ses produits associés. Êtes-vous sûr de vouloir continuer ?"
+          description="Êtes-vous sûr de vouloir supprimer ce client ? Cette action est irréversible."
           onConfirm={() => onConfirm(id)}
           loading={loading}
         />
       </>
     )
 }
-  
-  
