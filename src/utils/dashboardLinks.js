@@ -64,7 +64,7 @@ export const getLinks = (shopId = null) => {
       roles: ["admin", "gerant", "comptable"],
       subLinks: [
         { name: "Nouvelle commande", href: `/shop/${shopId}/dashboard/commande/ajouter` },
-        { name: "Liste", href: `/shop/${shopId}/dashboard/commande/liste` },
+        { name: "Liste", href: `/shop/${shopId}/dashboard/commande/historique` },
       ],
     },
     {

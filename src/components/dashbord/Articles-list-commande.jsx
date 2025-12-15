@@ -1,139 +1,186 @@
-"use client"
+"use client";
 
+import { useEffect, useRef, useState } from "react";
+import { useParams } from "next/navigation";
 import useArticles from "@/hooks/useArticles";
 import ArticlesHeader from "./ArticlesHeader";
 import ArticlesFooter from "./ArticlesFooter";
 import OrderSupplierSelector from "./Order-supplier-selector";
 import SearchLoader from "./Search-loader";
-import Image from "next/image";
 import { Card, CardContent, CardTitle } from "../ui/card";
 import { Badge } from "../ui/badge";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
 import { Button } from "../ui/button";
 import { Minus, Plus } from "lucide-react";
+import { useOrderStore } from "@/stores/useOrderStore";
+import PanierCommande from "./Panier-commande";
 
 const DEFAULT_IMAGE = "/360_F_517535712_q7f9QC9X6TQxWi6xYZZbMmw5cnLMr279.jpg";
 const tabSize = [8, 12, 32, 64, 100];
 
-const ArticlesListCommande = ({ initialArt, currentPage, initialTotalPages, search }) => {
+const ArticlesListCommande = ({
+  initialArt,
+  currentPage,
+  initialTotalPages,
+  search,
+}) => {
+  const params = useParams();
+  const shopId = params?.shopId;
+  const setShopId = useOrderStore((state) => state.setShopId);
+  const cart = useOrderStore((state) => state.cart);
+  const addToCart = useOrderStore((state) => state.addToCart);
+  const removeFromCart = useOrderStore((state) => state.removeFromCart);
 
-    const {
-        articles,
-        handleSearchChange,
-        isLoading,
-        limit,
-        page,
-        searchTerm,
-        setLimit,
-        setPage,
-        selected,
-        toggleCategory,
-        totalPages
-    } = useArticles(initialArt, initialTotalPages, currentPage, search, 8)
+  // ✅ Initialiser shopId dans le store
+  useEffect(() => {
+    if (shopId) {
+      setShopId(shopId);
+    }
+  }, [shopId, setShopId]);
 
-    return (
-        <>
-            <div className=" space-y-4">
-                <div className="flex gap-5 items-center justify-between sticky top-0 bg-white z-10 w-full px-4 py-2">
-                    <div className="xl:flex-1">
-                        <ArticlesHeader
-                        searchTerm={searchTerm}
-                        onSearchChange={handleSearchChange}
-                        limit={limit}
-                        setLimit={setLimit}
-                        setPage={setPage}
-                        selected={selected}
-                        toggleCategory={toggleCategory}
-                        tabSize={tabSize}
-                        />
-                    </div>
-                    <div className="flex items-center gap-5">
-                        <OrderSupplierSelector/>
-                    </div>
+  const {
+    articles,
+    handleSearchChange,
+    isLoading,
+    limit,
+    page,
+    searchTerm,
+    setLimit,
+    setPage,
+    selected,
+    toggleCategory,
+    totalPages,
+  } = useArticles(initialArt, initialTotalPages, currentPage, search, 8);
 
-                </div>
+  // ✅ Trier les articles par stock (les plus faibles en premier)
+  const sortedArticles = [...articles].sort((a, b) => a.QteStock - b.QteStock);
 
-                {isLoading && <SearchLoader/>}
+  return (
+    <>
+      <div className="space-y-4">
+        {/* Barre d'actions fixe responsive */}
+        <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-gray-100 py-3">
+          <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6">
+            <div className="flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-6">
+              <div className="flex-1 w-full">
+                <ArticlesHeader
+                  searchTerm={searchTerm}
+                  onSearchChange={handleSearchChange}
+                  limit={limit}
+                  setLimit={setLimit}
+                  setPage={setPage}
+                  selected={selected}
+                  toggleCategory={toggleCategory}
+                  tabSize={tabSize}
+                />
+              </div>
 
-                <div className={isLoading ? "opacity-50 pointer-events-none" : ""}>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {articles?.map((article) => {
-                            const src = article.image || DEFAULT_IMAGE
-                            return (
-                                <Card key={article._id} className="p-4">
-                                    <img
-                                        src={src}
-                                        alt={article.nom}
-                                        className="w-full h-32 object-cover rounded mb-2"
-                                        onError={(e) => {
-                                            e.currentTarget.src = DEFAULT_IMAGE;
-                                        }}
-                                    />
-                                    <CardTitle>{article.nom}</CardTitle>
-                                    <CardContent className="flex flex-col space-y-3 mt-2">
-                                        <div className="text-center">
-                                            <span className="text-lg text-black font-semibold">
-                                                {article.prixVenteDetail || article.prixVenteEnGros} fcfa
-                                            </span>
-                                        </div>
-
-                                        <div className="text-sm text-center">
-                                            <Badge
-                                            className={cn(
-                                                "text-xs font-semibold",
-                                                article.QteStock > 10
-                                                ? "bg-green-100 text-green-800"
-                                                : article.QteStock > 0
-                                                ? "bg-yellow-100 text-yellow-800"
-                                                : "bg-red-100 text-red-800"
-                                            )}
-                                            >
-                                                {article.QteStock} en stock
-                                            </Badge>
-                                        </div>
-
-                                        <div className="flex items-center justify-between w-full mt-2">
-                                            <Button
-                                             size="icon"
-                                             variant="ghost"
-                                             className="border rounded-full w-8 h-8 text-red-600 hover:bg-red-100 hover:cursor-pointer"
-                                            >
-                                                <Minus className="w-4 h-4" />
-                                            </Button>
-
-                                            <div className="text-center text-sm font-semibold px-3 py-1 border rounded bg-gray-100 min-w-[32px]">
-                                                {0}
-                                            </div>
-
-                                            <Button
-                                             size="icon"
-                                             variant="ghost"
-                                             className="border rounded-full w-8 h-8 text-green-600 hover:bg-green-100 hover:cursor-pointer"
-                                            >
-                                                <Plus className="w-4 h-4" />
-                                            </Button>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            )
-                        })}
-                    </div>
-                </div>
+              <div className="flex-shrink-0 flex items-center gap-3">
+                <OrderSupplierSelector />
+                <PanierCommande />
+              </div>
             </div>
+          </div>
+        </div>
 
-            <ArticlesFooter
-                limit={limit}
-                setLimit={setLimit}
-                page={page}
-                setPage={setPage}
-                totalPages={totalPages}
-                selected={selected}
-                toggleCategory={toggleCategory}
-                tabSize={tabSize}
-            />
-        </>
-    );
-}
+        {isLoading && <SearchLoader />}
+
+        <div className={isLoading ? "opacity-50 pointer-events-none" : ""}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {sortedArticles.map((article) => {
+              const inCart = cart.find((i) => i._id === article._id);
+              const src = article.image || DEFAULT_IMAGE;
+
+              return (
+                <Card
+                  key={article._id}
+                  className="p-3 hover:shadow-lg transition-shadow duration-150"
+                >
+                  <div className="overflow-hidden rounded">
+                    <img
+                      src={src}
+                      alt={article.nom}
+                      className="w-full h-40 sm:h-44 md:h-36 lg:h-40 object-cover rounded"
+                      onError={(e) => {
+                        e.currentTarget.src = DEFAULT_IMAGE;
+                      }}
+                    />
+                  </div>
+
+                  <CardTitle className="mt-3 text-sm sm:text-base truncate">
+                    {article.nom}
+                  </CardTitle>
+
+                  <CardContent className="flex flex-col space-y-3 mt-2">
+                    <div className="text-center">
+                      <span className="text-lg text-black font-semibold">
+                        {article.prixAchatEnGros} fcfa
+                      </span>
+                    </div>
+
+                    <div className="text-sm text-center">
+                      <Badge
+                        className={cn(
+                          "text-xs font-semibold",
+                          article.QteStock > 10
+                            ? "bg-green-100 text-green-800"
+                            : article.QteStock > 0
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-red-100 text-red-800"
+                        )}
+                      >
+                        {article.QteStock} en stock
+                      </Badge>
+                    </div>
+
+                    <div className="flex items-center justify-between w-full mt-2">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => removeFromCart(article._id)}
+                        disabled={!inCart}
+                        className="border rounded-full w-9 h-9 text-red-600 hover:bg-red-50"
+                        aria-label={`Retirer ${article.nom}`}
+                      >
+                        <Minus className="w-4 h-4" />
+                      </Button>
+
+                      <div className="text-center text-sm font-semibold px-3 py-1 border rounded bg-gray-50 min-w-[36px]">
+                        {inCart?.quantity ?? 0}
+                      </div>
+
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => addToCart(article)}
+                        className="border rounded-full w-9 h-9 text-green-600 hover:bg-green-50"
+                        aria-label={`Ajouter ${article.nom}`}
+                      >
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-6">
+        <ArticlesFooter
+          limit={limit}
+          setLimit={setLimit}
+          page={page}
+          setPage={setPage}
+          totalPages={totalPages}
+          selected={selected}
+          toggleCategory={toggleCategory}
+          tabSize={tabSize}
+        />
+      </div>
+    </>
+  );
+};
 
 export default ArticlesListCommande;

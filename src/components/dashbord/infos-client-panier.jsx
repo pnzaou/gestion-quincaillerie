@@ -3,109 +3,90 @@
 import { useSaleStore } from "@/stores/useSaleStore";
 import { Trash, Pencil, UserPlus } from "lucide-react";
 import { Button } from "../ui/button";
+import { Separator } from "../ui/separator";
 
 const InfosClientPanier = () => {
-  const setSelectClientOpen = useSaleStore(
-    (state) => state.setSelectClientOpen
-  );
+  const setSelectClientOpen = useSaleStore((state) => state.setSelectClientOpen);
   const client = useSaleStore((state) => state.client);
-  const handleDeleteSelectedClient = useSaleStore(
-    (state) => state.handleDeleteSelectedClient
-  );
-  const handleUpdateNewClient = useSaleStore(
-    (state) => state.handleUpdateNewClient
-  );
-  const setPanierDrawerOpen = useSaleStore(
-    (state) => state.setPanierDrawerOpen
-  );
+  const handleDeleteSelectedClient = useSaleStore((state) => state.handleDeleteSelectedClient);
+  const handleUpdateNewClient = useSaleStore((state) => state.handleUpdateNewClient);
+  const setPanierDrawerOpen = useSaleStore((state) => state.setPanierDrawerOpen);
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-black font-semibold">Infos client</h2>
-        <div className="flex items-center gap-2">
+        <h3 className="font-semibold text-lg">Client</h3>
+        <div className="flex items-center gap-1">
           {client ? (
             <>
               {!client?._id && (
                 <Button
-                  title="Modifie les infos client."
+                  title="Modifier les infos client"
                   size="icon"
                   variant="ghost"
                   onClick={handleUpdateNewClient}
-                  className="border rounded-full w-8 h-8"
+                  className="h-8 w-8 hover:bg-blue-50"
                 >
                   <Pencil className="w-4 h-4" />
                 </Button>
               )}
               <Button
-                title="Supprimer le client sélectionné."
+                title="Supprimer le client sélectionné"
                 size="icon"
                 variant="ghost"
                 onClick={handleDeleteSelectedClient}
-                className="border rounded-full w-8 h-8"
+                className="h-8 w-8 hover:bg-red-50"
               >
-                <Trash className="w-4 h-4" />
+                <Trash className="w-4 h-4 text-red-500" />
               </Button>
             </>
           ) : (
             <Button
-              title="Sélectionner/Ajouter un client."
+              title="Sélectionner/Ajouter un client"
               size="icon"
               variant="ghost"
               onClick={() => {
                 setPanierDrawerOpen(false);
                 setSelectClientOpen(true);
               }}
-              className="border rounded-full w-8 h-8"
+              className="h-8 w-8 hover:bg-green-50"
             >
-              <UserPlus className="w-4 h-4" />
+              <UserPlus className="w-4 h-4 text-green-600" />
             </Button>
           )}
         </div>
       </div>
 
-      <div>
-        <p className="text-gray-500 text-sm mb-1">Nom Complet:</p>
-        <p
-          className={`font-semibold ${
-            client?.nomComplet ? "text-black" : "text-gray-400 italic"
-          }`}
-        >
-          {client?.nomComplet || "Nom non renseignée"}
-        </p>
-      </div>
+      <Separator />
 
-      <div>
-        <p className="text-gray-500 text-sm mb-1">Téléphone:</p>
-        <p
-          className={`font-semibold ${
-            client?.tel ? "text-black" : "text-gray-400 italic"
-          }`}
-        >
-          {client?.tel || "Numéro non renseignée"}
-        </p>
-      </div>
+      <div className="space-y-3">
+        <div className="space-y-1">
+          <p className="text-xs text-muted-foreground">Nom Complet</p>
+          <p className={`font-medium ${client?.nomComplet ? "text-foreground" : "text-muted-foreground italic"}`}>
+            {client?.nomComplet || "Non renseigné"}
+          </p>
+        </div>
 
-      <div>
-        <p className="text-gray-500 text-sm mb-1">Email:</p>
-        <p
-          className={`font-semibold ${
-            client?.email ? "text-black" : "text-gray-400 italic"
-          }`}
-        >
-          {client?.email || "Email non renseigné"}
-        </p>
-      </div>
+        <div className="space-y-1">
+          <p className="text-xs text-muted-foreground">Téléphone</p>
+          <p className={`font-medium ${client?.tel ? "text-foreground" : "text-muted-foreground italic"}`}>
+            {client?.tel || "Non renseigné"}
+          </p>
+        </div>
 
-      <div>
-        <p className="text-gray-500 text-sm mb-1">Adresse:</p>
-        <p
-          className={`font-semibold ${
-            client?.adresse ? "text-black" : "text-gray-400 italic"
-          }`}
-        >
-          {client?.adresse || "Adresse non renseignée"}
-        </p>
+        <div className="space-y-1">
+          <p className="text-xs text-muted-foreground">Email</p>
+          <p className={`font-medium ${client?.email ? "text-foreground" : "text-muted-foreground italic"}`}>
+            {client?.email || "Non renseigné"}
+          </p>
+        </div>
+
+        <div className="space-y-1">
+          <p className="text-xs text-muted-foreground">Adresse</p>
+          <p className={`font-medium ${client?.adresse ? "text-foreground" : "text-muted-foreground italic"}`}>
+            {client?.adresse || "Non renseigné"}
+          </p>
+        </div>
       </div>
     </div>
   );

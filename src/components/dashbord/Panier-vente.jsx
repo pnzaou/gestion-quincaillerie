@@ -1,16 +1,14 @@
 "use client";
 
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  ShoppingCart,
-} from "lucide-react";
-
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { ShoppingCart } from "lucide-react";
 import { useSaleStore } from "@/stores/useSaleStore";
 import { Button } from "../ui/button";
 import InfosClientPanier from "./infos-client-panier";
@@ -18,14 +16,13 @@ import DetailsVentePanier from "./details-vente-panier";
 import ListeArticlesPanier from "./liste-articles-panier";
 
 const PanierVente = ({ localStocks, setLocalStocks }) => {
-  
   const panierDrawerOpen = useSaleStore((state) => state.panierDrawerOpen);
   const setPanierDrawerOpen = useSaleStore((state) => state.setPanierDrawerOpen);
   const cart = useSaleStore((state) => state.cart);
-  
+
   return (
-    <Dialog open={panierDrawerOpen} onOpenChange={setPanierDrawerOpen}>
-      <DialogTrigger asChild>
+    <Sheet open={panierDrawerOpen} onOpenChange={setPanierDrawerOpen}>
+      <SheetTrigger asChild>
         <div className="relative inline-block">
           <Button variant="outline" className="px-4 py-2">
             <ShoppingCart className="mr-1 h-4 w-4" /> Panier
@@ -36,36 +33,50 @@ const PanierVente = ({ localStocks, setLocalStocks }) => {
             </span>
           )}
         </div>
-      </DialogTrigger>
+      </SheetTrigger>
 
-      <DialogContent className="min-w-6xl">
-        <DialogHeader>
-          <DialogTitle>
-            <p className="text-lg font-bold mb-4">Récapitulatif de la vente</p>
-          </DialogTitle>
-        </DialogHeader>
+      <SheetContent 
+        side="right" 
+        className="w-full sm:max-w-full lg:max-w-7xl overflow-y-auto p-0"
+      >
+        <div className="p-6">
+          <SheetHeader className="mb-6">
+            <SheetTitle className="text-2xl">Récapitulatif de la vente</SheetTitle>
+            <SheetDescription>
+              {cart.length} article{cart.length > 1 ? "s" : ""} • Total: {useSaleStore.getState().total().toFixed(2)} FCFA
+            </SheetDescription>
+          </SheetHeader>
 
-        <div className="flex flex-col md:flex-row md:justify-between">
-          {/* 1. Liste des articles */}
-          <div>
-            <ListeArticlesPanier
-              localStocks={localStocks}
-              setLocalStocks={setLocalStocks}
-            />
-          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {/* 1. Liste des articles - 4 colonnes */}
+            <div className="lg:col-span-4">
+              <div className="bg-muted/30 rounded-lg p-4">
+                <h3 className="font-semibold mb-4 text-lg">Articles</h3>
+                <ListeArticlesPanier
+                  localStocks={localStocks}
+                  setLocalStocks={setLocalStocks}
+                />
+              </div>
+            </div>
 
-          {/* 2. Détails de la vente */}
-          <div className="md:w-80 lg:w-96">
-            <DetailsVentePanier />
-          </div>
+            {/* 2. Détails de la vente - 5 colonnes */}
+            <div className="lg:col-span-5">
+              <div className="bg-muted/30 rounded-lg p-4">
+                <h3 className="font-semibold mb-4 text-lg">Détails de la vente</h3>
+                <DetailsVentePanier />
+              </div>
+            </div>
 
-          {/* 3. Infos client */}
-          <div className="md:w-64">
-            <InfosClientPanier />
+            {/* 3. Infos client - 3 colonnes */}
+            <div className="lg:col-span-3">
+              <div className="bg-muted/30 rounded-lg p-4">
+                <InfosClientPanier />
+              </div>
+            </div>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 };
 

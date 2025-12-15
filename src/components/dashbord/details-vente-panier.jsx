@@ -7,6 +7,8 @@ import Required from "../Required";
 import SaleStatus from "./Sale-status";
 import PaymentMethod from "./Payment-method";
 import { useSaleStore } from "@/stores/useSaleStore";
+import { Separator } from "../ui/separator";
+import { Button } from "../ui/button";
 
 function DetailsVentePanier() {
   const loading = useSaleStore((state) => state.loading);
@@ -26,19 +28,17 @@ function DetailsVentePanier() {
 
   return (
     <div className="space-y-4 w-full">
-      <div>
-        <Label className="mb-2">Date de la vente</Label>
+      <div className="space-y-2">
+        <Label className="text-sm font-medium">Date de la vente</Label>
         <Input
           type="date"
           value={isoDate}
           onChange={(e) => {
             const val = e.target.value;
-            // si l’utilisateur efface, on remet null
             if (!val) {
               setSaleDate(null);
               return;
             }
-            // parse ISO string back en Date()
             const parsed = parseISO(val);
             setSaleDate(parsed);
           }}
@@ -46,8 +46,8 @@ function DetailsVentePanier() {
         />
       </div>
 
-      <div>
-        <Label className="mb-2">Remise %</Label>
+      <div className="space-y-2">
+        <Label className="text-sm font-medium">Remise %</Label>
         <Input
           type="number"
           value={discount}
@@ -58,31 +58,45 @@ function DetailsVentePanier() {
         />
       </div>
 
-      <div>
-        <Label className="mb-2">
+      <div className="space-y-2">
+        <Label className="text-sm font-medium">
           Statut <Required />
         </Label>
         <SaleStatus />
       </div>
 
       {(saleStatus === "paid" || saleStatus === "partial") && (
-        <div>
-          <Label className="mb-2">
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">
             Paiements <Required />
           </Label>
           <PaymentMethod />
-          { saleStatus === "partial" && <div className="mt-2 text-sm">Reste à payer : {remaining.toFixed(2)} fcfa</div>}
+          {saleStatus === "partial" && (
+            <div className="mt-2 text-sm bg-yellow-50 text-yellow-800 p-2 rounded">
+              Reste à payer : {remaining.toFixed(2)} FCFA
+            </div>
+          )}
         </div>
       )}
 
-      <div className="font-semibold">Total : {total.toFixed(2)} fcfa</div>
-      <button
-        className="w-full bg-[#0084D1] hover:bg-[#0042d1] text-white py-2 rounded hover:cursor-pointer"
+      <Separator />
+
+      <div className="bg-primary/10 p-4 rounded-lg">
+        <div className="flex justify-between items-center">
+          <span className="font-semibold text-lg">Total</span>
+          <span className="font-bold text-2xl text-[#0084D1]">
+            {total.toFixed(2)} FCFA
+          </span>
+        </div>
+      </div>
+
+      <Button
+        className="w-full bg-[#0084D1] hover:bg-[#0042d1] text-white py-6 text-lg font-semibold"
         onClick={createSale}
         disabled={loading}
       >
         {loading ? "Enregistrement..." : "Valider la vente"}
-      </button>
+      </Button>
     </div>
   );
 }
