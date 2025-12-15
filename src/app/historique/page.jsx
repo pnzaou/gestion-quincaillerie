@@ -87,6 +87,17 @@ const resourceIcons = {
   order: Package,
 };
 
+const resourceMap = {
+  sale: "vente",
+  order: "commande",
+  product: "produit",
+  user: "utilisateur",
+  business: "boutique",
+  category: "catégorie",
+  supplier: "fournisseur",
+  "client-account": "compte client",
+};
+
 const formatDate = (dateString) => {
   const date = new Date(dateString);
   return new Intl.DateTimeFormat("fr-FR", {
@@ -127,7 +138,7 @@ const HistoryPage = () => {
     setIsLoading(true);
     try {
       const params = new URLSearchParams();
-      params.append("limit", "50");
+      // params.append("limit", "50");
 
       if (startDate) {
         params.append("startDate", startDate.toISOString());
@@ -367,7 +378,7 @@ const HistoryPage = () => {
                               </Badge>
                               {item.resource && (
                                 <Badge variant="secondary" className="text-xs">
-                                  {item.resource}
+                                  {resourceMap[item.resource]}
                                 </Badge>
                               )}
                               {item.business && (
