@@ -38,6 +38,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 const actionConfig = {
   read: {
@@ -110,7 +112,10 @@ const formatDate = (dateString) => {
   }).format(date);
 };
 
-const HistoryPage = () => {
+const Page = () => {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
   const [histories, setHistories] = useState([]);
   const [businesses, setBusinesses] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -127,24 +132,44 @@ const HistoryPage = () => {
   const scrollAreaRef = useRef(null);
   const observerTarget = useRef(null);
 
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/");
+    }
+  }, [status, router]);
+
   // Charger les boutiques au montage
   useEffect(() => {
+    if (status !== "authenticated") return;
+
+    let aborted = false;
+    const controller = new AbortController();
+
     const loadBusinesses = async () => {
       try {
-        const response = await fetch("/api/business");
+        const response = await fetch("/api/business", { signal: controller.signal });
         const data = await response.json();
-        if (response.ok) {
+        if (!aborted && response.ok) {
           setBusinesses(data.businesses || []);
+        } else if (!aborted && !response.ok) {
+          console.error("Erreur chargement boutiques:", data);
         }
       } catch (error) {
+        if (error.name === "AbortError") return;
         console.error("Erreur chargement boutiques:", error);
       }
     };
     loadBusinesses();
+
+    return () => {
+      aborted = true;
+      controller.abort();
+    };
   }, []);
 
   // Fonction pour charger l'historique
   const loadHistory = async (page = 1, append = false) => {
+    if (status !== "authenticated") return;
     if (append) {
       setIsLoadingMore(true);
     } else {
@@ -197,10 +222,11 @@ const HistoryPage = () => {
 
   // Charger la première page quand les filtres changent
   useEffect(() => {
+    if (status !== "authenticated") return;
     setCurrentPage(1);
     setHasMore(true);
     loadHistory(1, false);
-  }, [startDate, endDate, selectedBusiness]);
+  }, [startDate, endDate, selectedBusiness, status]);
 
   // Intersection Observer pour le scroll infini
   useEffect(() => {
@@ -230,6 +256,19 @@ const HistoryPage = () => {
       }
     };
   }, [hasMore, isLoadingMore, isLoading, currentPage]);
+
+  if (status === "loading") {
+    return (
+      <div className="container max-w-5xl mx-auto py-6">
+        <div className="text-center py-12">
+          <Loader2 className="h-12 w-12 mx-auto animate-spin text-muted-foreground/50" />
+          <p className="mt-4">Vérification de la session...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === "unauthenticated") return null;
 
   const handleReset = () => {
     setStartDate(undefined);
@@ -524,4 +563,4 @@ const HistoryPage = () => {
   );
 };
 
-export default HistoryPage;
+export default Page;
