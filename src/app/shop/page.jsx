@@ -30,6 +30,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { createShopSchema } from "@/schemas";
 import { BusinessCardSkeletonGrid } from "@/components/skeletons";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 const Page = () => {
   const [open, setOpen] = useState(false);
@@ -48,15 +49,28 @@ const Page = () => {
     resolver: yupResolver(createShopSchema),
   })
 
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
   const [businesses, setBusinesses] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const router = useRouter()
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/");
+    }
+  }, [status, router]);
 
   useEffect(() => {
+    if (status !== "authenticated") return;
+
+    let aborted = false;
+    const controller = new AbortController()
+
     const fetchBusinesses = async () => {
+      setIsLoading(true);
       try {
-        const rep = await fetch("/api/shop");
+        const rep = await fetch("/api/shop", { signal: controller.signal });
         const repData = await rep.json();
 
         if (!rep.ok) {
@@ -67,22 +81,38 @@ const Page = () => {
           return;
         }
 
-        if (rep.ok) {
-          setBusinesses(repData?.data || []);
-        }
+        if (!aborted) setBusinesses(repData?.data || []);
       } catch (error) {
+        if (error.name === "AbortError") return;
         toast.error(
           "Erreur lors de la récupération des boutiques. Veuillez réessayer."
         );
         console.error(error);
         return;
       } finally {
-        setIsLoading(false);
+        if (!aborted) setIsLoading(false);
       }
     };
 
     fetchBusinesses();
-  }, []);
+
+    return () => {
+      aborted = true;
+      controller.abort();
+    };
+  }, [status]);
+
+  if (status === "loading" || (status !== "authenticated" && isLoading)) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-12 max-w-7xl">
+          <BusinessCardSkeletonGrid />
+        </div>
+      </div>
+    );
+  }
+
+  if (status === "unauthenticated") return null;
 
   const onSubmit = async (data) => {
 
