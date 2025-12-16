@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,6 +34,7 @@ import {
   Package,
   CalendarIcon,
   Globe,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
@@ -113,9 +114,18 @@ const HistoryPage = () => {
   const [histories, setHistories] = useState([]);
   const [businesses, setBusinesses] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [startDate, setStartDate] = useState();
   const [endDate, setEndDate] = useState();
   const [selectedBusiness, setSelectedBusiness] = useState("all");
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  
+  const scrollAreaRef = useRef(null);
+  const observerTarget = useRef(null);
 
   // Charger les boutiques au montage
   useEffect(() => {
@@ -134,11 +144,17 @@ const HistoryPage = () => {
   }, []);
 
   // Fonction pour charger l'historique
-  const loadHistory = async () => {
-    setIsLoading(true);
+  const loadHistory = async (page = 1, append = false) => {
+    if (append) {
+      setIsLoadingMore(true);
+    } else {
+      setIsLoading(true);
+    }
+
     try {
       const params = new URLSearchParams();
-      // params.append("limit", "50");
+      params.append("page", page.toString());
+      params.append("limit", "50");
 
       if (startDate) {
         params.append("startDate", startDate.toISOString());
@@ -154,7 +170,19 @@ const HistoryPage = () => {
       const data = await response.json();
 
       if (response.ok) {
-        setHistories(data.data || []);
+        const newHistories = data.data || [];
+        
+        if (append) {
+          // Ajouter les nouvelles données à la suite
+          setHistories(prev => [...prev, ...newHistories]);
+        } else {
+          // Remplacer toutes les données
+          setHistories(newHistories);
+        }
+
+        setCurrentPage(data.currentPage);
+        setTotalPages(data.totalPages);
+        setHasMore(data.currentPage < data.totalPages);
       } else {
         toast.error(data.message || "Erreur lors du chargement");
       }
@@ -163,13 +191,45 @@ const HistoryPage = () => {
       toast.error("Erreur lors du chargement de l'historique");
     } finally {
       setIsLoading(false);
+      setIsLoadingMore(false);
     }
   };
 
-  // Charger l'historique au montage et quand les filtres changent
+  // Charger la première page quand les filtres changent
   useEffect(() => {
-    loadHistory();
+    setCurrentPage(1);
+    setHasMore(true);
+    loadHistory(1, false);
   }, [startDate, endDate, selectedBusiness]);
+
+  // Intersection Observer pour le scroll infini
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // Si l'élément est visible et qu'on peut charger plus
+        if (entries[0].isIntersecting && hasMore && !isLoadingMore && !isLoading) {
+          const nextPage = currentPage + 1;
+          loadHistory(nextPage, true);
+        }
+      },
+      {
+        root: null,
+        rootMargin: "100px", // Déclencher 100px avant la fin
+        threshold: 0.1,
+      }
+    );
+
+    const currentTarget = observerTarget.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
+    };
+  }, [hasMore, isLoadingMore, isLoading, currentPage]);
 
   const handleReset = () => {
     setStartDate(undefined);
@@ -314,28 +374,33 @@ const HistoryPage = () => {
       {/* Timeline */}
       <Card className="mb-6">
         <CardHeader className="pb-4">
-          <CardTitle className="text-lg">
-            Activité récente{" "}
-            {isLoading && (
-              <span className="text-muted-foreground font-normal">
-                (Chargement...)
+          <CardTitle className="text-lg flex items-center justify-between">
+            <span>
+              Activité récente{" "}
+              {isLoading && (
+                <span className="text-muted-foreground font-normal">
+                  (Chargement...)
+                </span>
+              )}
+            </span>
+            {!isLoading && histories.length > 0 && (
+              <span className="text-sm font-normal text-muted-foreground">
+                Page {currentPage} / {totalPages}
               </span>
             )}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <ScrollArea className="h-[calc(100vh-28rem)]">
+          <ScrollArea className="h-[calc(100vh-28rem)]" ref={scrollAreaRef}>
             <div className="px-6 pb-6">
-              {histories.length === 0 ? (
+              {histories.length === 0 && !isLoading ? (
                 <div className="py-12 text-center">
                   <HistoryIcon className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
                   <h3 className="font-semibold text-lg mb-2">
-                    {isLoading ? "Chargement..." : "Aucune activité"}
+                    Aucune activité
                   </h3>
                   <p className="text-muted-foreground">
-                    {isLoading
-                      ? "Récupération de l'historique en cours..."
-                      : "Aucune activité trouvée pour cette période"}
+                    Aucune activité trouvée pour cette période
                   </p>
                 </div>
               ) : (
@@ -354,7 +419,7 @@ const HistoryPage = () => {
 
                       return (
                         <div
-                          key={item.id}
+                          key={`${item.id}-${index}`}
                           className="relative flex gap-4 pl-14"
                         >
                           {/* Icon */}
@@ -420,6 +485,35 @@ const HistoryPage = () => {
                       );
                     })}
                   </div>
+
+                  {/* Observer target pour le scroll infini */}
+                  <div
+                    ref={observerTarget}
+                    className="h-20 flex items-center justify-center"
+                  >
+                    {isLoadingMore && (
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        <span className="text-sm">Chargement...</span>
+                      </div>
+                    )}
+                    {!hasMore && histories.length > 0 && (
+                      <p className="text-sm text-muted-foreground">
+                        Fin de l'historique
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Loading initial */}
+              {isLoading && histories.length === 0 && (
+                <div className="py-12 text-center">
+                  <Loader2 className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4 animate-spin" />
+                  <h3 className="font-semibold text-lg mb-2">Chargement...</h3>
+                  <p className="text-muted-foreground">
+                    Récupération de l'historique en cours...
+                  </p>
                 </div>
               )}
             </div>

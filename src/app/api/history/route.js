@@ -92,4 +92,4 @@ export const GET = withAuthAndRole(async (req) => {
             error: true
         }, { status: 500 });
     }
-}); // Uniquement pour les admins
+});
