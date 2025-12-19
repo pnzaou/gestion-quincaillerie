@@ -1,12 +1,4 @@
 export const OrderPrint = ({ order }) => {
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'XOF',
-      minimumFractionDigits: 0
-    }).format(amount);
-  };
-
   const formatDate = (date) => {
     return new Intl.DateTimeFormat('fr-FR', {
       year: 'numeric',
@@ -76,14 +68,16 @@ export const OrderPrint = ({ order }) => {
         )}
       </div>
 
-      {/* Tableau des produits */}
+      {/* Tableau des produits - SANS PRIX */}
       <table className="w-full mb-8 border-collapse">
         <thead>
           <tr className="border-b-2 border-gray-800">
-            <th className="text-left py-2 text-sm font-bold text-gray-900">PRODUIT</th>
-            <th className="text-center py-2 text-sm font-bold text-gray-900">QTÉ</th>
-            <th className="text-right py-2 text-sm font-bold text-gray-900">P.U.</th>
-            <th className="text-right py-2 text-sm font-bold text-gray-900">TOTAL</th>
+            <th className="text-left py-2 text-sm font-bold text-gray-900">
+              PRODUIT
+            </th>
+            <th className="text-center py-2 text-sm font-bold text-gray-900">
+              QUANTITÉ COMMANDÉE
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -92,34 +86,28 @@ export const OrderPrint = ({ order }) => {
               <td className="py-3 text-sm text-gray-800">
                 <div className="font-medium">{item.product.nom}</div>
                 {item.product.reference && (
-                  <div className="text-xs text-gray-500">Réf: {item.product.reference}</div>
+                  <div className="text-xs text-gray-500">
+                    Réf: {item.product.reference}
+                  </div>
                 )}
               </td>
-              <td className="text-center py-3 text-sm text-gray-800">{item.quantity}</td>
-              <td className="text-right py-3 text-sm text-gray-800">{formatCurrency(item.price)}</td>
-              <td className="text-right py-3 text-sm font-medium text-gray-900">
-                {formatCurrency(item.price * item.quantity)}
+              <td className="text-center py-3 text-sm text-gray-800 font-semibold">
+                {item.quantity}
               </td>
             </tr>
           ))}
         </tbody>
       </table>
 
-      {/* Total */}
-      <div className="ml-auto w-80 mb-8">
-        <div className="space-y-2 text-sm">
-          <div className="border-t-2 border-gray-800 pt-2 flex justify-between text-lg font-bold text-gray-900">
-            <span>TOTAL</span>
-            <span>{formatCurrency(order.total)}</span>
-          </div>
-        </div>
-      </div>
-
       {/* Date de livraison attendue */}
       {order.expectedDelivery && (
         <div className="mb-8">
-          <h3 className="text-sm font-bold text-gray-900 mb-2">DATE DE LIVRAISON ATTENDUE</h3>
-          <p className="text-sm text-gray-700">{formatDate(order.expectedDelivery)}</p>
+          <h3 className="text-sm font-bold text-gray-900 mb-2">
+            DATE DE LIVRAISON SOUHAITÉE
+          </h3>
+          <p className="text-sm text-gray-700">
+            {formatDate(order.expectedDelivery)}
+          </p>
         </div>
       )}
 
@@ -133,7 +121,9 @@ export const OrderPrint = ({ order }) => {
 
       {/* Pied de page */}
       <div className="mt-12 pt-4 border-t border-gray-300 text-center text-xs text-gray-600">
-        <p>Commandé par: {order.createdBy.nom} {order.createdBy.prenom}</p>
+        <p>
+          Commandé par: {order.createdBy.nom} {order.createdBy.prenom}
+        </p>
         <p className="mt-1">Merci pour votre collaboration</p>
       </div>
     </div>

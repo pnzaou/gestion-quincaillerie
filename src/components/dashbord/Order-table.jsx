@@ -202,7 +202,9 @@ const OrderTable = ({
               >
                 <Filter className="w-4 h-4 mr-2" />
                 {selectedStatus.length > 0
-                  ? `${selectedStatus.length} statut${selectedStatus.length > 1 ? "s" : ""}`
+                  ? `${selectedStatus.length} statut${
+                      selectedStatus.length > 1 ? "s" : ""
+                    }`
                   : "Filtrer par statut"}
               </Button>
             </PopoverTrigger>
@@ -242,7 +244,9 @@ const OrderTable = ({
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 {startDate && endDate
-                  ? `${format(startDate, "dd/MM/yy", { locale: fr })} - ${format(endDate, "dd/MM/yy", { locale: fr })}`
+                  ? `${format(startDate, "dd/MM/yy", {
+                      locale: fr,
+                    })} - ${format(endDate, "dd/MM/yy", { locale: fr })}`
                   : startDate
                   ? `Du ${format(startDate, "dd/MM/yy", { locale: fr })}`
                   : endDate
@@ -275,7 +279,11 @@ const OrderTable = ({
           </Popover>
 
           {(selectedStatus.length > 0 || startDate || endDate) && (
-            <Button variant="ghost" onClick={clearFilters} className="w-full md:w-auto">
+            <Button
+              variant="ghost"
+              onClick={clearFilters}
+              className="w-full md:w-auto"
+            >
               Réinitialiser
             </Button>
           )}
@@ -290,23 +298,31 @@ const OrderTable = ({
             {/* Mobile */}
             <div className="md:hidden space-y-2">
               {orders?.map((order) => (
-                <div key={order._id} className="rounded-md bg-white p-4 shadow-sm">
+                <div
+                  key={order._id}
+                  className="rounded-md bg-white p-4 shadow-sm"
+                >
                   <div className="flex justify-between items-start border-b pb-2">
                     <p className="font-semibold">{order.reference}</p>
                     <OrderStatusBadge status={order.status} />
                   </div>
                   <div className="pt-2 space-y-1">
-                    <p className="text-sm">Date: {formatDate(order.orderDate)}</p>
+                    <p className="text-sm">
+                      Date: {formatDate(order.orderDate)}
+                    </p>
                     <p className="text-sm">
                       Fournisseur: {order.supplier?.nom || "Non spécifié"}
                     </p>
-                    <p className="text-sm font-medium">Total: {formatCurrency(order.total)}</p>
+                    <p className="text-sm font-medium">
+                      Total: {formatCurrency(order.estimatedTotal)}
+                    </p>
                   </div>
                   <div className="flex justify-end gap-2 mt-4">
                     <DetailsOrder id={order._id} />
-                    {order.status !== "cancelled" && order.status !== "completed" && (
-                      <CancelOrder id={order._id} />
-                    )}
+                    {order.status !== "cancelled" &&
+                      order.status !== "completed" && (
+                        <CancelOrder id={order._id} />
+                      )}
                   </div>
                 </div>
               ))}
@@ -328,13 +344,18 @@ const OrderTable = ({
               </thead>
               <tbody className="bg-white">
                 {orders?.map((order) => (
-                  <tr key={order._id} className="border-b last:border-none text-sm">
+                  <tr
+                    key={order._id}
+                    className="border-b last:border-none text-sm"
+                  >
                     <td className="py-4 px-3 font-medium">{order.reference}</td>
                     <td className="py-4 px-3">{formatDate(order.orderDate)}</td>
                     <td className="py-4 px-3">
                       {order.supplier ? (
                         <div>
-                          <div className="font-medium">{order.supplier.nom}</div>
+                          <div className="font-medium">
+                            {order.supplier.nom}
+                          </div>
                           {order.supplier.tel && (
                             <div className="text-xs text-muted-foreground">
                               {order.supplier.tel}
@@ -342,11 +363,30 @@ const OrderTable = ({
                           )}
                         </div>
                       ) : (
-                        <span className="text-muted-foreground">Non spécifié</span>
+                        <span className="text-muted-foreground">
+                          Non spécifié
+                        </span>
                       )}
                     </td>
                     <td className="py-4 px-3 text-right font-medium">
-                      {formatCurrency(order.total)}
+                      {formatCurrency(
+                        order.status === "completed" && order.actualTotal > 0
+                          ? order.actualTotal
+                          : order.estimatedTotal
+                      )}
+                      {order.status === "completed" &&
+                        order.priceVariance !== 0 && (
+                          <span
+                            className={`text-xs block ${
+                              order.priceVariance > 0
+                                ? "text-red-600"
+                                : "text-green-600"
+                            }`}
+                          >
+                            ({order.priceVariance > 0 ? "+" : ""}
+                            {formatCurrency(order.priceVariance)})
+                          </span>
+                        )}
                     </td>
                     <td className="py-4 px-3">
                       <OrderStatusBadge status={order.status} />
@@ -354,9 +394,10 @@ const OrderTable = ({
                     <td className="py-4 pl-6 pr-3 text-right">
                       <div className="flex justify-end gap-2">
                         <DetailsOrder id={order._id} />
-                        {order.status !== "cancelled" && order.status !== "completed" && (
-                          <CancelOrder id={order._id} />
-                        )}
+                        {order.status !== "cancelled" &&
+                          order.status !== "completed" && (
+                            <CancelOrder id={order._id} />
+                          )}
                       </div>
                     </td>
                   </tr>

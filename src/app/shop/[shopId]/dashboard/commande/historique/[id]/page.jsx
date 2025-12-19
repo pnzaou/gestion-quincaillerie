@@ -61,6 +61,7 @@ const Page = () => {
   const [selectedItems, setSelectedItems] = useState([]);
   const [receiveDialogOpen, setReceiveDialogOpen] = useState(false);
   const [receivingItems, setReceivingItems] = useState({});
+  const [actualPrices, setActualPrices] = useState({});
   const [loading, setLoading] = useState(false);
   const [printMode, setPrintMode] = useState(null);
   const [showOrderPreview, setShowOrderPreview] = useState(false);
@@ -101,6 +102,11 @@ const Page = () => {
           ...prev,
           [productId]: item.quantity - item.receivedQuantity,
         }));
+
+        setActualPrices((prev) => ({
+          ...prev,
+          [productId]: item.estimatedPrice,
+        }));
       }
     } else {
       setSelectedItems((prev) => prev.filter((id) => id !== productId));
@@ -108,6 +114,11 @@ const Page = () => {
         const newItems = { ...prev };
         delete newItems[productId];
         return newItems;
+      });
+      setActualPrices((prev) => {
+        const newPrices = { ...prev };
+        delete newPrices[productId];
+        return newPrices;
       });
     }
   };
@@ -133,10 +144,16 @@ const Page = () => {
     const items = selectedItems.map((productId) => ({
       productId,
       receivedQuantity: receivingItems[productId] || 0,
+      actualPrice: actualPrices[productId] || 0,
     }));
 
     if (items.some((item) => item.receivedQuantity <= 0)) {
       toast.error("Toutes les quantités doivent être supérieures à 0");
+      return;
+    }
+
+    if (items.some((item) => item.actualPrice <= 0)) {
+      toast.error("Tous les prix doivent être supérieurs à 0");
       return;
     }
 
@@ -401,10 +418,18 @@ const Page = () => {
                             </Badge>
                           </TableCell>
                           <TableCell className="text-right">
-                            {formatCurrency(item.price)}
+                            {formatCurrency(
+                              order.status === "completed" && item.actualPrice
+                                ? item.actualPrice
+                                : item.estimatedPrice
+                            )}
                           </TableCell>
                           <TableCell className="text-right font-medium">
-                            {formatCurrency(item.price * item.quantity)}
+                            {formatCurrency(
+                              order.status === "completed" && item.actualPrice
+                                ? item.actualPrice * item.quantity
+                                : item.estimatedPrice * item.quantity
+                            )}
                           </TableCell>
                           <TableCell className="text-center">
                             {item.status === "received" ? (
@@ -429,12 +454,51 @@ const Page = () => {
                   <Separator className="my-4" />
 
                   <div className="space-y-2">
-                    <div className="flex justify-between text-lg font-bold">
-                      <span>Total</span>
-                      <span className="text-[#0B64F3]">
-                        {formatCurrency(order.total)}
-                      </span>
+                    {/* Total estimé */}
+                    <div className="flex justify-between text-sm text-muted-foreground">
+                      <span>Total Estimé</span>
+                      <span>{formatCurrency(order.estimatedTotal)}</span>
                     </div>
+
+                    {/* Total réel (si commande completed) */}
+                    {order.status === "completed" && order.actualTotal > 0 && (
+                      <>
+                        <div className="flex justify-between text-lg font-bold">
+                          <span>Total Réel</span>
+                          <span className="text-[#0B64F3]">
+                            {formatCurrency(order.actualTotal)}
+                          </span>
+                        </div>
+
+                        {/* Écart de prix */}
+                        {order.priceVariance !== 0 && (
+                          <div
+                            className={`flex justify-between text-sm font-medium ${
+                              order.priceVariance > 0
+                                ? "text-red-600"
+                                : "text-green-600"
+                            }`}
+                          >
+                            <span>Écart de prix</span>
+                            <span>
+                              {order.priceVariance > 0 ? "+" : ""}
+                              {formatCurrency(order.priceVariance)}
+                            </span>
+                          </div>
+                        )}
+                      </>
+                    )}
+
+                    {/* Si pas completed ou actualTotal = 0, afficher l'estimé comme total */}
+                    {(order.status !== "completed" ||
+                      order.actualTotal === 0) && (
+                      <div className="flex justify-between text-lg font-bold">
+                        <span>Total</span>
+                        <span className="text-[#0B64F3]">
+                          {formatCurrency(order.estimatedTotal)}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -631,24 +695,51 @@ const Page = () => {
                       Restant à recevoir: {remaining} sur {item.quantity}
                     </div>
                     {isSelected && (
-                      <div className="mt-2">
-                        <Label htmlFor={`qty-${item.product._id}`}>
-                          Quantité reçue
-                        </Label>
-                        <Input
-                          id={`qty-${item.product._id}`}
-                          type="number"
-                          min="1"
-                          max={remaining}
-                          value={receivingItems[item.product._id] || ""}
-                          onChange={(e) =>
-                            handleQuantityChange(
-                              item.product._id,
-                              e.target.value
-                            )
-                          }
-                          className="w-32"
-                        />
+                      <div className="mt-3 space-y-3">
+                        <div>
+                          <Label htmlFor={`qty-${item.product._id}`}>
+                            Quantité reçue
+                          </Label>
+                          <Input
+                            id={`qty-${item.product._id}`}
+                            type="number"
+                            min="1"
+                            max={remaining}
+                            value={receivingItems[item.product._id] || ""}
+                            onChange={(e) =>
+                              handleQuantityChange(
+                                item.product._id,
+                                e.target.value
+                              )
+                            }
+                            className="w-full"
+                          />
+                        </div>
+
+                        {/* ✅ Nouveau champ pour le prix réel */}
+                        <div>
+                          <Label htmlFor={`price-${item.product._id}`}>
+                            Prix réel unitaire (FCFA)
+                            <span className="text-xs text-muted-foreground ml-2">
+                              (Estimé: {item.estimatedPrice.toFixed(2)})
+                            </span>
+                          </Label>
+                          <Input
+                            id={`price-${item.product._id}`}
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={actualPrices[item.product._id] || ""}
+                            onChange={(e) =>
+                              setActualPrices((prev) => ({
+                                ...prev,
+                                [item.product._id]:
+                                  parseFloat(e.target.value) || 0,
+                              }))
+                            }
+                            className="w-full"
+                          />
+                        </div>
                       </div>
                     )}
                   </div>

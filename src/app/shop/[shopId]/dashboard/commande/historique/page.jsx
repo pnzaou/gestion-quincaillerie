@@ -30,6 +30,8 @@ const Page = async ({ searchParams, params }) => {
     endDate: endDate1 ? new Date(endDate1) : null
   });
 
+  console.log("CONSOLES LOGS DES STATS", stats)
+
   const statusParam = status1 ? `&status=${status1}` : "";
   const dateParams = `${startDate1 ? `&startDate=${startDate1}` : ""}${endDate1 ? `&endDate=${endDate1}` : ""}`;
 

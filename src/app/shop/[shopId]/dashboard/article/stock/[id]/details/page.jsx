@@ -10,6 +10,7 @@ const Page = async ({ params }) => {
   const { id, shopId } = await params;
 
   const data = await getProductAnalytics(id);
+  console.log(data)
 
   if (!data) {
     return (
@@ -33,7 +34,11 @@ const Page = async ({ params }) => {
 
         <div className="space-y-8">
           <ProductHeader product={product} />
-          <MarginAnalyticsCard analytics={analytics} />
+          <MarginAnalyticsCard
+            analytics={analytics}
+            productId={id}
+            businessId={shopId}
+          />
           <ProductInfoCard product={product} />
         </div>
       </div>

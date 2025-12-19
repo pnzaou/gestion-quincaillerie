@@ -14,5 +14,7 @@ import './Sale.model'
 import './Supplier.model'
 import './User.model'
 import './Business.model'
+import './PriceHistory.model'
+import './PurchaseHistory.model'
 
 export {}

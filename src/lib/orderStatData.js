@@ -32,7 +32,7 @@ export async function getOrdersStatistics({ businessId, startDate, endDate } = {
     completedCount,
     cancelledCount,
     totalAmount,
-    averageAmount
+    averageAmount,
   ] = await Promise.all([
     // Total des commandes
     Order.countDocuments(baseFilter),
@@ -54,9 +54,27 @@ export async function getOrdersStatistics({ businessId, startDate, endDate } = {
         }
       },
       {
+        $addFields: {
+          // Si completed et actualTotal > 0, utiliser actualTotal
+          // Sinon utiliser estimatedTotal
+          effectiveTotal: {
+            $cond: {
+              if: { 
+                $and: [
+                  { $eq: ["$status", "completed"] },
+                  { $gt: ["$actualTotal", 0] }
+                ]
+              },
+              then: "$actualTotal",
+              else: "$estimatedTotal"
+            }
+          }
+        }
+      },
+      {
         $group: {
           _id: null,
-          total: { $sum: "$total" }
+          total: { $sum: "$effectiveTotal" }
         }
       }
     ]),
@@ -70,12 +88,28 @@ export async function getOrdersStatistics({ businessId, startDate, endDate } = {
         }
       },
       {
+        $addFields: {
+          effectiveTotal: {
+            $cond: {
+              if: { 
+                $and: [
+                  { $eq: ["$status", "completed"] },
+                  { $gt: ["$actualTotal", 0] }
+                ]
+              },
+              then: "$actualTotal",
+              else: "$estimatedTotal"
+            }
+          }
+        }
+      },
+      {
         $group: {
           _id: null,
-          avgAmount: { $avg: "$total" }
+          avgAmount: { $avg: "$effectiveTotal" }
         }
       }
-    ])
+    ]),
   ]);
 
   return {

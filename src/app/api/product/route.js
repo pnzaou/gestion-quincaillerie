@@ -9,206 +9,305 @@ import authOptions from "@/lib/auth"
 import History from "@/models/History.model"
 
 export const POST = withAuth(async (req) => {
-    await dbConnection()
-    const mongoSession = await mongoose.startSession()
-    mongoSession.startTransaction()
-    try {
-        const session = await getServerSession(authOptions)
-        const { name, id: userId } = session.user
+  await dbConnection();
+  const mongoSession = await mongoose.startSession();
+  mongoSession.startTransaction();
+  try {
+    const session = await getServerSession(authOptions);
+    const { name, id: userId } = session.user;
 
-        const { 
-            nom, prixAchatEnGros, prixVenteEnGros, prixAchatDetail, prixVenteDetail, 
-            QteInitial, QteStock, QteAlerte, image, reference, description, 
-            dateExpiration, category_id, supplier_id, businessId 
-        } = await req.json()
+    const {
+      nom,
+      prixAchatEnGros,
+      prixVenteEnGros,
+      prixAchatDetail,
+      prixVenteDetail,
+      QteInitial,
+      QteStock,
+      QteAlerte,
+      image,
+      reference,
+      description,
+      dateExpiration,
+      category_id,
+      supplier_id,
+      businessId,
+    } = await req.json();
 
-        if (!businessId) {
-            await mongoSession.abortTransaction()
-            mongoSession.endSession()
-            return NextResponse.json({
-                message: "ID de la boutique manquant.",
-                success: false,
-                error: true
-            }, { status: 400 })
-        }
-
-        if(!nom || prixAchatEnGros === undefined || prixVenteEnGros === undefined || QteInitial === undefined || QteStock === undefined || QteAlerte === undefined || !category_id || !supplier_id) {
-            await mongoSession.abortTransaction()
-            mongoSession.endSession()
-            return NextResponse.json({
-                message: "Veuillez renseigner les champs obligatoires.",
-                success: false,
-                error: true
-            }, { status: 400 })
-        }
-
-        const businessObjectId = new mongoose.Types.ObjectId(businessId)
-
-        const parsedAchatEnGros = Number(prixAchatEnGros)
-        const parsedVenteEnGros = Number(prixVenteEnGros)
-        const parsedAchatDetail = prixAchatDetail ? Number(prixAchatDetail) : undefined
-        const parsedVenteDetail = prixVenteDetail ? Number(prixVenteDetail) : undefined
-        const parsedQteInitial = Number(QteInitial)
-        const parsedQteStock = QteStock !== undefined ? Number(QteStock) : parsedQteInitial
-        const parsedQteAlerte = Number(QteAlerte)
-
-        const statut = (parsedQteStock > 0) ? "En stock" : "En rupture"
-
-        if (
-            isNaN(parsedAchatEnGros) || parsedAchatEnGros <= 0 ||
-            isNaN(parsedVenteEnGros) || parsedVenteEnGros <= 0
-        ) {
-            await mongoSession.abortTransaction()
-            mongoSession.endSession()
-            return NextResponse.json({
-                message: "Les prix d'achat et de vente en gros doivent être des nombres positifs.",
-                success: false,
-                error: true
-            }, { status: 400 });
-        }
-
-        if (
-            (prixAchatDetail && (isNaN(parsedAchatDetail) || parsedAchatDetail <= 0)) ||
-            (prixVenteDetail && (isNaN(parsedVenteDetail) || parsedVenteDetail <= 0))
-        ) {
-            await mongoSession.abortTransaction()
-            mongoSession.endSession()
-            return NextResponse.json({
-                message: "Les prix d'achat et de vente en détail doivent être des nombres positifs.",
-                success: false,
-                error: true
-            }, { status: 400 });
-        }
-
-        if (
-            isNaN(parsedQteInitial) || parsedQteInitial < 0 ||
-            isNaN(parsedQteStock) || parsedQteStock < 0 ||
-            isNaN(parsedQteAlerte) || parsedQteAlerte < 0
-        ) {
-            await mongoSession.abortTransaction()
-            mongoSession.endSession()
-            return NextResponse.json({
-                message: "Les quantités doivent être des nombres entiers positifs ou nuls.",
-                success: false,
-                error: true
-            }, { status: 400 });
-        }
-
-        if (category_id && !mongoose.Types.ObjectId.isValid(category_id)) {
-            await mongoSession.abortTransaction()
-            mongoSession.endSession()
-            return NextResponse.json({
-                message: "L'ID de la catégorie est invalide.",
-                success: false,
-                error: true
-            }, { status: 400 })
-        }
-
-        if (supplier_id && !mongoose.Types.ObjectId.isValid(supplier_id)) {
-            await mongoSession.abortTransaction()
-            mongoSession.endSession()
-            return NextResponse.json({
-                message: "L'ID du fournisseur est invalide.",
-                success: false,
-                error: true
-            }, { status: 400 })
-        }
-
-        if (dateExpiration && isNaN(Date.parse(dateExpiration))) {
-            await mongoSession.abortTransaction()
-            mongoSession.endSession()
-            return NextResponse.json({
-                message: "La date d'expiration est invalide.",
-                success: false,
-                error: true
-            }, { status: 400 });
-        }
-
-        const existingProduct = await Product.findOne({ 
-            nom,
-            business: businessObjectId 
-        }).session(mongoSession)
-        
-        if(existingProduct) {
-            await mongoSession.abortTransaction()
-            mongoSession.endSession()
-            return NextResponse.json(
-                { 
-                    message: "Ce produit existe déjà dans cette boutique.",
-                    success: false,
-                    error: true
-                },
-                { status: 400 }
-            );
-        }
-
-        const data = {
-            nom,
-            prixAchatEnGros: parsedAchatEnGros,
-            prixVenteEnGros: parsedVenteEnGros,
-            prixAchatDetail: parsedAchatDetail,
-            prixVenteDetail: parsedVenteDetail,
-            QteInitial: parsedQteInitial,
-            QteStock: parsedQteStock,
-            QteAlerte: parsedQteAlerte,
-            reference,
-            description,
-            dateExpiration,
-            category_id,
-            supplier_id,
-            statut,
-            business: businessObjectId
-        }
-
-        if(image && typeof image === "string" && image.startsWith("data:image/")) {
-            try {
-                const rep = await cloudinary.uploader.upload(image, {folder: "quincaillerie"})
-                data.image = rep.secure_url 
-            } catch (uploadErr) {
-                console.warn("Erreur lors de l'upload de l'image sur Cloudinary: ", uploadErr)
-            }
-        }
-
-        const [rep] = await Product.create([data], { session: mongoSession })
-
-        await History.create([{
-            user: userId,
-            actions: "create",
-            resource: "product",
-            description: `${name} a créé le produit ${rep.nom}.`,
-            resourceId: rep._id,
-            business: businessObjectId
-        }], { session: mongoSession })
-
-        await mongoSession.commitTransaction()
-        mongoSession.endSession()
-
-        return NextResponse.json({
-            message: "Produit ajouté avec succès.",
-            data: rep,
-            success: true,
-            error: false
-        }, { status: 201 })
-
-        
-    } catch (error) {
-        await mongoSession.abortTransaction()
-        mongoSession.endSession()
-        console.error("Erreur lors de l'ajout d'un produit: ", error)
-
-        let errorMessage = "Erreur! Veuillez réessayer."
-
-        if (error.code === 11000) {
-            errorMessage = "Ce produit existe déjà."
-        }
-
-        return NextResponse.json({
-            message: errorMessage,
-            success: false,
-            error: true
-        }, { status: 500 })
+    if (!businessId) {
+      await mongoSession.abortTransaction();
+      mongoSession.endSession();
+      return NextResponse.json(
+        {
+          message: "ID de la boutique manquant.",
+          success: false,
+          error: true,
+        },
+        { status: 400 }
+      );
     }
-})
+
+    if (
+      !nom ||
+      prixAchatEnGros === undefined ||
+      prixVenteEnGros === undefined ||
+      QteInitial === undefined ||
+      QteStock === undefined ||
+      QteAlerte === undefined ||
+      !category_id ||
+      !supplier_id
+    ) {
+      await mongoSession.abortTransaction();
+      mongoSession.endSession();
+      return NextResponse.json(
+        {
+          message: "Veuillez renseigner les champs obligatoires.",
+          success: false,
+          error: true,
+        },
+        { status: 400 }
+      );
+    }
+
+    const businessObjectId = new mongoose.Types.ObjectId(businessId);
+
+    const parsedAchatEnGros = Number(prixAchatEnGros);
+    const parsedVenteEnGros = Number(prixVenteEnGros);
+    const parsedAchatDetail = prixAchatDetail
+      ? Number(prixAchatDetail)
+      : undefined;
+    const parsedVenteDetail = prixVenteDetail
+      ? Number(prixVenteDetail)
+      : undefined;
+    const parsedQteInitial = Number(QteInitial);
+    const parsedQteStock =
+      QteStock !== undefined ? Number(QteStock) : parsedQteInitial;
+    const parsedQteAlerte = Number(QteAlerte);
+
+    const statut = parsedQteStock > 0 ? "En stock" : "En rupture";
+
+    if (
+      isNaN(parsedAchatEnGros) ||
+      parsedAchatEnGros <= 0 ||
+      isNaN(parsedVenteEnGros) ||
+      parsedVenteEnGros <= 0
+    ) {
+      await mongoSession.abortTransaction();
+      mongoSession.endSession();
+      return NextResponse.json(
+        {
+          message:
+            "Les prix d'achat et de vente en gros doivent être des nombres positifs.",
+          success: false,
+          error: true,
+        },
+        { status: 400 }
+      );
+    }
+
+    if (
+      (prixAchatDetail &&
+        (isNaN(parsedAchatDetail) || parsedAchatDetail <= 0)) ||
+      (prixVenteDetail && (isNaN(parsedVenteDetail) || parsedVenteDetail <= 0))
+    ) {
+      await mongoSession.abortTransaction();
+      mongoSession.endSession();
+      return NextResponse.json(
+        {
+          message:
+            "Les prix d'achat et de vente en détail doivent être des nombres positifs.",
+          success: false,
+          error: true,
+        },
+        { status: 400 }
+      );
+    }
+
+    if (
+      isNaN(parsedQteInitial) ||
+      parsedQteInitial < 0 ||
+      isNaN(parsedQteStock) ||
+      parsedQteStock < 0 ||
+      isNaN(parsedQteAlerte) ||
+      parsedQteAlerte < 0
+    ) {
+      await mongoSession.abortTransaction();
+      mongoSession.endSession();
+      return NextResponse.json(
+        {
+          message:
+            "Les quantités doivent être des nombres entiers positifs ou nuls.",
+          success: false,
+          error: true,
+        },
+        { status: 400 }
+      );
+    }
+
+    if (category_id && !mongoose.Types.ObjectId.isValid(category_id)) {
+      await mongoSession.abortTransaction();
+      mongoSession.endSession();
+      return NextResponse.json(
+        {
+          message: "L'ID de la catégorie est invalide.",
+          success: false,
+          error: true,
+        },
+        { status: 400 }
+      );
+    }
+
+    if (supplier_id && !mongoose.Types.ObjectId.isValid(supplier_id)) {
+      await mongoSession.abortTransaction();
+      mongoSession.endSession();
+      return NextResponse.json(
+        {
+          message: "L'ID du fournisseur est invalide.",
+          success: false,
+          error: true,
+        },
+        { status: 400 }
+      );
+    }
+
+    if (dateExpiration && isNaN(Date.parse(dateExpiration))) {
+      await mongoSession.abortTransaction();
+      mongoSession.endSession();
+      return NextResponse.json(
+        {
+          message: "La date d'expiration est invalide.",
+          success: false,
+          error: true,
+        },
+        { status: 400 }
+      );
+    }
+
+    const existingProduct = await Product.findOne({
+      nom,
+      business: businessObjectId,
+    }).session(mongoSession);
+
+    if (existingProduct) {
+      await mongoSession.abortTransaction();
+      mongoSession.endSession();
+      return NextResponse.json(
+        {
+          message: "Ce produit existe déjà dans cette boutique.",
+          success: false,
+          error: true,
+        },
+        { status: 400 }
+      );
+    }
+
+    const data = {
+      nom,
+      prixAchatEnGros: parsedAchatEnGros,
+      prixVenteEnGros: parsedVenteEnGros,
+      prixAchatDetail: parsedAchatDetail,
+      prixVenteDetail: parsedVenteDetail,
+      QteInitial: parsedQteInitial,
+      QteStock: parsedQteStock,
+      QteAlerte: parsedQteAlerte,
+      reference,
+      description,
+      dateExpiration,
+      category_id,
+      supplier_id,
+      statut,
+      business: businessObjectId,
+    };
+
+    if (image && typeof image === "string" && image.startsWith("data:image/")) {
+      try {
+        const rep = await cloudinary.uploader.upload(image, {
+          folder: "quincaillerie",
+        });
+        data.image = rep.secure_url;
+      } catch (uploadErr) {
+        console.warn(
+          "Erreur lors de l'upload de l'image sur Cloudinary: ",
+          uploadErr
+        );
+      }
+    }
+
+    const [rep] = await Product.create([data], { session: mongoSession });
+
+    // ✅ NOUVEAU - Créer l'historique d'achat initial
+    if (parsedQteInitial > 0 && parsedAchatEnGros > 0) {
+      const PurchaseHistory = (await import("@/models/PurchaseHistory.model"))
+        .default;
+
+      await PurchaseHistory.create(
+        [
+          {
+            business: businessObjectId,
+            product: rep._id,
+            order: null, // Pas de commande associée (stock initial)
+            supplier: supplier_id
+              ? new mongoose.Types.ObjectId(supplier_id)
+              : null,
+            quantity: parsedQteInitial,
+            unitPrice: parsedAchatEnGros,
+            totalCost: parsedQteInitial * parsedAchatEnGros,
+            receivedDate: new Date(),
+            receivedBy: userId,
+            notes: "Stock initial",
+          },
+        ],
+        { session: mongoSession }
+      );
+    }
+
+    await History.create(
+      [
+        {
+          user: userId,
+          actions: "create",
+          resource: "product",
+          description: `${name} a créé le produit ${rep.nom}.`,
+          resourceId: rep._id,
+          business: businessObjectId,
+        },
+      ],
+      { session: mongoSession }
+    );
+
+    await mongoSession.commitTransaction();
+    mongoSession.endSession();
+
+    return NextResponse.json(
+      {
+        message: "Produit ajouté avec succès.",
+        data: rep,
+        success: true,
+        error: false,
+      },
+      { status: 201 }
+    );
+  } catch (error) {
+    await mongoSession.abortTransaction();
+    mongoSession.endSession();
+    console.error("Erreur lors de l'ajout d'un produit: ", error);
+
+    let errorMessage = "Erreur! Veuillez réessayer.";
+
+    if (error.code === 11000) {
+      errorMessage = "Ce produit existe déjà.";
+    }
+
+    return NextResponse.json(
+      {
+        message: errorMessage,
+        success: false,
+        error: true,
+      },
+      { status: 500 }
+    );
+  }
+});
 
 export const GET = withAuth(async (req) => {
     try {

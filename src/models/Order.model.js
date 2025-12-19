@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
 
 const orderItemSchema = new mongoose.Schema({
-    // ❌ RETIRER business d'ici
     product: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Product",
@@ -12,24 +11,38 @@ const orderItemSchema = new mongoose.Schema({
         required: true,
         min: 1
     },
-    price: {
+    // Prix ESTIMÉ lors de la commande (pour budgétisation)
+    estimatedPrice: {
         type: Number,
         required: true
     },
-    receivedQuantity: { // Pour gérer les réceptions partielles
+    // Prix RÉEL à la réception (peut différer de l'estimé)
+    actualPrice: {
+        type: Number,
+        default: null // null tant que pas reçu
+    },
+    receivedQuantity: {
         type: Number,
         default: 0,
         min: 0
     },
-    status: { // Statut par produit
+    status: {
         type: String,
         enum: ['pending', 'partially_received', 'received'],
         default: 'pending'
-    }
+    },
+    // Historique des réceptions pour ce produit dans cette commande
+    receptions: [{
+        date: { type: Date, required: true },
+        quantity: { type: Number, required: true },
+        actualPrice: { type: Number, required: true }, // Prix unitaire réel à cette réception
+        receivedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        notes: String
+    }]
 }, { _id: false })
 
 const orderSchema = new mongoose.Schema({
-    business: { type: mongoose.Schema.Types.ObjectId, ref: "Business", required: true }, // ✅ business au niveau Order
+    business: { type: mongoose.Schema.Types.ObjectId, ref: "Business", required: true },
     reference: { type: String, required: true },
     supplier: {
         type: mongoose.Schema.Types.ObjectId,
@@ -48,17 +61,19 @@ const orderSchema = new mongoose.Schema({
     orderDate: { type: Date, required: true, default: () => new Date() },
     expectedDelivery: { type: Date, required: false },
     receivedDate: { type: Date, required: false },
+    // Totaux
+    estimatedTotal: { type: Number, required: true }, // Total estimé
+    actualTotal: { type: Number, default: 0 }, // Total réel (calculé à la réception)
+    // Écart entre estimé et réel
+    priceVariance: { type: Number, default: 0 }, // actualTotal - estimatedTotal
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    notes: String,
-    total: { type: Number, required: true }
+    notes: String
 }, {
     timestamps: true
 })
 
 // Index unique pour reference par boutique
 orderSchema.index({ reference: 1, business: 1 }, { unique: true })
-
-// Index de performance
 orderSchema.index({ business: 1, status: 1 })
 orderSchema.index({ business: 1, orderDate: 1 })
 orderSchema.index({ supplier: 1 })

@@ -4,6 +4,7 @@ import Product from "@/models/Product.model";
 import { generateOrderReference } from "./generateOrderReference.service";
 import { createHistory } from "./history.service";
 import { HttpError } from "./errors.service";
+import PurchaseHistory from "@/models/PurchaseHistory.model";
 
 /**
  * Créer une commande
@@ -40,19 +41,23 @@ export async function createOrder({ payload, user }) {
       business: businessObjectId,
       reference,
       supplier: payload.supplier || null,
-      items: payload.items.map(item => ({
+      items: payload.items.map((item) => ({
         product: item.product,
         quantity: item.quantity,
-        price: item.price,
+        estimatedPrice: item.price, // ✅ Changé de "price" à "estimatedPrice"
+        actualPrice: null,
         receivedQuantity: 0,
-        status: 'pending'
+        status: "pending",
+        receptions: [],
       })),
-      status: 'draft',
+      status: "draft",
       orderDate: payload.orderDate || now,
       expectedDelivery: payload.expectedDelivery || null,
       createdBy: user?.id,
       notes: payload.notes || "",
-      total: payload.total
+      estimatedTotal: payload.total, // ✅ Changé de "total" à "estimatedTotal"
+      actualTotal: 0,
+      priceVariance: 0,
     };
 
     const [order] = await Order.create([data], { session });
@@ -103,8 +108,9 @@ export async function receiveOrder({ orderId, items, user, businessId }) {
       throw new HttpError(400, `Impossible de recevoir une commande avec le statut ${order.status}`);
     }
 
-    // items = [{ productId, receivedQuantity }]
+    // items = [{ productId, receivedQuantity, actualPrice }]
     let allReceived = true;
+    let actualTotal = order.actualTotal || 0;
 
     for (const receivedItem of items) {
       const orderItem = order.items.find(
@@ -115,14 +121,34 @@ export async function receiveOrder({ orderId, items, user, businessId }) {
         throw new HttpError(404, `Produit ${receivedItem.productId} non trouvé dans la commande`);
       }
 
-      // Mettre à jour la quantité reçue
+      // Vérifier la quantité
       const newReceivedQty = orderItem.receivedQuantity + receivedItem.receivedQuantity;
       
       if (newReceivedQty > orderItem.quantity) {
         throw new HttpError(400, `Quantité reçue dépasse la quantité commandée pour le produit ${receivedItem.productId}`);
       }
 
+      // Valider le prix réel
+      if (!receivedItem.actualPrice || receivedItem.actualPrice <= 0) {
+        throw new HttpError(400, `Prix réel invalide pour le produit ${receivedItem.productId}`);
+      }
+
+      // Mettre à jour la quantité reçue
       orderItem.receivedQuantity = newReceivedQty;
+
+      // Ajouter à l'historique des réceptions de cet item
+      orderItem.receptions.push({
+        date: new Date(),
+        quantity: receivedItem.receivedQuantity,
+        actualPrice: receivedItem.actualPrice,
+        receivedBy: user?.id,
+        notes: receivedItem.notes || ""
+      });
+
+      // Calculer le prix réel moyen pour cet item
+      const totalQtyReceived = orderItem.receptions.reduce((sum, r) => sum + r.quantity, 0);
+      const totalCost = orderItem.receptions.reduce((sum, r) => sum + (r.quantity * r.actualPrice), 0);
+      orderItem.actualPrice = totalCost / totalQtyReceived;
 
       // Mettre à jour le statut de l'item
       if (newReceivedQty === orderItem.quantity) {
@@ -133,6 +159,23 @@ export async function receiveOrder({ orderId, items, user, businessId }) {
       } else {
         allReceived = false;
       }
+
+      // Mettre à jour le total réel de la commande
+      actualTotal += receivedItem.receivedQuantity * receivedItem.actualPrice;
+
+      // ✅ Créer l'historique d'achat
+      await PurchaseHistory.create([{
+        business: businessId,
+        product: receivedItem.productId,
+        order: order._id,
+        supplier: order.supplier,
+        quantity: receivedItem.receivedQuantity,
+        unitPrice: receivedItem.actualPrice,
+        totalCost: receivedItem.receivedQuantity * receivedItem.actualPrice,
+        receivedDate: new Date(),
+        receivedBy: user?.id,
+        notes: receivedItem.notes || ""
+      }], { session });
 
       // Mettre à jour le stock du produit
       const product = await Product.findOne({
@@ -155,6 +198,10 @@ export async function receiveOrder({ orderId, items, user, businessId }) {
       await product.save({ session });
     }
 
+    // Mettre à jour les totaux de la commande
+    order.actualTotal = actualTotal;
+    order.priceVariance = actualTotal - order.estimatedTotal;
+
     // Vérifier si tous les items sont reçus
     const allItemsReceived = order.items.every(item => item.status === 'received');
     
@@ -168,7 +215,11 @@ export async function receiveOrder({ orderId, items, user, businessId }) {
     await order.save({ session });
 
     // Créer l'historique
-    const description = `Réception ${allItemsReceived ? 'complète' : 'partielle'} de la commande ${order.reference}. ${items.length} produit(s) reçu(s).`;
+    const priceVarianceText = order.priceVariance !== 0 
+      ? ` Écart de prix: ${order.priceVariance > 0 ? '+' : ''}${order.priceVariance.toFixed(2)} FCFA`
+      : '';
+    
+    const description = `Réception ${allItemsReceived ? 'complète' : 'partielle'} de la commande ${order.reference}. ${items.length} produit(s) reçu(s).${priceVarianceText}`;
     
     await createHistory({
       userId: user?.id,
