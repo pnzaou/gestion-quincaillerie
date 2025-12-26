@@ -11,6 +11,7 @@ export function validateOrderPayload(raw) {
       product: i.product,
       quantity: Number(i.quantity),
       price: Number(i.price)
+      // ❌ purchaseType supprimé
     })) : [],
 
     orderDate: raw.orderDate ? new Date(raw.orderDate) : new Date(),

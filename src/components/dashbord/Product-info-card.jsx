@@ -12,13 +12,8 @@ export const ProductInfoCard = ({ product }) => {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <InfoItem label="Prix de vente (Gros)" value={`${product.prixVenteEnGros.toFixed(2)} FCFA`} />
-          {product.prixAchatDetail && (
-            <InfoItem label="Prix d'achat (Détail)" value={`${product.prixAchatDetail.toFixed(2)} FCFA`} />
-          )}
-          {product.prixVenteDetail && (
-            <InfoItem label="Prix de vente (Détail)" value={`${product.prixVenteDetail.toFixed(2)} FCFA`} />
-          )}
+          <InfoItem label="Prix d'achat" value={`${product.prixAchat.toFixed(2)} FCFA`} />
+          <InfoItem label="Prix de vente" value={`${product.prixVente.toFixed(2)} FCFA`} />
         </div>
         
         <div className="border-t pt-4 mt-4">

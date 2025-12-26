@@ -47,53 +47,33 @@ const AriticleFormStep1 = ({ register, errors, control, cats }) => {
       <div className="flex gap-4">
         <div className="grid gap-3 flex-1">
           <Label>
-            Prix Achat (Gros)
+            Prix d'Achat
             <Required />
           </Label>
           <Input
             type="number"
             step="0.01"
             min="1"
-            {...register("prixAchatEnGros", { required: true })}
+            {...register("prixAchat", { required: true })}
           />
-          {errors.prixAchatEnGros && (
+          {errors.prixAchat && (
             <p className="text-sm text-red-500">Ce champ est requis</p>
           )}
         </div>
         <div className="grid gap-3 flex-1">
           <Label>
-            Prix Vente (Gros)
+            prixAchat
             <Required />
           </Label>
           <Input
             type="number"
             step="0.01"
             min="1"
-            {...register("prixVenteEnGros", { required: true })}
+            {...register("prixVente", { required: true })}
           />
-          {errors.prixVenteEnGros && (
+          {errors.prixVente && (
             <p className="text-sm text-red-500">Ce champ est requis</p>
           )}
-        </div>
-      </div>
-      <div className="flex gap-4">
-        <div className="grid gap-3 flex-1">
-          <Label>Prix Achat (Détail)</Label>
-          <Input
-            type="number"
-            step="0.01"
-            min="1"
-            {...register("prixAchatDetail")}
-          />
-        </div>
-        <div className="grid gap-3 flex-1">
-          <Label>Prix Vente (Détail)</Label>
-          <Input
-            type="number"
-            step="0.01"
-            min="1"
-            {...register("prixVenteDetail")}
-          />
         </div>
       </div>
     </div>

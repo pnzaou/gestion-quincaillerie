@@ -107,39 +107,41 @@ export const catAliasMapping = {
 
 export const productAliasMapping = {
   nom: [
-    "nom", "Nom", "nom produit", "Nom produit", "Nom de l’article", "nom article",
+    "nom", "Nom", "nom produit", "Nom produit", "Nom de l'article", "nom article",
     "designation", "Designation", "désignation", "Désignation", "designation_produit",
     "product name", "item name", "libelle", "libellé", "label", "intitulé", "name",
     "nomProduit", "nom_produit", "nom-produit", "productname", "titre", "intitule"
   ],
 
-  prixAchatEnGros: [
-    "prix achat en gros", "prix d’achat en gros", "prix fournisseur", "prix grossiste",
-    "prix fournisseur gros", "prixAchatEnGros", "prix_achat_en_gros", "prix-achat-en-gros",
-    "gros achat", "achat_gros", "gross purchase price", "wholesale price",
-    "prixAchatGros", "prix_fournisseur", "cost_price_bulk", "achat_grossiste"
+  // ✅ RENOMMÉ et SIMPLIFIÉ - Support aussi anciens formats pour compatibilité
+  prixAchat: [
+    // Nouveaux noms (simplifiés)
+    "prix achat", "prix d'achat", "prixAchat", "prix_achat", "prix-achat",
+    "purchase price", "cost price", "buying price", "achat",
+    
+    // Anciens noms (pour compatibilité avec fichiers Excel existants)
+    "prix achat en gros", "prix d'achat en gros", "prixAchatEnGros", 
+    "prix_achat_en_gros", "prix-achat-en-gros", "prix fournisseur", 
+    "prix grossiste", "prix fournisseur gros", "gros achat", "achat_gros",
+    "gross purchase price", "wholesale price", "prixAchatGros", 
+    "prix_fournisseur", "cost_price_bulk", "achat_grossiste"
   ],
 
-  prixVenteEnGros: [
-    "prix vente en gros", "prix revendeur", "prix revendeur gros", "prixVenteEnGros",
-    "prix_vente_en_gros", "prix-vente-en-gros", "vente_gros", "gros vente",
-    "wholesale selling price", "wholesale price", "prixVenteGros", "selling_price_bulk",
-    "prix_revendeur", "vente_grossiste"
+  // ✅ RENOMMÉ et SIMPLIFIÉ - Support aussi anciens formats pour compatibilité
+  prixVente: [
+    // Nouveaux noms (simplifiés)
+    "prix vente", "prix de vente", "prixVente", "prix_vente", "prix-vente",
+    "selling price", "sale price", "vente", "prix",
+    
+    // Anciens noms (pour compatibilité avec fichiers Excel existants)
+    "prix vente en gros", "prixVenteEnGros", "prix_vente_en_gros", 
+    "prix-vente-en-gros", "prix revendeur", "prix revendeur gros",
+    "vente_gros", "gros vente", "wholesale selling price", 
+    "prixVenteGros", "selling_price_bulk", "prix_revendeur", "vente_grossiste"
   ],
 
-  prixAchatDetail: [
-    "prix achat détail", "prix achat au détail", "prix fournisseur détail", "prixAchatDetail",
-    "prix_achat_detail", "prix-achat-detail", "retail purchase price", "cost retail",
-    "retail cost", "prix detail achat", "achat_detail", "achat_detaille", "prix_fournisseur_detail",
-    "prix_detail_fournisseur"
-  ],
-
-  prixVenteDetail: [
-    "prix vente détail", "prix de vente au détail", "prix client", "prix public",
-    "prixVenteDetail", "prix_vente_detail", "prix-vente-detail", "retail price",
-    "selling price", "unit price", "prix détail vente", "vente_detail", "prix_unitaire",
-    "prix_detail", "prix_consommateur", "prix_detaille"
-  ],
+  // ❌ SUPPRIMÉ - prixAchatDetail (plus utilisé)
+  // ❌ SUPPRIMÉ - prixVenteDetail (plus utilisé)
 
   QteInitial: [
     "quantité initiale", "stock initial", "stock départ", "qteinitial", "QteInitial",
@@ -173,7 +175,7 @@ export const productAliasMapping = {
   ],
 
   dateExpiration: [
-    "dateExpiration", "date_expiration", "date d’expiration", "date péremption",
+    "dateExpiration", "date_expiration", "date d'expiration", "date péremption",
     "périmé le", "date limite", "expiry date", "expiration", "expire_le", "expiration_date",
     "valid until", "date_peremption", "expirationDate", "date_limite", "peremption",
     "date péremptoire", "validité", "expiry", "exp_date"
@@ -190,6 +192,5 @@ export function mapRowData(row, aliasMapping) {
   
       if (field) mapped[field] = value;
     }
-    return mapped;
+    return mapped;
   }
-  

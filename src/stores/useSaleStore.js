@@ -6,8 +6,8 @@ import { create } from "zustand";
 
 export const useSaleStore = create((set, get) => ({
   loading: false,
-  shopId: null, // ✅ Ajout du shopId
-  setShopId: (id) => set({ shopId: id }), // ✅ Setter pour shopId
+  shopId: null,
+  setShopId: (id) => set({ shopId: id }),
 
   //gestion de la date de vente
   saleDate: new Date(),
@@ -88,6 +88,8 @@ export const useSaleStore = create((set, get) => ({
   setPanierDrawerOpen: (isOpen) => set({ panierDrawerOpen: isOpen }),
 
   cart: [],
+  
+  // ✅ SIMPLIFIÉ - Sans saleType
   addToCart: (item, localStocks, setLocalStocks) => {
     const currentStock = localStocks[item._id] ?? item.QteStock;
 
@@ -97,14 +99,18 @@ export const useSaleStore = create((set, get) => ({
 
     set((state) => {
       const exists = state.cart.find((i) => i._id === item._id);
+      
       if (exists) {
         return {
           ...state,
           cart: state.cart.map((i) =>
-            i._id === item._id ? { ...i, quantity: i.quantity + 1 } : i
+            i._id === item._id
+              ? { ...i, quantity: i.quantity + 1 }
+              : i
           ),
         };
       }
+      
       return {
         ...state,
         cart: [...state.cart, { ...item, quantity: 1 }],
@@ -116,6 +122,8 @@ export const useSaleStore = create((set, get) => ({
       [item._id]: prev[item._id] - 1,
     }));
   },
+  
+  // ✅ SIMPLIFIÉ - Sans saleType
   removeFromCart: (itemId, setLocalStocks) => {
     const cart = get().cart;
     const item = cart.find((i) => i._id === itemId);
@@ -127,7 +135,11 @@ export const useSaleStore = create((set, get) => ({
     set((state) => ({
       ...state,
       cart: state.cart
-        .map((i) => (i._id === itemId ? { ...i, quantity: i.quantity - 1 } : i))
+        .map((i) => 
+          i._id === itemId
+            ? { ...i, quantity: i.quantity - 1 }
+            : i
+        )
         .filter((i) => i.quantity > 0),
     }));
 
@@ -151,7 +163,7 @@ export const useSaleStore = create((set, get) => ({
     const discount = get().discount;
     return (
       cart.reduce((sum, item) => {
-        const prix = item.prixVenteDetail || item.prixVenteEnGros;
+        const prix = item.prixVente; // ✅ Simplifié
         return sum + prix * item.quantity;
       }, 0) *
       (1 - discount / 100)
@@ -166,7 +178,7 @@ export const useSaleStore = create((set, get) => ({
   payementMethod: "",
   setPayementMethod: (newMethod) => set({ payementMethod: newMethod }),
 
-  payments: [], // tableau { method, amount }
+  payments: [],
 
   addPayment: (payment) => {
     set((state) => {
@@ -207,7 +219,7 @@ export const useSaleStore = create((set, get) => ({
       saleStatus,
       payments,
       clearPayments,
-      shopId // ✅ Récupérer shopId
+      shopId
     } = get();
     const total = get().total();
 
@@ -220,11 +232,11 @@ export const useSaleStore = create((set, get) => ({
     try {
       saleVerif(cart, saleStatus, payments, total, client);
       const data = {
-        businessId: shopId, // ✅ Ajout du businessId
+        businessId: shopId,
         items: cart.map((item) => ({
           product: item._id,
           quantity: item.quantity,
-          price: item.prixVenteDetail || item.prixVenteEnGros,
+          price: item.prixVente // ✅ Simplifié
         })),
         dateExacte: saleDate,
         remise: discount,

@@ -4,7 +4,7 @@ export function validateSalePayload(raw) {
   const errors = [];
 
   const payload = {
-    businessId: raw.businessId, // ✅ Ajout du businessId
+    businessId: raw.businessId,
     reference: raw.reference,
     client: raw.client || null,
 
@@ -12,6 +12,7 @@ export function validateSalePayload(raw) {
       product: i.product,
       quantity: Number(i.quantity),
       price: Number(i.price)
+      // ❌ saleType supprimé
     })) : [],
 
     dateExacte: raw.dateExacte ? new Date(raw.dateExacte) : new Date(),
@@ -50,7 +51,7 @@ export function validateSalePayload(raw) {
     .filter(p => p.method === "account")
     .reduce((s, p) => s + p.amount, 0);
 
-  // ✅ Validation businessId
+  // Validation businessId
   if (!payload.businessId) {
     errors.push("businessId est obligatoire.");
   }

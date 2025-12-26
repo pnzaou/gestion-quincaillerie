@@ -33,10 +33,7 @@ const ArticlesTableDesktop = ({articles, deleting, modalProdToDelete, setModalPr
               </td>
               <td className="whitespace-nowrap px-3 py-4">{art.nom}</td>
               <td className="whitespace-nowrap px-3 py-4">
-                {art.prixVenteDetail
-                  ? art.prixVenteDetail
-                  : art.prixVenteEnGros}{" "}
-                fcfa
+                {art.prixVente} fcfa {/* ✅ Simplifié */}
               </td>
               <td className="whitespace-nowrap px-3 py-4">{art.QteStock}</td>
               <td className="whitespace-nowrap px-3 py-4">{art.reference}</td>

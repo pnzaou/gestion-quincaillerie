@@ -112,9 +112,10 @@ const ArticlesListCommande = ({
                   </CardTitle>
 
                   <CardContent className="flex flex-col space-y-3 mt-2">
+                    {/* ✅ Prix simplifié */}
                     <div className="text-center">
                       <span className="text-lg text-black font-semibold">
-                        {article.prixAchatEnGros} fcfa
+                        {article.prixAchat} fcfa
                       </span>
                     </div>
 
@@ -133,6 +134,7 @@ const ArticlesListCommande = ({
                       </Badge>
                     </div>
 
+                    {/* ✅ Boutons simplifiés */}
                     <div className="flex items-center justify-between w-full mt-2">
                       <Button
                         size="icon"

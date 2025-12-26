@@ -107,6 +107,7 @@ const ArticlesListVente = ({
             {articles.map((article) => {
               const inCart = cart.find((i) => i._id === article._id);
               const src = article.image || DEFAULT_IMAGE;
+
               return (
                 <Card key={article._id} className="p-3 hover:shadow-lg transition-shadow duration-150">
                   <div className="overflow-hidden rounded">
@@ -122,9 +123,10 @@ const ArticlesListVente = ({
 
                   <CardTitle className="mt-3 text-sm sm:text-base truncate">{article.nom}</CardTitle>
                   <CardContent className="flex flex-col space-y-3 mt-2">
+                    {/* ✅ Prix simplifié */}
                     <div className="text-center">
                       <span className="text-lg text-black font-semibold">
-                        {article.prixVenteDetail || article.prixVenteEnGros} fcfa
+                        {article.prixVente} fcfa
                       </span>
                     </div>
 
@@ -143,6 +145,7 @@ const ArticlesListVente = ({
                       </Badge>
                     </div>
 
+                    {/* ✅ Boutons simplifiés */}
                     <div className="flex items-center justify-between w-full mt-2">
                       <Button
                         size="icon"

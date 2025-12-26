@@ -51,17 +51,23 @@ export const useOrderStore = create((set, get) => ({
 
   // Gestion du panier de commande
   cart: [],
+  
+  // ✅ SIMPLIFIÉ - Sans purchaseType
   addToCart: (item) => {
     set((state) => {
       const exists = state.cart.find((i) => i._id === item._id);
+      
       if (exists) {
         return {
           ...state,
           cart: state.cart.map((i) =>
-            i._id === item._id ? { ...i, quantity: i.quantity + 1 } : i
+            i._id === item._id
+              ? { ...i, quantity: i.quantity + 1 }
+              : i
           ),
         };
       }
+      
       return {
         ...state,
         cart: [...state.cart, { ...item, quantity: 1 }],
@@ -69,11 +75,16 @@ export const useOrderStore = create((set, get) => ({
     });
   },
 
+  // ✅ SIMPLIFIÉ - Sans purchaseType
   removeFromCart: (itemId) => {
     set((state) => ({
       ...state,
       cart: state.cart
-        .map((i) => (i._id === itemId ? { ...i, quantity: i.quantity - 1 } : i))
+        .map((i) => 
+          i._id === itemId
+            ? { ...i, quantity: i.quantity - 1 }
+            : i
+        )
         .filter((i) => i.quantity > 0),
     }));
   },
@@ -88,8 +99,7 @@ export const useOrderStore = create((set, get) => ({
   total: () => {
     const cart = get().cart;
     return cart.reduce((sum, item) => {
-      // Prix d'achat en gros par défaut
-      const prix = item.prixAchatEnGros;
+      const prix = item.prixAchat; // ✅ Simplifié
       return sum + prix * item.quantity;
     }, 0);
   },
@@ -126,7 +136,7 @@ export const useOrderStore = create((set, get) => ({
         items: cart.map((item) => ({
           product: item._id,
           quantity: item.quantity,
-          price: item.prixAchatEnGros,
+          price: item.prixAchat // ✅ Simplifié
         })),
         orderDate,
         expectedDelivery,

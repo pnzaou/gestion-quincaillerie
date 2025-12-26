@@ -89,10 +89,8 @@ export const PUT = withAuth(async (req, { params }) => {
   
         const {
             nom,
-            prixAchatEnGros,
-            prixVenteEnGros,
-            prixAchatDetail,
-            prixVenteDetail,
+            prixAchat, // ✅ Renommé
+            prixVente, // ✅ Renommé
             QteInitial,
             QteStock,
             QteAlerte,
@@ -142,58 +140,32 @@ export const PUT = withAuth(async (req, { params }) => {
             if (t) updateData.nom = t
         }
   
-        if (prixAchatEnGros !== undefined) {
-            const v = Number(prixAchatEnGros)
+        if (prixAchat !== undefined) {
+            const v = Number(prixAchat)
             if (isNaN(v) || v <= 0) {
                 await mongoSession.abortTransaction()
                 mongoSession.endSession()
                 return NextResponse.json({
-                    message: "Le prix d'achat en gros doit être un nombre positif.",
+                    message: "Le prix d'achat doit être un nombre positif.",
                     success: false,
                     error: true
                 }, { status: 400 })
             }
-            updateData.prixAchatEnGros = v
+            updateData.prixAchat = v
         }
-        if (prixVenteEnGros !== undefined) {
-            const v = Number(prixVenteEnGros)
+
+        if (prixVente !== undefined) {
+            const v = Number(prixVente)
             if (isNaN(v) || v <= 0) {
                 await mongoSession.abortTransaction()
                 mongoSession.endSession()
                 return NextResponse.json({
-                    message: "Le prix de vente en gros doit être un nombre positif.",
+                    message: "Le prix de vente doit être un nombre positif.",
                     success: false,
                     error: true
                 }, { status: 400 })
             }
-            updateData.prixVenteEnGros = v
-        }
-  
-        if (prixAchatDetail !== undefined && prixAchatDetail !== "") {
-            const v = Number(prixAchatDetail)
-            if (isNaN(v) || v <= 0) {
-                await mongoSession.abortTransaction()
-                mongoSession.endSession()
-                return NextResponse.json({
-                    message: "Le prix d'achat détail doit être un nombre positif.",
-                    success: false,
-                    error: true
-                }, { status: 400 })
-            }
-            updateData.prixAchatDetail = v
-        }
-        if (prixVenteDetail !== undefined && prixVenteDetail !== "") {
-            const v = Number(prixVenteDetail)
-            if (isNaN(v) || v <= 0) {
-                await mongoSession.abortTransaction()
-                mongoSession.endSession()
-                return NextResponse.json({
-                    message: "Le prix de vente détail doit être un nombre positif.",
-                    success: false,
-                    error: true
-                }, { status: 400 })
-            }
-            updateData.prixVenteDetail = v
+            updateData.prixVente = v
         }
   
         if (QteInitial !== undefined && QteInitial !== "") {
@@ -209,6 +181,7 @@ export const PUT = withAuth(async (req, { params }) => {
             }
             updateData.QteInitial = v
         }
+
         if (QteStock !== undefined && QteStock !== "") {
             const v = Number(QteStock)
             if (isNaN(v) || v < 0) {
@@ -222,6 +195,7 @@ export const PUT = withAuth(async (req, { params }) => {
             }
             updateData.QteStock = v
         }
+
         if (QteAlerte !== undefined && QteAlerte !== "") {
             const v = Number(QteAlerte)
             if (isNaN(v) || v < 0) {
@@ -240,6 +214,7 @@ export const PUT = withAuth(async (req, { params }) => {
             const t = reference.trim()
             if (t) updateData.reference = t
         }
+
         if (typeof description === "string") {
             const t = description.trim()
             if (t) updateData.description = t

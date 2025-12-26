@@ -3,10 +3,8 @@ import mongoose from "mongoose";
 const productSchema = new mongoose.Schema({
     business: { type: mongoose.Schema.Types.ObjectId, ref: "Business", required: true },
     nom: { type: String, required: true },
-    prixAchatEnGros: { type: Number, required: true },
-    prixVenteEnGros: { type: Number, required: true },
-    prixAchatDetail: { type: Number, required: false },
-    prixVenteDetail: { type: Number, required: false },
+    prixAchat: { type: Number, required: true }, // ✅ Renommé (était prixAchatEnGros)
+    prixVente: { type: Number, required: true }, // ✅ Renommé (était prixVenteEnGros)
     QteInitial: { type: Number, required: true, default: 0 },
     QteStock: { type: Number, required: true, default: 0 },
     QteAlerte: { type: Number, required: true, default: 0 },

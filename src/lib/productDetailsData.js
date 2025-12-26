@@ -89,7 +89,7 @@ export const getTotalDepense = async (productId, businessId) => {
 export const getTotalAttendu = (product) => {
   if (!product) return 0
   
-  const prixVente = product.prixVenteDetail || product.prixVenteEnGros
+  const prixVente = product.prixVente // ✅ Renommé
   return product.QteInitial * prixVente
 }
 

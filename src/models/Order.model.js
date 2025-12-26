@@ -21,6 +21,7 @@ const orderItemSchema = new mongoose.Schema({
         type: Number,
         default: null // null tant que pas reçu
     },
+    // ❌ purchaseType supprimé
     receivedQuantity: {
         type: Number,
         default: 0,

@@ -18,10 +18,8 @@ export const POST = withAuth(async (req) => {
 
     const {
       nom,
-      prixAchatEnGros,
-      prixVenteEnGros,
-      prixAchatDetail,
-      prixVenteDetail,
+      prixAchat, // ✅ Renommé
+      prixVente, // ✅ Renommé
       QteInitial,
       QteStock,
       QteAlerte,
@@ -49,8 +47,8 @@ export const POST = withAuth(async (req) => {
 
     if (
       !nom ||
-      prixAchatEnGros === undefined ||
-      prixVenteEnGros === undefined ||
+      prixAchat === undefined ||
+      prixVente === undefined ||
       QteInitial === undefined ||
       QteStock === undefined ||
       QteAlerte === undefined ||
@@ -71,51 +69,25 @@ export const POST = withAuth(async (req) => {
 
     const businessObjectId = new mongoose.Types.ObjectId(businessId);
 
-    const parsedAchatEnGros = Number(prixAchatEnGros);
-    const parsedVenteEnGros = Number(prixVenteEnGros);
-    const parsedAchatDetail = prixAchatDetail
-      ? Number(prixAchatDetail)
-      : undefined;
-    const parsedVenteDetail = prixVenteDetail
-      ? Number(prixVenteDetail)
-      : undefined;
+    const parsedAchat = Number(prixAchat);
+    const parsedVente = Number(prixVente);
     const parsedQteInitial = Number(QteInitial);
-    const parsedQteStock =
-      QteStock !== undefined ? Number(QteStock) : parsedQteInitial;
+    const parsedQteStock = QteStock !== undefined ? Number(QteStock) : parsedQteInitial;
     const parsedQteAlerte = Number(QteAlerte);
 
     const statut = parsedQteStock > 0 ? "En stock" : "En rupture";
 
     if (
-      isNaN(parsedAchatEnGros) ||
-      parsedAchatEnGros <= 0 ||
-      isNaN(parsedVenteEnGros) ||
-      parsedVenteEnGros <= 0
+      isNaN(parsedAchat) ||
+      parsedAchat <= 0 ||
+      isNaN(parsedVente) ||
+      parsedVente <= 0
     ) {
       await mongoSession.abortTransaction();
       mongoSession.endSession();
       return NextResponse.json(
         {
-          message:
-            "Les prix d'achat et de vente en gros doivent être des nombres positifs.",
-          success: false,
-          error: true,
-        },
-        { status: 400 }
-      );
-    }
-
-    if (
-      (prixAchatDetail &&
-        (isNaN(parsedAchatDetail) || parsedAchatDetail <= 0)) ||
-      (prixVenteDetail && (isNaN(parsedVenteDetail) || parsedVenteDetail <= 0))
-    ) {
-      await mongoSession.abortTransaction();
-      mongoSession.endSession();
-      return NextResponse.json(
-        {
-          message:
-            "Les prix d'achat et de vente en détail doivent être des nombres positifs.",
+          message: "Les prix d'achat et de vente doivent être des nombres positifs.",
           success: false,
           error: true,
         },
@@ -135,8 +107,7 @@ export const POST = withAuth(async (req) => {
       mongoSession.endSession();
       return NextResponse.json(
         {
-          message:
-            "Les quantités doivent être des nombres entiers positifs ou nuls.",
+          message: "Les quantités doivent être des nombres entiers positifs ou nuls.",
           success: false,
           error: true,
         },
@@ -203,10 +174,8 @@ export const POST = withAuth(async (req) => {
 
     const data = {
       nom,
-      prixAchatEnGros: parsedAchatEnGros,
-      prixVenteEnGros: parsedVenteEnGros,
-      prixAchatDetail: parsedAchatDetail,
-      prixVenteDetail: parsedVenteDetail,
+      prixAchat: parsedAchat, // ✅ Renommé
+      prixVente: parsedVente, // ✅ Renommé
       QteInitial: parsedQteInitial,
       QteStock: parsedQteStock,
       QteAlerte: parsedQteAlerte,
@@ -235,10 +204,9 @@ export const POST = withAuth(async (req) => {
 
     const [rep] = await Product.create([data], { session: mongoSession });
 
-    // ✅ NOUVEAU - Créer l'historique d'achat initial
-    if (parsedQteInitial > 0 && parsedAchatEnGros > 0) {
-      const PurchaseHistory = (await import("@/models/PurchaseHistory.model"))
-        .default;
+    // ✅ Créer l'historique d'achat initial
+    if (parsedQteInitial > 0 && parsedAchat > 0) {
+      const PurchaseHistory = (await import("@/models/PurchaseHistory.model")).default;
 
       await PurchaseHistory.create(
         [
@@ -246,12 +214,10 @@ export const POST = withAuth(async (req) => {
             business: businessObjectId,
             product: rep._id,
             order: null, // Pas de commande associée (stock initial)
-            supplier: supplier_id
-              ? new mongoose.Types.ObjectId(supplier_id)
-              : null,
+            supplier: supplier_id ? new mongoose.Types.ObjectId(supplier_id) : null,
             quantity: parsedQteInitial,
-            unitPrice: parsedAchatEnGros,
-            totalCost: parsedQteInitial * parsedAchatEnGros,
+            unitPrice: parsedAchat,
+            totalCost: parsedQteInitial * parsedAchat,
             receivedDate: new Date(),
             receivedBy: userId,
             notes: "Stock initial",

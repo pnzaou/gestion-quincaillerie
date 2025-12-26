@@ -10,6 +10,7 @@ const SaleSchema = new mongoose.Schema(
         product: { type: mongoose.Schema.Types.ObjectId, ref: "Product", required: true },
         quantity: { type: Number, required: true },
         price: { type: Number, required: true },
+        // ❌ saleType supprimé
       }
     ],
     dateExacte: { type: Date, required: true },
@@ -28,11 +29,10 @@ SaleSchema.index({ reference: 1, business: 1 }, { unique: true })
 // Index de performance
 SaleSchema.index({ status: 1 })
 SaleSchema.index({ dateExacte: 1 })
-SaleSchema.index({ paymentMethod: 1 })
 SaleSchema.index({ vendeur: 1 })
 SaleSchema.index({ client: 1 })
 SaleSchema.index({ vendeur: 1, dateExacte: 1 })
-SaleSchema.index({ business: 1, dateExacte: 1 }) // Pour les requêtes du dashboard
+SaleSchema.index({ business: 1, dateExacte: 1 })
 
 const Sale = mongoose.models.Sale || mongoose.model("Sale", SaleSchema)
 export default Sale

@@ -38,10 +38,8 @@ export const GET = withAuth(async (req) => {
         
         const rows = articles.map((article) => ({
             Nom: article.nom,
-            PrixAchatEnGros: article.prixAchatEnGros,
-            PrixVenteEnGros: article.prixVenteEnGros,
-            PrixAchatDetail: article.prixAchatDetail || "",
-            PrixVenteDetail: article.prixVenteDetail || "",
+            PrixAchat: article.prixAchat, // ✅ Renommé
+            PrixVente: article.prixVente, // ✅ Renommé
             QteInitial: article.QteInitial,
             QteStock: article.QteStock,
             QteAlerte: article.QteAlerte,

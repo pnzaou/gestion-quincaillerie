@@ -62,17 +62,15 @@ export const POST = withAuthAndRole(async (req) => {
         for (const rawRow of rawRows) {
             const mapped = mapRowData(rawRow, productAliasMapping)
             const nom = mapped.nom?.trim()
-            const prixAchatEnGros = mapped.prixAchatEnGros
-            const prixVenteEnGros = mapped.prixVenteEnGros
-            const prixAchatDetail = mapped.prixAchatDetail || 0
-            const prixVenteDetail = mapped.prixVenteDetail || 0
+            const prixAchat = mapped.prixAchat || mapped.prixAchatEnGros // ✅ Support ancien format
+            const prixVente = mapped.prixVente || mapped.prixVenteEnGros // ✅ Support ancien format
             const QteInitial = mapped.QteInitial || 0
             const QteStock = mapped.QteStock || 0
             const QteAlerte = mapped.QteAlerte || 0
             const reference = mapped.reference?.trim() || ""
             const description = mapped.description?.trim() || ""
 
-            if (!nom || prixAchatEnGros === undefined || prixVenteEnGros === undefined || QteInitial === undefined || QteStock === undefined || QteAlerte === undefined) continue
+            if (!nom || prixAchat === undefined || prixVente === undefined || QteInitial === undefined || QteStock === undefined || QteAlerte === undefined) continue
 
             // Vérifier si existe dans CETTE boutique
             const existingProd = await Product.findOne({ 
@@ -89,10 +87,8 @@ export const POST = withAuthAndRole(async (req) => {
 
             const [newProd] = await Product.create([{ 
                 nom,
-                prixAchatEnGros,
-                prixVenteEnGros,
-                prixAchatDetail,
-                prixVenteDetail,
+                prixAchat, // ✅ Renommé
+                prixVente, // ✅ Renommé
                 QteInitial,
                 QteStock,
                 QteAlerte,
