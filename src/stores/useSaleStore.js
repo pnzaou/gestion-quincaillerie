@@ -9,11 +9,9 @@ export const useSaleStore = create((set, get) => ({
   shopId: null,
   setShopId: (id) => set({ shopId: id }),
 
-  //gestion de la date de vente
   saleDate: new Date(),
   setSaleDate: (newDate) => set({ saleDate: newDate }),
 
-  //gestion des clients provenants de la bd pour les afficher dans le combobox client
   clientsData: [],
   getClientsData: async () => {
     const shopId = get().shopId;
@@ -40,15 +38,12 @@ export const useSaleStore = create((set, get) => ({
     }
   },
 
-  //gestion des informations du client à envoyer lors de la soumission de la commande
   client: null,
   setClient: (client) => set({ client }),
 
-  //gestion du popup d'ajout d'un nouveau client
   newClientDrawerOpen: false,
   setNewClientDrawerOpen: (isOpen) => set({ newClientDrawerOpen: isOpen }),
 
-  //gestion du formulaire d'ajout d'un nouveau client
   newClient: {
     nomComplet: "",
     tel: "",
@@ -66,11 +61,9 @@ export const useSaleStore = create((set, get) => ({
     });
   },
 
-  //gestion du combobox de selection d'un client
   selectClientOpen: false,
   setSelectClientOpen: (isOpen) => set({ selectClientOpen: isOpen }),
 
-  //suppression du client selectionné
   handleDeleteSelectedClient: () => {
     set({
       client: null,
@@ -83,13 +76,11 @@ export const useSaleStore = create((set, get) => ({
     });
   },
 
-  //gestion du panier de vente
   panierDrawerOpen: false,
   setPanierDrawerOpen: (isOpen) => set({ panierDrawerOpen: isOpen }),
 
   cart: [],
   
-  // ✅ SIMPLIFIÉ - Sans saleType
   addToCart: (item, localStocks, setLocalStocks) => {
     const currentStock = localStocks[item._id] ?? item.QteStock;
 
@@ -123,7 +114,6 @@ export const useSaleStore = create((set, get) => ({
     }));
   },
   
-  // ✅ SIMPLIFIÉ - Sans saleType
   removeFromCart: (itemId, setLocalStocks) => {
     const cart = get().cart;
     const item = cart.find((i) => i._id === itemId);
@@ -149,32 +139,73 @@ export const useSaleStore = create((set, get) => ({
     }));
   },
 
-  //gestion remise
+  // ✅ NOUVEAU - Mise à jour directe de la quantité
+  updateCartQuantity: (item, newQuantity, localStocks, setLocalStocks) => {
+    const cart = get().cart;
+    const existingItem = cart.find((i) => i._id === item._id);
+    const oldQuantity = existingItem?.quantity || 0;
+    const quantityDiff = newQuantity - oldQuantity;
+
+    if (newQuantity === 0) {
+      // Retirer complètement du panier
+      set((state) => ({
+        ...state,
+        cart: state.cart.filter((i) => i._id !== item._id),
+      }));
+
+      setLocalStocks((prev) => ({
+        ...prev,
+        [item._id]: prev[item._id] + oldQuantity,
+      }));
+      return;
+    }
+
+    if (existingItem) {
+      // Mettre à jour la quantité
+      set((state) => ({
+        ...state,
+        cart: state.cart.map((i) =>
+          i._id === item._id
+            ? { ...i, quantity: newQuantity }
+            : i
+        ),
+      }));
+    } else {
+      // Ajouter au panier
+      set((state) => ({
+        ...state,
+        cart: [...state.cart, { ...item, quantity: newQuantity }],
+      }));
+    }
+
+    // Ajuster le stock local
+    setLocalStocks((prev) => ({
+      ...prev,
+      [item._id]: prev[item._id] - quantityDiff,
+    }));
+  },
+
   discount: 0,
   setDiscount: (newDiscount) => set({ discount: newDiscount }),
 
-  //gestion statut vente
   saleStatus: "",
   setSaleStatus: (newStatus) => set({ saleStatus: newStatus }),
 
-  //gestion du total
   total: () => {
     const cart = get().cart;
     const discount = get().discount;
     return (
       cart.reduce((sum, item) => {
-        const prix = item.prixVente; // ✅ Simplifié
+        const prix = item.prixVente;
         return sum + prix * item.quantity;
       }, 0) *
       (1 - discount / 100)
     );
   },
 
-  //montant payé
   amountPaid: 0,
   setAmountPaid: (newAmount) => set({ amountPaid: newAmount }),
 
-  //méthode de paiement
   payementMethod: "",
   setPayementMethod: (newMethod) => set({ payementMethod: newMethod }),
 
@@ -208,7 +239,6 @@ export const useSaleStore = create((set, get) => ({
     return payments.reduce((s, p) => s + Number(p.amount || 0), 0);
   },
 
-  //creation de la vente
   createSale: async () => {
     set({ loading: true });
     const {
@@ -236,7 +266,7 @@ export const useSaleStore = create((set, get) => ({
         items: cart.map((item) => ({
           product: item._id,
           quantity: item.quantity,
-          price: item.prixVente // ✅ Simplifié
+          price: item.prixVente
         })),
         dateExacte: saleDate,
         remise: discount,
