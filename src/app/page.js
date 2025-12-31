@@ -6,6 +6,8 @@ import { redirect } from "next/navigation";
 export default async function Page() {
   const session = await getServerSession(authOptions)
 
+  console.log(session?.user)
+
   if (session) {
     switch (session?.user?.role) {
       case "admin":
@@ -15,7 +17,7 @@ export default async function Page() {
         redirect("/shop");
         break;
       case "gerant":
-        redirect("/dashboard");
+        redirect(`/shop/${session?.user?.business}/dashboard`);
         break;
       default:
         redirect("/");
