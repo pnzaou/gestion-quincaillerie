@@ -9,13 +9,14 @@ import OrderSupplierSelector from "./Order-supplier-selector";
 import SearchLoader from "./Search-loader";
 import { Card, CardContent, CardTitle } from "../ui/card";
 import { Badge } from "../ui/badge";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
-import { Minus, Plus } from "lucide-react";
+import { Minus, Plus, Package } from "lucide-react";
 import { useOrderStore } from "@/stores/useOrderStore";
 import PanierCommande from "./Panier-commande";
+import toast from "react-hot-toast";
 
-const DEFAULT_IMAGE = "/360_F_517535712_q7f9QC9X6TQxWi6xYZZbMmw5cnLMr279.jpg";
 const tabSize = [8, 12, 32, 64, 100];
 
 const ArticlesListCommande = ({
@@ -30,8 +31,8 @@ const ArticlesListCommande = ({
   const cart = useOrderStore((state) => state.cart);
   const addToCart = useOrderStore((state) => state.addToCart);
   const removeFromCart = useOrderStore((state) => state.removeFromCart);
+  const updateCartQuantity = useOrderStore((state) => state.updateCartQuantity);
 
-  // ✅ Initialiser shopId dans le store
   useEffect(() => {
     if (shopId) {
       setShopId(shopId);
@@ -52,13 +53,19 @@ const ArticlesListCommande = ({
     totalPages,
   } = useArticles(initialArt, initialTotalPages, currentPage, search, 8);
 
-  // ✅ Trier les articles par stock (les plus faibles en premier)
   const sortedArticles = [...articles].sort((a, b) => a.QteStock - b.QteStock);
+
+  const handleQuantityChange = (article, newQuantity) => {
+    const qty = parseInt(newQuantity) || 0;
+    
+    if (qty < 0) return;
+
+    updateCartQuantity(article, qty);
+  };
 
   return (
     <>
       <div className="space-y-4">
-        {/* Barre d'actions fixe responsive */}
         <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-gray-100 py-3">
           <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6">
             <div className="flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-6">
@@ -89,22 +96,23 @@ const ArticlesListCommande = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {sortedArticles.map((article) => {
               const inCart = cart.find((i) => i._id === article._id);
-              const src = article.image || DEFAULT_IMAGE;
 
               return (
                 <Card
                   key={article._id}
                   className="p-3 hover:shadow-lg transition-shadow duration-150"
                 >
-                  <div className="overflow-hidden rounded">
-                    <img
-                      src={src}
-                      alt={article.nom}
-                      className="w-full h-40 sm:h-44 md:h-36 lg:h-40 object-cover rounded"
-                      onError={(e) => {
-                        e.currentTarget.src = DEFAULT_IMAGE;
-                      }}
-                    />
+                  {/* ✅ Image ou icône Package */}
+                  <div className="overflow-hidden rounded bg-muted flex items-center justify-center h-40 sm:h-44 md:h-36 lg:h-40">
+                    {article.image ? (
+                      <img
+                        src={article.image}
+                        alt={article.nom}
+                        className="w-full h-full object-cover rounded"
+                      />
+                    ) : (
+                      <Package className="w-16 h-16 text-muted-foreground" />
+                    )}
                   </div>
 
                   <CardTitle className="mt-3 text-sm sm:text-base truncate">
@@ -112,7 +120,6 @@ const ArticlesListCommande = ({
                   </CardTitle>
 
                   <CardContent className="flex flex-col space-y-3 mt-2">
-                    {/* ✅ Prix simplifié */}
                     <div className="text-center">
                       <span className="text-lg text-black font-semibold">
                         {article.prixAchat} fcfa
@@ -134,28 +141,31 @@ const ArticlesListCommande = ({
                       </Badge>
                     </div>
 
-                    {/* ✅ Boutons simplifiés */}
-                    <div className="flex items-center justify-between w-full mt-2">
+                    <div className="flex items-center justify-between w-full mt-2 gap-2">
                       <Button
                         size="icon"
                         variant="ghost"
                         onClick={() => removeFromCart(article._id)}
                         disabled={!inCart}
-                        className="border rounded-full w-9 h-9 text-red-600 hover:bg-red-50"
+                        className="border rounded-full w-9 h-9 text-red-600 hover:bg-red-50 flex-shrink-0"
                         aria-label={`Retirer ${article.nom}`}
                       >
                         <Minus className="w-4 h-4" />
                       </Button>
 
-                      <div className="text-center text-sm font-semibold px-3 py-1 border rounded bg-gray-50 min-w-[36px]">
-                        {inCart?.quantity ?? 0}
-                      </div>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={inCart?.quantity ?? 0}
+                        onChange={(e) => handleQuantityChange(article, e.target.value)}
+                        className="text-center h-9 w-16 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      />
 
                       <Button
                         size="icon"
                         variant="ghost"
                         onClick={() => addToCart(article)}
-                        className="border rounded-full w-9 h-9 text-green-600 hover:bg-green-50"
+                        className="border rounded-full w-9 h-9 text-green-600 hover:bg-green-50 flex-shrink-0"
                         aria-label={`Ajouter ${article.nom}`}
                       >
                         <Plus className="w-4 h-4" />
