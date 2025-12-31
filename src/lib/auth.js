@@ -43,7 +43,8 @@ const authOptions = {
                     id: user._id.toString(),
                     name: `${user.prenom} ${user.nom}`, //name est ajouté automatiquement dans la session et le token
                     email: user.email, //email aussi est ajouté automatiquement dans la session et le token
-                    role: user.role 
+                    role: user.role,
+                    business: user.business?.toString() || null
                 }
             }
         })
@@ -56,8 +57,9 @@ const authOptions = {
     callbacks: {
         async jwt({ token, user }) { //Ajouter des data au token id et role qui ne sont pas enregistré automatiquement dans le token
             if(user) {
-                token.id = user.id
-                token.role = user.role
+                token.id = user.id;
+                token.role = user.role;
+                token.business = user.business;
             }
             return token
         },
@@ -65,6 +67,7 @@ const authOptions = {
             if (session?.user) {
                 session.user.id = token.id;
                 session.user.role = token.role;
+                session.user.business = token.business;
             }
             return session
         }
