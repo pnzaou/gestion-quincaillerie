@@ -10,19 +10,15 @@ export const useOrderStore = create((set, get) => ({
   selectSupplierOpen: false,
   setSelectSupplierOpen: (isOpen) => set({ selectSupplierOpen: isOpen }),
 
-  // Gestion de la date de commande
   orderDate: new Date(),
   setOrderDate: (newDate) => set({ orderDate: newDate }),
 
-  // Date de livraison attendue
   expectedDelivery: null,
   setExpectedDelivery: (date) => set({ expectedDelivery: date }),
 
-  // Gestion du fournisseur
   supplier: null,
   setSupplier: (supplier) => set({ supplier }),
 
-  // Gestion des fournisseurs disponibles
   suppliersData: [],
   getSuppliersData: async () => {
     const shopId = get().shopId;
@@ -49,10 +45,8 @@ export const useOrderStore = create((set, get) => ({
     }
   },
 
-  // Gestion du panier de commande
   cart: [],
   
-  // ✅ SIMPLIFIÉ - Sans purchaseType
   addToCart: (item) => {
     set((state) => {
       const exists = state.cart.find((i) => i._id === item._id);
@@ -75,7 +69,6 @@ export const useOrderStore = create((set, get) => ({
     });
   },
 
-  // ✅ SIMPLIFIÉ - Sans purchaseType
   removeFromCart: (itemId) => {
     set((state) => ({
       ...state,
@@ -89,22 +82,52 @@ export const useOrderStore = create((set, get) => ({
     }));
   },
 
+  // ✅ NOUVEAU - Mise à jour directe de la quantité
+  updateCartQuantity: (item, newQuantity) => {
+    const cart = get().cart;
+    const existingItem = cart.find((i) => i._id === item._id);
+
+    if (newQuantity === 0) {
+      // Retirer complètement du panier
+      set((state) => ({
+        ...state,
+        cart: state.cart.filter((i) => i._id !== item._id),
+      }));
+      return;
+    }
+
+    if (existingItem) {
+      // Mettre à jour la quantité
+      set((state) => ({
+        ...state,
+        cart: state.cart.map((i) =>
+          i._id === item._id
+            ? { ...i, quantity: newQuantity }
+            : i
+        ),
+      }));
+    } else {
+      // Ajouter au panier
+      set((state) => ({
+        ...state,
+        cart: [...state.cart, { ...item, quantity: newQuantity }],
+      }));
+    }
+  },
+
   clearCart: () => set({ cart: [] }),
 
-  // Gestion des notes
   notes: "",
   setNotes: (notes) => set({ notes }),
 
-  // Calcul du total
   total: () => {
     const cart = get().cart;
     return cart.reduce((sum, item) => {
-      const prix = item.prixAchat; // ✅ Simplifié
+      const prix = item.prixAchat;
       return sum + prix * item.quantity;
     }, 0);
   },
 
-  // Création de la commande
   createOrder: async () => {
     set({ loading: true });
     const {
@@ -136,7 +159,7 @@ export const useOrderStore = create((set, get) => ({
         items: cart.map((item) => ({
           product: item._id,
           quantity: item.quantity,
-          price: item.prixAchat // ✅ Simplifié
+          price: item.prixAchat
         })),
         orderDate,
         expectedDelivery,
