@@ -60,7 +60,7 @@ export function LoginForm({className, ...props}) {
           router.push("/shop")
           break
         case "gerant":
-          router.push("/dashboard")
+          router.push(`/shop/${session?.user?.business}/dashboard`)
           break
         default:
           router.push("/")
