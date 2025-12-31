@@ -2,12 +2,33 @@ import React from "react";
 import { Plus, Minus, ShoppingCart } from "lucide-react";
 import { useSaleStore } from "@/stores/useSaleStore";
 import { Button } from "../ui/button";
+import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import toast from "react-hot-toast";
 
 const ListeArticlesPanier = ({ localStocks, setLocalStocks }) => {
   const addToCart = useSaleStore((state) => state.addToCart);
   const removeFromCart = useSaleStore((state) => state.removeFromCart);
+  const updateCartQuantity = useSaleStore((state) => state.updateCartQuantity);
   const cart = useSaleStore((state) => state.cart);
+
+  // ✅ Gestion de la saisie directe de quantité
+  const handleQuantityChange = (item, newQuantity) => {
+    const qty = parseInt(newQuantity) || 0;
+    const maxStock = localStocks[item._id] ?? item.QteStock;
+    const currentCartQty = item.quantity || 0;
+    
+    // Quantité disponible = stock actuel + quantité déjà dans le panier
+    const availableStock = maxStock + currentCartQty;
+    
+    if (qty < 0) return;
+    if (qty > availableStock) {
+      toast.error(`Stock insuffisant. Maximum: ${availableStock}`);
+      return;
+    }
+
+    updateCartQuantity(item, qty, localStocks, setLocalStocks);
+  };
 
   return (
     <ScrollArea className="h-[400px] pr-4">
@@ -26,24 +47,34 @@ const ListeArticlesPanier = ({ localStocks, setLocalStocks }) => {
             <div className="flex-1 pr-4 min-w-0">
               <div className="font-medium truncate">{item.nom}</div>
               <div className="text-sm text-muted-foreground">
-                {(item.prixVenteDetail || item.prixVenteEnGros)} FCFA
+                {item.prixVente} FCFA
               </div>
             </div>
+            
+            {/* ✅ Contrôles de quantité avec input */}
             <div className="flex items-center gap-2">
               <Button
                 size="icon"
                 variant="ghost"
                 onClick={() => removeFromCart(item._id, setLocalStocks)}
-                className="border rounded-full w-8 h-8 hover:bg-red-50"
+                className="border rounded-full w-8 h-8 hover:bg-red-50 flex-shrink-0"
               >
                 <Minus className="h-4 w-4" />
               </Button>
-              <div className="w-8 text-center font-semibold">{item.quantity}</div>
+              
+              <Input
+                type="number"
+                min="0"
+                value={item.quantity}
+                onChange={(e) => handleQuantityChange(item, e.target.value)}
+                className="text-center h-8 w-14 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              />
+              
               <Button
                 size="icon"
                 variant="ghost"
                 onClick={() => addToCart(item, localStocks, setLocalStocks)}
-                className="border rounded-full w-8 h-8 hover:bg-green-50"
+                className="border rounded-full w-8 h-8 hover:bg-green-50 flex-shrink-0"
               >
                 <Plus className="h-4 w-4" />
               </Button>
