@@ -149,10 +149,13 @@ export const withAuth = (handler, options = {}) => {
     }
 
     // 4. Appeler le handler avec la session
-    if (args.length === 1) {
-      return handler(req, session);
-    } else {
+    // ✅ FIX : Vérifier si context a des params pour déterminer le type de route
+    if (context && context.params) {
+      // Routes avec params dynamiques ([id], [shopId], etc.)
       return handler(req, context, session);
+    } else {
+      // Routes simples (GET, POST sans params)
+      return handler(req, session);
     }
   };
 };
