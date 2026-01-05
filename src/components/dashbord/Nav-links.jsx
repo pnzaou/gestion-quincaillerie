@@ -15,12 +15,12 @@ const NavLinks = ({ session, shopId }) => {
     setOpenDropdown(openDropdown === name ? null : name)
   }
 
-  const links = getLinks(shopId)
-  const filteredLinks = links.filter(link => link.roles.includes(role))
+  // ✅ NOUVEAU : getLinks filtre automatiquement selon le rôle
+  const links = getLinks(shopId, role)
 
   return (
     <div className="space-y-1">
-      {filteredLinks.map((link) => {
+      {links.map((link) => {
         const LinkIcon = link.icon
         const isActive = pathName === link.href || link.subLinks.some(sub => pathName === sub.href)
 
