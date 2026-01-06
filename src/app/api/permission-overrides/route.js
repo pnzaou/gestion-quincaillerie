@@ -102,9 +102,7 @@ export const POST = withAuth(
     }
   },
   {
-    resource: RESOURCES.USERS,
-    action: ACTIONS.UPDATE,
-    checkOverrides: false, // Ne pas vérifier les overrides pour cette route
+    roles: ["admin"]
   }
 );
 
@@ -171,9 +169,7 @@ export const GET = withAuth(
     }
   },
   {
-    resource: RESOURCES.USERS,
-    action: ACTIONS.READ,
-    checkOverrides: false,
+    roles: ["admin"]
   }
 );
 
@@ -226,8 +222,6 @@ export const DELETE = withAuth(
     }
   },
   {
-    resource: RESOURCES.USERS,
-    action: ACTIONS.DELETE,
-    checkOverrides: false,
+    roles: ["admin"]
   }
 );
