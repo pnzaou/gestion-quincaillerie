@@ -1,63 +1,90 @@
-import authOptions from "@/lib/auth"
-import dbConnection from "@/lib/db"
-import Sale from "@/models/Sale.model"
-import { withAuth } from "@/utils/withAuth"
-import { getServerSession } from "next-auth"
-import { NextResponse } from "next/server"
-import Client from "@/models/Client.model"
-import User from "@/models/User.model"
-import { validateSalePayload } from "@/dtos/sale.dto"
-import { createSale } from "@/services/sale.service"
-import { HttpError } from "@/services/errors.service"
-import mongoose from "mongoose"
+import dbConnection from "@/lib/db";
+import Sale from "@/models/Sale.model";
+import { withAuth } from "@/utils/withAuth"; // ✅ Déjà bon
+import { RESOURCES, ACTIONS } from "@/lib/permissions"; // ✅ Nouveau
+import { NextResponse } from "next/server";
+import Client from "@/models/Client.model";
+import User from "@/models/User.model";
+import { validateSalePayload } from "@/dtos/sale.dto";
+import { createSale } from "@/services/sale.service";
+import { HttpError } from "@/services/errors.service";
+import mongoose from "mongoose";
 
-export const POST = withAuth(async (req) => {
+// ============================================
+// POST - Créer une vente
+// ============================================
+export const POST = withAuth(
+  async (req, session) => { // ✅ session en paramètre
     await dbConnection();
     const raw = await req.json();
 
     // ✅ Vérifier businessId avant validation
     if (!raw.businessId) {
-        return NextResponse.json({
-            message: "ID de la boutique manquant.",
-            success: false,
-            error: true
-        }, { status: 400 });
+      return NextResponse.json(
+        {
+          message: "ID de la boutique manquant.",
+          success: false,
+          error: true,
+        },
+        { status: 400 }
+      );
     }
 
     const { valid, errors, payload } = validateSalePayload(raw);
     if (!valid) {
-        return NextResponse.json({
-            message: "Données invalides",
-            errors,
-            success: false,
-            error: true,
-        }, { status: 400 });
+      return NextResponse.json(
+        {
+          message: "Données invalides",
+          errors,
+          success: false,
+          error: true,
+        },
+        { status: 400 }
+      );
     }
 
-    const session = await getServerSession(authOptions);
+    // ✅ Plus besoin de getServerSession
     try {
-        const sale = await createSale({ payload, user: session?.user });
-        return NextResponse.json({
-            message: "Vente enregistrée avec succès.",
-            success: true,
-            error: false,
-            data: sale
-        }, { status: 201 });
-
+      const sale = await createSale({ payload, user: session.user });
+      return NextResponse.json(
+        {
+          message: "Vente enregistrée avec succès.",
+          success: true,
+          error: false,
+          data: sale,
+        },
+        { status: 201 }
+      );
     } catch (err) {
-        console.error("Erreur route POST /sales :", err);
-        if (err instanceof HttpError || (err.status && err.message)) {
-            return NextResponse.json({ message: err.message, success: false, error: true }, { status: err.status || 400 });
-        }
-        return NextResponse.json({ message: "Erreur! Veuillez réessayer.", success: false, error: true }, { status: 500 });
+      console.error("Erreur route POST /sales :", err);
+      if (err instanceof HttpError || (err.status && err.message)) {
+        return NextResponse.json(
+          { message: err.message, success: false, error: true },
+          { status: err.status || 400 }
+        );
+      }
+      return NextResponse.json(
+        { message: "Erreur! Veuillez réessayer.", success: false, error: true },
+        { status: 500 }
+      );
     }
-});
+  },
+  {
+    resource: RESOURCES.SALES, // ✅ Flexible (overrides possibles)
+    action: ACTIONS.CREATE,
+  }
+);
 
-export const GET = withAuth(async (req) => {
+// ============================================
+// GET - Liste des ventes
+// ============================================
+export const GET = withAuth(
+  async (req, session) => { // ✅ session en paramètre
     try {
       await dbConnection();
-      const session = await getServerSession(authOptions);
-      const { role, id: userId } = session?.user;
+      
+      // ✅ Plus besoin de getServerSession
+      const { role, id: userId } = session.user;
 
       const { searchParams } = new URL(req.url);
       const page = parseInt(searchParams.get("page") || "1");
@@ -68,11 +95,14 @@ export const GET = withAuth(async (req) => {
 
       // ✅ Vérifier businessId
       if (!businessId) {
-        return NextResponse.json({
-          message: "ID de la boutique manquant.",
-          success: false,
-          error: true
-        }, { status: 400 });
+        return NextResponse.json(
+          {
+            message: "ID de la boutique manquant.",
+            success: false,
+            error: true,
+          },
+          { status: 400 }
+        );
       }
 
       const businessObjectId = new mongoose.Types.ObjectId(businessId);
@@ -106,7 +136,7 @@ export const GET = withAuth(async (req) => {
         // c) Recherche par client (nomComplet) - filtré par business
         const clientIds = await Client.find({
           nomComplet: { $regex: regex },
-          business: businessObjectId
+          business: businessObjectId,
         }).distinct("_id");
         if (clientIds.length) {
           orClauses.push({ client: { $in: clientIds } });
@@ -125,7 +155,7 @@ export const GET = withAuth(async (req) => {
 
       // 3) Construction de la requête finale
       const filter = {
-        business: businessObjectId // ✅ Filtrer par boutique
+        business: businessObjectId, // ✅ Filtrer par boutique
       };
 
       if (orClauses.length) {
@@ -137,7 +167,7 @@ export const GET = withAuth(async (req) => {
         filter.status = { $in: statuses };
       }
 
-      //4) Limitation au vendeur connecté si pas admin
+      // 4) ✅ IMPORTANT : Limitation au vendeur connecté si pas admin
       if (role !== "admin") {
         filter.vendeur = userId;
       }
@@ -187,4 +217,9 @@ export const GET = withAuth(async (req) => {
         { status: 500 }
       );
     }
-});
+  },
+  {
+    resource: RESOURCES.SALES, // ✅ Flexible (overrides possibles)
+    action: ACTIONS.LIST,
+  }
+);
