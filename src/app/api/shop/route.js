@@ -79,7 +79,7 @@ export const POST = withAuth(
     }
   },
   {
-    roles: ["admin", "comptable"],
+    roles: ["admin"],
   }
 );
 

@@ -1,14 +1,18 @@
 import dbConnection from "@/lib/db";
 import BusinessModel from "@/models/Business.model";
-import { withAuthAndRole } from "@/utils/withAuthAndRole";
+import { withAuth } from "@/utils/withAuth"; // ✅ Changé
 import mongoose from "mongoose";
 import { NextResponse } from "next/server";
 
-export const PUT = withAuthAndRole(async( req, { params } ) => {
+// ============================================
+// PUT - Modifier une boutique
+// ============================================
+export const PUT = withAuth(
+  async (req, context, session) => { // ✅ context + session
     try {
       await dbConnection();
 
-      const { id } = await params;
+      const { id } = await context.params; // ✅ Changé
 
       if (!id || !mongoose.Types.ObjectId.isValid(id)) {
         return NextResponse.json(
@@ -99,58 +103,70 @@ export const PUT = withAuthAndRole(async( req, { params } ) => {
         { status: 500 }
       );
     }
-})
-
-export const DELETE = withAuthAndRole(async (req, { params }) => {
-  try {
-    await dbConnection();
-
-    const { id } = await params;
-
-    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json(
-        {
-          message: "Veuillez fournir un ID valide",
-          success: false,
-          error: true,
-        },
-        { status: 400 }
-      );
-    }
-
-    const business = await BusinessModel.findById(id);
-
-    if (!business) {
-      return NextResponse.json(
-        {
-          message: "Boutique introuvable",
-          success: false,
-          error: true,
-        },
-        { status: 404 }
-      );
-    }
-
-    await business.deleteOne();
-
-    return NextResponse.json(
-      {
-        message: "Boutique supprimée avec succès",
-        success: true,
-        error: false,
-      },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error("Erreur lors de la suppression:", error);
-
-    return NextResponse.json(
-      {
-        message: "Une erreur est survenue lors de la suppression.",
-        success: false,
-        error: true,
-      },
-      { status: 500 }
-    );
+  },
+  {
+    roles: ["admin"], // ✅ ADMIN UNIQUEMENT (strict, pas d'overrides)
   }
-})
+);
+
+// ============================================
+// DELETE - Supprimer une boutique
+// ============================================
+export const DELETE = withAuth(
+  async (req, context, session) => { // ✅ context + session
+    try {
+      await dbConnection();
+
+      const { id } = await context.params; // ✅ Changé
+
+      if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+        return NextResponse.json(
+          {
+            message: "Veuillez fournir un ID valide",
+            success: false,
+            error: true,
+          },
+          { status: 400 }
+        );
+      }
+
+      const business = await BusinessModel.findById(id);
+
+      if (!business) {
+        return NextResponse.json(
+          {
+            message: "Boutique introuvable",
+            success: false,
+            error: true,
+          },
+          { status: 404 }
+        );
+      }
+
+      await business.deleteOne();
+
+      return NextResponse.json(
+        {
+          message: "Boutique supprimée avec succès",
+          success: true,
+          error: false,
+        },
+        { status: 200 }
+      );
+    } catch (error) {
+      console.error("Erreur lors de la suppression:", error);
+
+      return NextResponse.json(
+        {
+          message: "Une erreur est survenue lors de la suppression.",
+          success: false,
+          error: true,
+        },
+        { status: 500 }
+      );
+    }
+  },
+  {
+    roles: ["admin"], // ✅ ADMIN UNIQUEMENT (strict, pas d'overrides)
+  }
+);
