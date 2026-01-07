@@ -1,7 +1,7 @@
 "use client";
 
 import { NavLink } from "@/components/nav-link";
-import { Users, Store, History, Menu, X } from "lucide-react";
+import { Users, Store, History, Menu, X, Settings, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
@@ -23,6 +23,12 @@ const navItems = [
     href: "/historique",
     icon: History,
     label: "Historique",
+    roles: ["admin"],
+  },
+  {
+    href: "/reglages",
+    icon: Settings,
+    label: "Réglages",
     roles: ["admin"],
   },
 ];
