@@ -23,12 +23,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -45,7 +39,6 @@ import {
   Eye,
   Pencil,
   Trash2,
-  MoreHorizontal,
   Clock,
   ChevronLeft,
   Users,
@@ -70,42 +63,42 @@ const Page = () => {
   const [overrideFilter, setOverrideFilter] = useState("all");
   const [userToReset, setUserToReset] = useState(null);
   
-  // États pour données API
   const [users, setUsers] = useState([]);
   const [businesses, setBusinesses] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch users et businesses
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         
-        // Fetch users
         const usersRes = await fetch("/api/user?limit=100");
         const usersData = await usersRes.json();
         
-        // Fetch businesses
         const businessRes = await fetch("/api/shop?limit=100");
         const businessData = await businessRes.json();
 
-        // Pour chaque utilisateur non-admin, fetch ses overrides
         const usersWithOverrides = await Promise.all(
           (usersData.data || [])
             .filter(u => u.role !== "admin")
             .map(async (user) => {
               try {
+                const businessId = typeof user.business === 'object' 
+                  ? user.business._id 
+                  : user.business;
+                const businessName = typeof user.business === 'object' 
+                  ? user.business.name 
+                  : '-';
+
                 const overrideRes = await fetch(
-                  `/api/permission-overrides?userId=${user._id}&businessId=${user.business}`
+                  `/api/permission-overrides?userId=${user._id}&businessId=${businessId}`
                 );
                 const overrideData = await overrideRes.json();
                 
-                // Transformer en format attendu
                 const overrides = [];
                 if (overrideData.data) {
                   const { addedPermissions, removedPermissions, expiresAt, reason, createdAt } = overrideData.data;
                   
-                  // Convertir addedPermissions en array d'overrides
                   if (addedPermissions) {
                     Object.entries(addedPermissions).forEach(([resource, actions]) => {
                       actions.forEach(action => {
@@ -121,7 +114,6 @@ const Page = () => {
                     });
                   }
                   
-                  // Convertir removedPermissions en array d'overrides
                   if (removedPermissions) {
                     Object.entries(removedPermissions).forEach(([resource, actions]) => {
                       actions.forEach(action => {
@@ -144,20 +136,27 @@ const Page = () => {
                   lastName: user.nom || '',
                   email: user.email,
                   role: user.role,
-                  businessId: user.business,
-                  businessName: user.businessName || '',
+                  businessId: businessId,
+                  businessName: businessName,
                   avatar: user.avatar || '',
                   overrides,
                 };
               } catch (err) {
+                const businessId = typeof user.business === 'object' 
+                  ? user.business._id 
+                  : user.business;
+                const businessName = typeof user.business === 'object' 
+                  ? user.business.name 
+                  : '-';
+
                 return {
                   id: user._id,
                   firstName: user.prenom || '',
                   lastName: user.nom || '',
                   email: user.email,
                   role: user.role,
-                  businessId: user.business,
-                  businessName: user.businessName || '',
+                  businessId: businessId,
+                  businessName: businessName,
                   avatar: user.avatar || '',
                   overrides: [],
                 };
@@ -178,7 +177,6 @@ const Page = () => {
     fetchData();
   }, []);
 
-  // Helper pour déterminer le type de badge
   const getOverrideBadgeType = (overrides) => {
     if (!overrides || overrides.length === 0) return 'none';
     const hasGrant = overrides.some(o => o.type === 'grant');
@@ -189,23 +187,17 @@ const Page = () => {
     return 'none';
   };
 
-  // Filtrer les utilisateurs
   const filteredUsers = useMemo(() => {
     return users.filter(user => {
-      // Filtre recherche
       const searchLower = searchQuery.toLowerCase();
       const matchesSearch = 
         user.firstName.toLowerCase().includes(searchLower) ||
         user.lastName.toLowerCase().includes(searchLower) ||
         user.email.toLowerCase().includes(searchLower);
 
-      // Filtre rôle
       const matchesRole = roleFilter === "all" || user.role === roleFilter;
-
-      // Filtre boutique
       const matchesBusiness = businessFilter === "all" || user.businessId === businessFilter;
 
-      // Filtre overrides
       const badgeType = getOverrideBadgeType(user.overrides);
       const matchesOverride = 
         overrideFilter === "all" ||
@@ -284,7 +276,6 @@ const Page = () => {
       
       if (res.ok) {
         toast.success(`Permissions de ${userToReset.firstName} ${userToReset.lastName} réinitialisées`);
-        // Recharger les données
         window.location.reload();
       } else {
         toast.error("Erreur lors de la réinitialisation");
@@ -314,56 +305,34 @@ const Page = () => {
   }, [users]);
 
   if (loading) {
-    return (
-      <>
-        <PermissionsListSkeleton />
-      </>
-    );
+    return <PermissionsListSkeleton />;
   }
 
   return (
     <>
       <div className="space-y-6 px-5 md:px-10 py-6">
-        {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => router.push("/reglages")}
-              className="shrink-0"
-            >
+            <Button variant="ghost" size="icon" onClick={() => router.push("/reglages")} className="shrink-0">
               <ChevronLeft className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-                Gestion des permissions
-              </h1>
-              <p className="text-muted-foreground text-sm sm:text-base">
-                Personnalisez les accès de chaque utilisateur
-              </p>
+              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Gestion des permissions</h1>
+              <p className="text-muted-foreground text-sm sm:text-base">Personnalisez les accès de chaque utilisateur</p>
             </div>
           </div>
           <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              onClick={() => router.push("/reglages/permissions/history")}
-              className="gap-2 hover:cursor-pointer"
-            >
+            <Button variant="outline" onClick={() => router.push("/reglages/permissions/history")} className="gap-2">
               <History className="h-4 w-4" />
               <span className="hidden sm:inline">Historique</span>
             </Button>
-            <Button 
-              onClick={() => router.push("/reglages/permissions/edit/new")}
-              className="gap-2 bg-blue-600 hover:cursor-pointer hover:bg-blue-700"
-            >
+            <Button onClick={() => router.push("/reglages/permissions/edit/new")} className="gap-2 bg-blue-600 hover:bg-blue-700">
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">Personnaliser</span>
             </Button>
           </div>
         </div>
 
-        {/* Stats Cards */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Card>
             <CardContent className="flex items-center gap-4 p-4">
@@ -400,18 +369,12 @@ const Page = () => {
           </Card>
         </div>
 
-        {/* Filters */}
         <Card>
           <CardContent className="p-4">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Rechercher un utilisateur..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
+                <Input placeholder="Rechercher un utilisateur..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10" />
               </div>
               <div className="flex flex-wrap gap-2">
                 <Select value={roleFilter} onValueChange={setRoleFilter}>
@@ -431,8 +394,8 @@ const Page = () => {
                     <SelectValue placeholder="Boutique" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Toutes les boutiques</SelectItem>
-                    {businesses.map(b => (
+                    <SelectItem value="all">Tous les utilisateurs</SelectItem>
+                    {businesses.map((b) => (
                       <SelectItem key={b._id} value={b._id}>{b.name}</SelectItem>
                     ))}
                   </SelectContent>
@@ -453,15 +416,11 @@ const Page = () => {
           </CardContent>
         </Card>
 
-        {/* Users Table */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg">
-              Utilisateurs ({filteredUsers.length})
-            </CardTitle>
+            <CardTitle className="text-lg">Utilisateurs ({filteredUsers.length})</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            {/* Desktop Table */}
             <div className="hidden md:block overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -470,7 +429,7 @@ const Page = () => {
                     <TableHead>Rôle</TableHead>
                     <TableHead>Boutique</TableHead>
                     <TableHead>Permissions</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -485,53 +444,45 @@ const Page = () => {
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <p className="font-medium">
-                              {user.firstName} {user.lastName}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              {user.email}
-                            </p>
+                            <p className="font-medium">{user.firstName} {user.lastName}</p>
+                            <p className="text-sm text-muted-foreground">{user.email}</p>
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge className={roleLabels[user.role].color}>
-                          {roleLabels[user.role].label}
-                        </Badge>
+                        <Badge className={roleLabels[user.role].color}>{roleLabels[user.role].label}</Badge>
                       </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {user.businessName || '-'}
-                      </TableCell>
+                      <TableCell className="text-muted-foreground">{user.businessName || "-"}</TableCell>
+                      <TableCell>{getOverrideBadge(user)}</TableCell>
                       <TableCell>
-                        {getOverrideBadge(user)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="h-4 w-4" />
+                        <div className="flex gap-1">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => router.push(`/reglages/permissions/view/${user.id}`)}
+                            className="cursor-pointer"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => router.push(`/reglages/permissions/edit/${user.id}`)}
+                            className="cursor-pointer"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          {user.overrides.length > 0 && (
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              onClick={() => setUserToReset(user)} 
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10 cursor-pointer"
+                            >
+                              <Trash2 className="h-4 w-4" />
                             </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => router.push(`/reglages/permissions/view/${user.id}`)}>
-                              <Eye className="h-4 w-4 mr-2" />
-                              Voir les permissions
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => router.push(`/reglages/permissions/edit/${user.id}`)}>
-                              <Pencil className="h-4 w-4 mr-2" />
-                              Modifier
-                            </DropdownMenuItem>
-                            {user.overrides.length > 0 && (
-                              <DropdownMenuItem 
-                                onClick={() => setUserToReset(user)}
-                                className="text-destructive focus:text-destructive"
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Réinitialiser
-                              </DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -539,77 +490,48 @@ const Page = () => {
               </Table>
             </div>
 
-            {/* Mobile Cards */}
             <div className="md:hidden divide-y">
               {filteredUsers.map((user) => (
                 <div key={user.id} className="p-4 space-y-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={user.avatar} />
-                        <AvatarFallback className="bg-primary/10 text-primary">
-                          {user.firstName[0]}{user.lastName[0]}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium">
-                          {user.firstName} {user.lastName}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {user.email}
-                        </p>
-                      </div>
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={user.avatar} />
+                      <AvatarFallback className="bg-primary/10 text-primary">{user.firstName[0]}{user.lastName[0]}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <p className="font-medium">{user.firstName} {user.lastName}</p>
+                      <p className="text-sm text-muted-foreground">{user.email}</p>
                     </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => router.push(`/reglages/permissions/view/${user.id}`)}>
-                          <Eye className="h-4 w-4 mr-2" />
-                          Voir
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => router.push(`/reglages/permissions/edit/${user.id}`)}>
-                          <Pencil className="h-4 w-4 mr-2" />
-                          Modifier
-                        </DropdownMenuItem>
-                        {user.overrides.length > 0 && (
-                          <DropdownMenuItem 
-                            onClick={() => setUserToReset(user)}
-                            className="text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Réinitialiser
-                          </DropdownMenuItem>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge className={roleLabels[user.role].color}>
-                      {roleLabels[user.role].label}
-                    </Badge>
-                    {user.businessName && (
-                      <Badge variant="outline">{user.businessName}</Badge>
-                    )}
+                    <Badge className={roleLabels[user.role].color}>{roleLabels[user.role].label}</Badge>
+                    {user.businessName && <Badge variant="outline">{user.businessName}</Badge>}
                     {getOverrideBadge(user)}
+                  </div>
+                  <div className="flex gap-2 justify-end">
+                    <Button variant="outline" size="icon" onClick={() => router.push(`/reglages/permissions/view/${user.id}`)}>
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button variant="outline" size="icon" onClick={() => router.push(`/reglages/permissions/edit/${user.id}`)}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    {user.overrides.length > 0 && (
+                      <Button variant="outline" size="icon" onClick={() => setUserToReset(user)} className="text-destructive border-destructive/30 hover:bg-destructive/10">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
 
             {filteredUsers.length === 0 && (
-              <div className="p-8 text-center text-muted-foreground">
-                Aucun utilisateur trouvé
-              </div>
+              <div className="p-8 text-center text-muted-foreground">Aucun utilisateur trouvé</div>
             )}
           </CardContent>
         </Card>
       </div>
 
-      {/* Reset Confirmation Dialog */}
       <AlertDialog open={!!userToReset} onOpenChange={() => setUserToReset(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
