@@ -1,44 +1,47 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import toast from "react-hot-toast";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Separator } from "@/components/ui/separator";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
+  ChevronLeft,
+  AlertTriangle,
+  Check,
+  X,
+  Calendar,
+  Info,
+} from "lucide-react";
+import { toast } from "sonner";
 
-// Définition des ressources et actions (depuis /lib/permissions.js)
-const RESOURCES = {
-  PRODUCTS: 'products',
-  CATEGORIES: 'categories',
-  CLIENTS: 'clients',
-  SALES: 'sales',
-  ORDERS: 'orders',
-  SUPPLIERS: 'suppliers',
-  USERS: 'users',
-  SETTINGS: 'settings',
-  REPORTS: 'reports',
-  PAYMENTS: 'payments',
-};
+const allResources = [
+  'products', 'categories', 'clients', 'users', 
+  'sales', 'orders', 'suppliers', 'settings', 'reports', 'payments'
+];
 
-const ACTIONS = {
-  CREATE: 'create',
-  READ: 'read',
-  UPDATE: 'update',
-  DELETE: 'delete',
-  LIST: 'list',
-  EXPORT: 'export',
-  IMPORT: 'import',
-};
-
-const allResources = Object.values(RESOURCES);
-const allActions = Object.values(ACTIONS);
+const allActions = ['create', 'read', 'update', 'delete', 'list', 'import', 'export'];
 
 const resourceLabels = {
   products: { label: 'Produits', icon: '📦' },
   categories: { label: 'Catégories', icon: '🏪' },
   clients: { label: 'Clients', icon: '👥' },
+  users: { label: 'Utilisateurs', icon: '👤' },
   sales: { label: 'Ventes', icon: '💰' },
   orders: { label: 'Commandes', icon: '📋' },
   suppliers: { label: 'Fournisseurs', icon: '🚚' },
-  users: { label: 'Utilisateurs', icon: '👤' },
   settings: { label: 'Paramètres', icon: '⚙️' },
   reports: { label: 'Rapports', icon: '📊' },
   payments: { label: 'Paiements', icon: '💳' },
@@ -54,50 +57,87 @@ const actionLabels = {
   import: 'Importer',
 };
 
-export default function PermissionsEditPage() {
+const roleLabels = {
+  admin: { label: 'Administrateur', color: 'bg-red-500/10 text-red-600 border-red-500/30' },
+  gerant: { label: 'Gérant', color: 'bg-blue-500/10 text-blue-600 border-blue-500/30' },
+  comptable: { label: 'Comptable', color: 'bg-green-500/10 text-green-600 border-green-500/30' },
+  vendeur: { label: 'Vendeur', color: 'bg-purple-500/10 text-purple-600 border-purple-500/30' },
+};
+
+// Permissions par défaut selon rôle (simplifié - à adapter selon votre logique)
+const defaultRolePermissions = {
+  admin: allResources.flatMap(r => allActions.map(a => ({ resource: r, action: a }))),
+  gerant: [
+    { resource: 'products', action: 'create' },
+    { resource: 'products', action: 'read' },
+    { resource: 'products', action: 'update' },
+    { resource: 'products', action: 'list' },
+    { resource: 'sales', action: 'create' },
+    { resource: 'sales', action: 'read' },
+    { resource: 'sales', action: 'list' },
+    // etc...
+  ],
+  comptable: [
+    { resource: 'products', action: 'read' },
+    { resource: 'products', action: 'list' },
+    { resource: 'sales', action: 'read' },
+    { resource: 'sales', action: 'list' },
+    // etc...
+  ],
+  vendeur: [],
+};
+
+const Page = () => {
   const router = useRouter();
   const params = useParams();
-  const userId = params.userId;
+  const userId = params?.userId;
   const isNewMode = userId === 'new';
 
+  const [selectedUserId, setSelectedUserId] = useState(isNewMode ? null : userId || null);
   const [users, setUsers] = useState([]);
-  const [selectedUser, setSelectedUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
   
-  // État des permissions à ajouter/retirer
-  const [addedPermissions, setAddedPermissions] = useState({});
-  const [removedPermissions, setRemovedPermissions] = useState({});
+  const basePermissions = useMemo(() => 
+    user ? (defaultRolePermissions[user.role] || []) : [],
+    [user]
+  );
+
+  const [permissionsToGrant, setPermissionsToGrant] = useState([]);
+  const [permissionsToRevoke, setPermissionsToRevoke] = useState([]);
   const [reason, setReason] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
 
-  // Fetch users disponibles
+  const availableUsers = useMemo(() => 
+    users.filter(u => u.role !== 'admin'),
+    [users]
+  );
+
+  // Fetch users
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         const res = await fetch("/api/user?limit=100");
         const data = await res.json();
-        const nonAdmins = data.data?.filter(u => u.role !== "admin") || [];
-        setUsers(nonAdmins);
+        const allUsers = (data.data || []).map(u => ({
+          id: u._id,
+          firstName: u.prenom || '',
+          lastName: u.nom || '',
+          email: u.email,
+          role: u.role,
+          businessId: u.business,
+          businessName: u.businessName || '',
+          avatar: u.avatar || '',
+        }));
+        
+        setUsers(allUsers);
 
-        // Si mode edit, charger l'utilisateur spécifique
         if (!isNewMode) {
-          const user = nonAdmins.find(u => u._id === userId);
-          setSelectedUser(user);
-          
-          // Charger les overrides existants
-          if (user) {
-            const overrideRes = await fetch(
-              `/api/permission-overrides?userId=${user._id}&businessId=${user.business}`
-            );
-            const overrideData = await overrideRes.json();
-            if (overrideData.data) {
-              setAddedPermissions(overrideData.data.addedPermissions || {});
-              setRemovedPermissions(overrideData.data.removedPermissions || {});
-              setReason(overrideData.data.reason || "");
-              setExpiresAt(overrideData.data.expiresAt ? 
-                new Date(overrideData.data.expiresAt).toISOString().split('T')[0] : ""
-              );
-            }
+          const foundUser = allUsers.find(u => u.id === userId);
+          if (foundUser) {
+            setUser(foundUser);
+            // Charger les overrides existants
+            await loadOverrides(foundUser);
           }
         }
       } catch (error) {
@@ -111,52 +151,110 @@ export default function PermissionsEditPage() {
     fetchUsers();
   }, [userId, isNewMode]);
 
-  const toggleAddedPermission = (resource, action) => {
-    setAddedPermissions(prev => {
-      const current = prev[resource] || [];
-      const exists = current.includes(action);
+  const loadOverrides = async (userToLoad) => {
+    try {
+      const res = await fetch(
+        `/api/permission-overrides?userId=${userToLoad.id}&businessId=${userToLoad.businessId}`
+      );
+      const data = await res.json();
       
-      return {
-        ...prev,
-        [resource]: exists 
-          ? current.filter(a => a !== action)
-          : [...current, action]
-      };
-    });
+      if (data.data) {
+        const { addedPermissions, removedPermissions, reason: existingReason, expiresAt: existingExpiry } = data.data;
+        
+        // Convertir en array
+        const added = [];
+        if (addedPermissions) {
+          Object.entries(addedPermissions).forEach(([resource, actions]) => {
+            actions.forEach(action => {
+              added.push({ resource, action });
+            });
+          });
+        }
+        
+        const removed = [];
+        if (removedPermissions) {
+          Object.entries(removedPermissions).forEach(([resource, actions]) => {
+            actions.forEach(action => {
+              removed.push({ resource, action });
+            });
+          });
+        }
+        
+        setPermissionsToGrant(added);
+        setPermissionsToRevoke(removed);
+        setReason(existingReason || "");
+        setExpiresAt(existingExpiry ? new Date(existingExpiry).toISOString().split('T')[0] : "");
+      }
+    } catch (error) {
+      console.error("Erreur chargement overrides:", error);
+    }
   };
 
-  const toggleRemovedPermission = (resource, action) => {
-    setRemovedPermissions(prev => {
-      const current = prev[resource] || [];
-      const exists = current.includes(action);
-      
-      return {
-        ...prev,
-        [resource]: exists 
-          ? current.filter(a => a !== action)
-          : [...current, action]
-      };
-    });
+  const hasBasePermission = (resource, action) => {
+    return basePermissions.some(p => p.resource === resource && p.action === action);
+  };
+
+  const isGranted = (resource, action) => {
+    return permissionsToGrant.some(p => p.resource === resource && p.action === action);
+  };
+
+  const isRevoked = (resource, action) => {
+    return permissionsToRevoke.some(p => p.resource === resource && p.action === action);
+  };
+
+  const toggleGrant = (resource, action) => {
+    const exists = isGranted(resource, action);
+    if (exists) {
+      setPermissionsToGrant(prev => 
+        prev.filter(p => !(p.resource === resource && p.action === action))
+      );
+    } else {
+      setPermissionsToGrant(prev => [...prev, { resource, action }]);
+    }
+  };
+
+  const toggleRevoke = (resource, action) => {
+    const exists = isRevoked(resource, action);
+    if (exists) {
+      setPermissionsToRevoke(prev => 
+        prev.filter(p => !(p.resource === resource && p.action === action))
+      );
+    } else {
+      setPermissionsToRevoke(prev => [...prev, { resource, action }]);
+    }
   };
 
   const handleSave = async () => {
-    if (!selectedUser) {
+    if (!user) {
       toast.error("Sélectionnez un utilisateur");
       return;
     }
 
     if (!reason.trim()) {
-      toast.error("Veuillez indiquer une raison");
+      toast.error("Veuillez indiquer une raison pour les modifications");
       return;
     }
-
+    
     try {
+      // Convertir en format API
+      const addedPermissions = {};
+      permissionsToGrant.forEach(p => {
+        if (!addedPermissions[p.resource]) addedPermissions[p.resource] = [];
+        addedPermissions[p.resource].push(p.action);
+      });
+
+      const removedPermissions = {};
+      permissionsToRevoke.forEach(p => {
+        if (!removedPermissions[p.resource]) removedPermissions[p.resource] = [];
+        removedPermissions[p.resource].push(p.action);
+      });
+
       const res = await fetch("/api/permission-overrides", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId: selectedUser._id,
-          businessId: selectedUser.business,
+          userId: user.id,
+          businessId: user.businessId,
           addedPermissions,
           removedPermissions,
           reason: reason.trim(),
@@ -165,8 +263,8 @@ export default function PermissionsEditPage() {
       });
 
       if (res.ok) {
-        toast.success("Permissions mises à jour");
-        router.push("/permissions");
+        toast.success(`Permissions de ${user.firstName} ${user.lastName} mises à jour avec succès`);
+        router.push("/reglages/permissions");
       } else {
         const data = await res.json();
         toast.error(data.message || "Erreur lors de la sauvegarde");
@@ -177,186 +275,413 @@ export default function PermissionsEditPage() {
     }
   };
 
+  const totalChanges = permissionsToGrant.length + permissionsToRevoke.length;
+
   if (loading) {
-    return <div className="p-8 text-center">Chargement...</div>;
+    return (
+      <>
+        <div className="flex items-center justify-center h-64">
+          <p className="text-muted-foreground">Chargement...</p>
+        </div>
+      </>
+    );
   }
 
-  // Mode sélection utilisateur
-  if (isNewMode && !selectedUser) {
+  // Si mode nouveau et pas d'utilisateur sélectionné
+  if (isNewMode && !selectedUserId) {
     return (
-      <div className="container mx-auto py-6 max-w-3xl space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Personnaliser les permissions</h1>
-          <p className="text-muted-foreground">
-            Sélectionnez un utilisateur
-          </p>
-        </div>
-
-        <div className="space-y-2">
-          {users.map(user => (
-            <button
-              key={user._id}
-              onClick={() => setSelectedUser(user)}
-              className="w-full p-4 border rounded-lg hover:bg-muted text-left"
+      <>
+        <div className="max-w-3xl mx-auto space-y-6">
+          <div className="flex items-center gap-3">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => router.push("/reglages/permissions")}
             >
-              <div className="font-medium">{user.prenom} {user.nom}</div>
-              <div className="text-sm text-muted-foreground">{user.email}</div>
-              <div className="text-sm text-muted-foreground mt-1">
-                Rôle: {user.role}
-              </div>
-            </button>
-          ))}
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold">Personnaliser les permissions</h1>
+              <p className="text-muted-foreground">
+                Sélectionnez un utilisateur pour modifier ses permissions
+              </p>
+            </div>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Sélectionner un utilisateur</CardTitle>
+              <CardDescription>
+                Choisissez l'utilisateur dont vous souhaitez personnaliser les permissions
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {availableUsers.map((u) => (
+                <button
+                  key={u.id}
+                  onClick={() => {
+                    setSelectedUserId(u.id);
+                    setUser(u);
+                    loadOverrides(u);
+                  }}
+                  className="w-full flex items-center gap-4 p-4 rounded-lg border hover:bg-muted/50 transition-colors text-left"
+                >
+                  <Avatar className="h-12 w-12">
+                    <AvatarImage src={u.avatar} />
+                    <AvatarFallback className="bg-primary/10 text-primary">
+                      {u.firstName[0]}{u.lastName[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium">{u.firstName} {u.lastName}</p>
+                    <p className="text-sm text-muted-foreground truncate">{u.email}</p>
+                  </div>
+                  <Badge className={roleLabels[u.role].color}>
+                    {roleLabels[u.role].label}
+                  </Badge>
+                </button>
+              ))}
+            </CardContent>
+          </Card>
         </div>
-      </div>
+      </>
     );
   }
 
-  if (!selectedUser) {
+  if (!user) {
     return (
-      <div className="p-8 text-center">
-        <p className="text-muted-foreground">Utilisateur non trouvé</p>
-        <button
-          onClick={() => router.push("/permissions")}
-          className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg"
-        >
-          Retour
-        </button>
-      </div>
+      <>
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">Utilisateur non trouvé</p>
+          <Button onClick={() => router.push("/reglages/permissions")} className="mt-4">
+            Retour à la liste
+          </Button>
+        </div>
+      </>
     );
   }
-
-  const totalChanges = 
-    Object.values(addedPermissions).flat().length +
-    Object.values(removedPermissions).flat().length;
 
   return (
-    <div className="container mx-auto py-6 max-w-4xl space-y-6">
-      {/* Header */}
-      <div>
-        <button
-          onClick={() => router.push("/permissions")}
-          className="mb-4 text-primary hover:underline"
-        >
-          ← Retour
-        </button>
-        <h1 className="text-3xl font-bold">Modifier les permissions</h1>
-        <p className="text-muted-foreground">
-          Personnalisez les accès de {selectedUser.prenom} {selectedUser.nom}
-        </p>
-      </div>
+    <>
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex items-center gap-3">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => router.push("/reglages/permissions")}
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold">Modifier les permissions</h1>
+            <p className="text-muted-foreground">
+              Personnalisez les accès de cet utilisateur
+            </p>
+          </div>
+        </div>
 
-      {/* User Info */}
-      <div className="p-4 border rounded-lg">
-        <div className="font-medium">{selectedUser.prenom} {selectedUser.nom}</div>
-        <div className="text-sm text-muted-foreground">{selectedUser.email}</div>
-        <div className="text-sm text-muted-foreground">Rôle: {selectedUser.role}</div>
-      </div>
-
-      {/* Ajouter permissions */}
-      <div className="border rounded-lg p-4 space-y-4">
-        <h2 className="text-xl font-semibold text-emerald-600">
-          ✅ Ajouter des permissions
-        </h2>
-        {allResources.map(resource => (
-          <details key={resource} className="border-b pb-2">
-            <summary className="cursor-pointer font-medium py-2">
-              {resourceLabels[resource].icon} {resourceLabels[resource].label}
-            </summary>
-            <div className="grid grid-cols-3 gap-2 pt-2">
-              {allActions.map(action => (
-                <label key={action} className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={addedPermissions[resource]?.includes(action) || false}
-                    onChange={() => toggleAddedPermission(resource, action)}
-                  />
-                  <span className="text-sm">{actionLabels[action]}</span>
-                </label>
-              ))}
+        {/* User Info Card */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-4">
+              <Avatar className="h-14 w-14">
+                <AvatarImage src={user.avatar} />
+                <AvatarFallback className="bg-primary/10 text-primary text-lg">
+                  {user.firstName[0]}{user.lastName[0]}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <p className="text-lg font-semibold">
+                  {user.firstName} {user.lastName}
+                </p>
+                <p className="text-sm text-muted-foreground">{user.email}</p>
+              </div>
+              <div className="text-right">
+                <Badge className={roleLabels[user.role].color}>
+                  {roleLabels[user.role].label}
+                </Badge>
+                {user.businessName && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {user.businessName}
+                  </p>
+                )}
+              </div>
             </div>
-          </details>
-        ))}
-      </div>
+          </CardContent>
+        </Card>
 
-      {/* Retirer permissions */}
-      <div className="border rounded-lg p-4 space-y-4">
-        <h2 className="text-xl font-semibold text-amber-600">
-          ❌ Retirer des permissions
-        </h2>
-        {allResources.map(resource => (
-          <details key={resource} className="border-b pb-2">
-            <summary className="cursor-pointer font-medium py-2">
-              {resourceLabels[resource].icon} {resourceLabels[resource].label}
-            </summary>
-            <div className="grid grid-cols-3 gap-2 pt-2">
-              {allActions.map(action => (
-                <label key={action} className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={removedPermissions[resource]?.includes(action) || false}
-                    onChange={() => toggleRemovedPermission(resource, action)}
-                  />
-                  <span className="text-sm">{actionLabels[action]}</span>
-                </label>
-              ))}
+        {/* Current Role Permissions (Read-only) */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Info className="h-4 w-4 text-muted-foreground" />
+              Permissions du rôle {roleLabels[user.role].label}
+            </CardTitle>
+            <CardDescription>
+              Permissions de base accordées par le rôle (lecture seule)
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {allResources.map((resource) => {
+                const perms = basePermissions.filter(p => p.resource === resource);
+                if (perms.length === 0) return null;
+                
+                return (
+                  <div key={resource} className="space-y-1">
+                    <p className="text-sm font-medium flex items-center gap-2">
+                      <span>{resourceLabels[resource].icon}</span>
+                      {resourceLabels[resource].label}
+                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      {perms.map((p) => (
+                        <Badge key={p.action} variant="secondary" className="text-xs">
+                          {actionLabels[p.action]}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          </details>
-        ))}
-      </div>
+          </CardContent>
+        </Card>
 
-      {/* Métadonnées */}
-      <div className="border rounded-lg p-4 space-y-4">
-        <div>
-          <label className="block font-medium mb-2">
-            Raison <span className="text-destructive">*</span>
-          </label>
-          <textarea
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            placeholder="Ex: Gérant senior responsable catalogue..."
-            className="w-full px-3 py-2 border rounded-lg"
-            rows={3}
-          />
-        </div>
-        <div>
-          <label className="block font-medium mb-2">
-            Date d'expiration (optionnel)
-          </label>
-          <input
-            type="date"
-            value={expiresAt}
-            onChange={(e) => setExpiresAt(e.target.value)}
-            className="px-3 py-2 border rounded-lg"
-          />
+        {/* Add Permissions Section */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2 text-emerald-600">
+              <Check className="h-4 w-4" />
+              Ajouter des permissions
+            </CardTitle>
+            <CardDescription>
+              Accorder des permissions supplémentaires à cet utilisateur
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Accordion type="multiple" className="w-full">
+              {allResources.map((resource) => {
+                const availableToGrant = allActions.filter(
+                  action => !hasBasePermission(resource, action)
+                );
+                
+                if (availableToGrant.length === 0) return null;
+                
+                return (
+                  <AccordionItem key={resource} value={resource}>
+                    <AccordionTrigger className="hover:no-underline">
+                      <span className="flex items-center gap-2">
+                        <span>{resourceLabels[resource].icon}</span>
+                        {resourceLabels[resource].label}
+                        {permissionsToGrant.filter(p => p.resource === resource).length > 0 && (
+                          <Badge className="bg-emerald-500/10 text-emerald-600 border-0 ml-2">
+                            {permissionsToGrant.filter(p => p.resource === resource).length}
+                          </Badge>
+                        )}
+                      </span>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
+                        {availableToGrant.map((action) => (
+                          <label
+                            key={action}
+                            className="flex items-center gap-2 cursor-pointer"
+                          >
+                            <Checkbox
+                              checked={isGranted(resource, action)}
+                              onCheckedChange={() => toggleGrant(resource, action)}
+                              className="data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+                            />
+                            <span className="text-sm">{actionLabels[action]}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                );
+              })}
+            </Accordion>
+          </CardContent>
+        </Card>
+
+        {/* Revoke Permissions Section */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2 text-amber-600">
+              <X className="h-4 w-4" />
+              Retirer des permissions
+            </CardTitle>
+            <CardDescription>
+              Retirer des permissions que l'utilisateur possède par son rôle
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Accordion type="multiple" className="w-full">
+              {allResources.map((resource) => {
+                const availableToRevoke = allActions.filter(
+                  action => hasBasePermission(resource, action)
+                );
+                
+                if (availableToRevoke.length === 0) return null;
+                
+                return (
+                  <AccordionItem key={resource} value={`revoke-${resource}`}>
+                    <AccordionTrigger className="hover:no-underline">
+                      <span className="flex items-center gap-2">
+                        <span>{resourceLabels[resource].icon}</span>
+                        {resourceLabels[resource].label}
+                        {permissionsToRevoke.filter(p => p.resource === resource).length > 0 && (
+                          <Badge className="bg-amber-500/10 text-amber-600 border-0 ml-2">
+                            {permissionsToRevoke.filter(p => p.resource === resource).length}
+                          </Badge>
+                        )}
+                      </span>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
+                        {availableToRevoke.map((action) => (
+                          <label
+                            key={action}
+                            className="flex items-center gap-2 cursor-pointer"
+                          >
+                            <Checkbox
+                              checked={isRevoked(resource, action)}
+                              onCheckedChange={() => toggleRevoke(resource, action)}
+                              className="data-[state=checked]:bg-amber-600 data-[state=checked]:border-amber-600"
+                            />
+                            <span className="text-sm">{actionLabels[action]}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                );
+              })}
+            </Accordion>
+          </CardContent>
+        </Card>
+
+        {/* Metadata Section */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Détails de la modification</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="reason" className="flex items-center gap-1">
+                Raison <span className="text-destructive">*</span>
+                <span className="text-xs text-muted-foreground ml-2">
+                  (Obligatoire pour traçabilité)
+                </span>
+              </Label>
+              <Textarea
+                id="reason"
+                placeholder="Ex: Gérant senior responsable catalogue..."
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                className="resize-none"
+                rows={3}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="expires" className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                Date d'expiration
+                <span className="text-xs text-muted-foreground">
+                  (Optionnel - utile pour permissions temporaires)
+                </span>
+              </Label>
+              <Input
+                id="expires"
+                type="date"
+                value={expiresAt}
+                onChange={(e) => setExpiresAt(e.target.value)}
+                className="max-w-xs"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Warning if too many revokes */}
+        {permissionsToRevoke.length > 5 && (
+          <div className="flex items-start gap-3 p-4 rounded-lg bg-amber-500/10 border border-amber-500/30">
+            <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-medium text-amber-600">Attention</p>
+              <p className="text-sm text-muted-foreground">
+                Vous retirez beaucoup de permissions. Cet utilisateur n'aura presque plus aucun accès.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Preview Section */}
+        {totalChanges > 0 && (
+          <Card className="border-primary/30 bg-primary/5">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Aperçu des changements</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {permissionsToGrant.length > 0 && (
+                <div>
+                  <p className="text-sm font-medium text-emerald-600 mb-2 flex items-center gap-2">
+                    <Check className="h-4 w-4" />
+                    Permissions ajoutées ({permissionsToGrant.length})
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {permissionsToGrant.map((p) => (
+                      <Badge key={`${p.resource}-${p.action}`} className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30">
+                        {resourceLabels[p.resource].icon} {resourceLabels[p.resource].label}: {actionLabels[p.action]}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {permissionsToRevoke.length > 0 && (
+                <div>
+                  <p className="text-sm font-medium text-amber-600 mb-2 flex items-center gap-2">
+                    <X className="h-4 w-4" />
+                    Permissions retirées ({permissionsToRevoke.length})
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {permissionsToRevoke.map((p) => (
+                      <Badge key={`${p.resource}-${p.action}`} className="bg-amber-500/10 text-amber-600 border-amber-500/30">
+                        {resourceLabels[p.resource].icon} {resourceLabels[p.resource].label}: {actionLabels[p.action]}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <Separator />
+
+              <div className="text-sm text-muted-foreground space-y-1">
+                <p>📝 Raison : {reason || <span className="text-destructive">Non renseignée</span>}</p>
+                <p>⏰ Expire le : {expiresAt || "Permanent"}</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Action Buttons */}
+        <div className="flex justify-end gap-3 pb-6">
+          <Button variant="outline" onClick={() => router.push("/reglages/permissions")}>
+            Annuler
+          </Button>
+          <Button 
+            onClick={handleSave}
+            disabled={totalChanges === 0 || !reason.trim()}
+            className="gap-2"
+          >
+            <Check className="h-4 w-4" />
+            Enregistrer
+          </Button>
         </div>
       </div>
-
-      {/* Aperçu */}
-      {totalChanges > 0 && (
-        <div className="border border-primary rounded-lg p-4 bg-primary/5">
-          <h3 className="font-semibold mb-2">Aperçu des changements</h3>
-          <p className="text-sm text-muted-foreground">
-            {totalChanges} modification{totalChanges > 1 ? 's' : ''}
-          </p>
-        </div>
-      )}
-
-      {/* Actions */}
-      <div className="flex justify-end gap-3">
-        <button
-          onClick={() => router.push("/permissions")}
-          className="px-4 py-2 border rounded-lg hover:bg-muted"
-        >
-          Annuler
-        </button>
-        <button
-          onClick={handleSave}
-          disabled={totalChanges === 0 || !reason.trim()}
-          className="px-4 py-2 bg-primary text-primary-foreground rounded-lg disabled:opacity-50"
-        >
-          Enregistrer
-        </button>
-      </div>
-    </div>
+    </>
   );
-}
+};
+
+export default Page;

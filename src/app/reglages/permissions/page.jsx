@@ -61,7 +61,7 @@ const roleLabels = {
   vendeur: { label: 'Vendeur', color: 'bg-purple-500/10 text-purple-600 border-purple-500/30' },
 };
 
-const PermissionsList = () => {
+const Page = () => {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
@@ -324,7 +324,7 @@ const PermissionsList = () => {
 
   return (
     <>
-      <div className="space-y-6">
+      <div className="space-y-6 px-10 py-6">
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
@@ -368,8 +368,8 @@ const PermissionsList = () => {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Card>
             <CardContent className="flex items-center gap-4 p-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                <Users className="h-6 w-6 text-primary" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#1166D4]/10">
+                <Users className="h-6 w-6 text-[#1166D4]" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.totalUsers}</p>
@@ -379,7 +379,7 @@ const PermissionsList = () => {
           </Card>
           <Card>
             <CardContent className="flex items-center gap-4 p-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-600/10">
                 <Shield className="h-6 w-6 text-emerald-600" />
               </div>
               <div>
@@ -633,4 +633,4 @@ const PermissionsList = () => {
   );
 };
 
-export default PermissionsList;
+export default Page;
