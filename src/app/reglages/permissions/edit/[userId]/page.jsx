@@ -25,7 +25,8 @@ import {
   Calendar,
   Info,
 } from "lucide-react";
-import { toast } from "sonner";
+import toast from "react-hot-toast";
+import { PermissionsEditSkeleton } from "@/components/skeleton/PermissionsEditSkeleton";
 
 const allResources = [
   'products', 'categories', 'clients', 'users', 
@@ -280,9 +281,7 @@ const Page = () => {
   if (loading) {
     return (
       <>
-        <div className="flex items-center justify-center h-64">
-          <p className="text-muted-foreground">Chargement...</p>
-        </div>
+        <PermissionsEditSkeleton />
       </>
     );
   }

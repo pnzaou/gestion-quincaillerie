@@ -53,6 +53,7 @@ import {
   History,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { PermissionsListSkeleton } from "@/components/skeleton/PermissionsListSkeleton";
 
 const roleLabels = {
   admin: { label: 'Administrateur', color: 'bg-red-500/10 text-red-600 border-red-500/30' },
@@ -315,9 +316,7 @@ const Page = () => {
   if (loading) {
     return (
       <>
-        <div className="flex items-center justify-center h-64">
-          <p className="text-muted-foreground">Chargement...</p>
-        </div>
+        <PermissionsListSkeleton />
       </>
     );
   }
@@ -349,14 +348,14 @@ const Page = () => {
             <Button 
               variant="outline" 
               onClick={() => router.push("/reglages/permissions/history")}
-              className="gap-2"
+              className="gap-2 hover:cursor-pointer"
             >
               <History className="h-4 w-4" />
               <span className="hidden sm:inline">Historique</span>
             </Button>
             <Button 
               onClick={() => router.push("/reglages/permissions/edit/new")}
-              className="gap-2"
+              className="gap-2 bg-blue-600 hover:cursor-pointer hover:bg-blue-700"
             >
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">Personnaliser</span>

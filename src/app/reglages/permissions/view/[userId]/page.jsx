@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { PermissionsViewSkeleton } from "@/components/skeleton/PermissionsViewSkeleton";
 
 const allResources = [
   'products', 'categories', 'clients', 'users', 
@@ -151,9 +152,7 @@ const Page = () => {
   if (loading) {
     return (
       <>
-        <div className="flex items-center justify-center h-64">
-          <p className="text-muted-foreground">Chargement...</p>
-        </div>
+        <PermissionsViewSkeleton />
       </>
     );
   }

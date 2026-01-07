@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { PermissionsHistorySkeleton } from "@/components/skeleton/PermissionsHistorySkeleton";
 
 const resourceLabels = {
   products: { label: 'Produits', icon: '📦' },
@@ -109,7 +110,11 @@ export default function PermissionsHistoryPage() {
   };
 
   if (loading) {
-    return <div className="p-8 text-center">Chargement...</div>;
+    return (
+      <>
+        <PermissionsHistorySkeleton />
+      </>
+    );
   }
 
   return (
