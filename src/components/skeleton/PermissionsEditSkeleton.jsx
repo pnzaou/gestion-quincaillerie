@@ -4,7 +4,7 @@ import { Separator } from "@/components/ui/separator";
 
 export function PermissionsEditSkeleton() {
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-md md:max-w-lg lg:max-w-4xl mx-auto space-y-6 py-6">
       {/* Header Skeleton */}
       <div className="flex items-center gap-3">
         <Skeleton className="h-10 w-10 rounded-md" />

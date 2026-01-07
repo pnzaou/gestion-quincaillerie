@@ -118,11 +118,11 @@ export default function PermissionsHistoryPage() {
   }
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="space-y-6 px-5 md:px-10 py-6">
       {/* Header */}
       <div>
         <button
-          onClick={() => router.push("/permissions")}
+          onClick={() => router.push("/reglages/permissions")}
           className="mb-4 text-primary hover:underline"
         >
           ← Retour

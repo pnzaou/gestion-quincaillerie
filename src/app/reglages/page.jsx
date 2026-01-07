@@ -91,7 +91,7 @@ const Page = () => {
 
   return (
     <>
-      <div className="max-w-4xl mx-auto space-y-6 py-5">
+      <div className="max-w-sm md:max-w-2xl lg:max-w-4xl mx-auto space-y-6 py-5">
         {/* Header */}
         <div className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">Réglages</h1>

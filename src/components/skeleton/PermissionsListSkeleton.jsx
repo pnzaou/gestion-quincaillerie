@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export function PermissionsListSkeleton() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-5 md:px-10 py-6">
       {/* Header Skeleton */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
