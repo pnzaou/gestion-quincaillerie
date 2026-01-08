@@ -1,4 +1,4 @@
-import { ACTIONS, canAccessResource, RESOURCES } from "@/lib/permissions";
+import { ACTIONS, canAccessResource, hasPermission, RESOURCES } from "@/lib/permissions";
 import {
     AdjustmentsHorizontalIcon,
     ListBulletIcon,
@@ -12,7 +12,7 @@ import { FileText, LayoutDashboard, Truck } from "lucide-react"
  * Configuration des liens de navigation
  * Chaque lien est associé à une ressource pour vérification des permissions
  */
-const NAVIGATION_CONFIG = [
+export const NAVIGATION_CONFIG = [
   {
     name: "Dashboard",
     href: (shopId) => `/shop/${shopId}/dashboard`,
@@ -120,36 +120,13 @@ const NAVIGATION_CONFIG = [
 ];
 
 /**
- * Filtre les sous-liens selon les permissions de l'utilisateur
- * @param {Array} subLinks - Sous-liens du lien parent
- * @param {string} resource - Ressource du lien parent
- * @param {string} role - Rôle de l'utilisateur
- * @param {string} shopId - ID de la boutique
- * @returns {Array} - Sous-liens filtrés
- */
-function filterSubLinks(subLinks, resource, role, shopId) {
-  if (!subLinks || subLinks.length === 0) return [];
-  
-  return subLinks
-    .filter(subLink => {
-      // Si pas d'action requise, on affiche le sous-lien
-      if (!subLink.requiredAction) return true;
-      
-      // Sinon, on vérifie la permission
-      const { hasPermission } = require("@/lib/permissions");
-      return hasPermission(role, resource, subLink.requiredAction);
-    })
-    .map(subLink => ({
-      ...subLink,
-      href: typeof subLink.href === 'function' ? subLink.href(shopId) : subLink.href
-    }));
-}
-
-/**
- * Génère les liens de navigation selon les permissions de l'utilisateur
+ * Génère les liens de navigation selon les permissions hardcodées du rôle
+ * Version SYNCHRONE - utilisée pour l'affichage initial côté client
+ * Les overrides sont gérés via /api/navigation
+ * 
  * @param {string} shopId - ID de la boutique
  * @param {string} role - Rôle de l'utilisateur
- * @returns {Array} - Liste des liens accessibles
+ * @returns {Array} - Liste des liens accessibles (permissions hardcodées uniquement)
  */
 export const getLinks = (shopId = null, role = null) => {
   if (!shopId || !role) {
@@ -158,21 +135,29 @@ export const getLinks = (shopId = null, role = null) => {
 
   return NAVIGATION_CONFIG
     .filter(link => {
-      // Vérifier si l'utilisateur peut accéder à la ressource
+      // Vérifier si l'utilisateur peut accéder à la ressource (hardcodé)
       return canAccessResource(role, link.resource);
     })
     .map(link => {
-      // Filtrer les sous-liens selon les permissions
-      const filteredSubLinks = filterSubLinks(link.subLinks, link.resource, role, shopId);
+      // Filtrer les sous-liens selon les permissions (hardcodées)
+      const filteredSubLinks = (link.subLinks || [])
+        .filter(subLink => {
+          if (!subLink.requiredAction) return true;
+          return hasPermission(role, link.resource, subLink.requiredAction);
+        })
+        .map(subLink => ({
+          ...subLink,
+          href: typeof subLink.href === 'function' ? subLink.href(shopId) : subLink.href
+        }));
 
       return {
         ...link,
         href: typeof link.href === 'function' ? link.href(shopId) : link.href,
-        subLinks: filteredSubLinks
+        subLinks: filteredSubLinks,
+        icon: link.icon
       };
     })
-    // Ne garder que les liens qui ont soit pas de sous-liens, soit des sous-liens accessibles
     .filter(link => link.subLinks.length === 0 || link.subLinks.length > 0);
-}; 
+};
 
 export const links = getLinks();

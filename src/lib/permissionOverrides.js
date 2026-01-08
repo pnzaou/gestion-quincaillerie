@@ -4,20 +4,26 @@ import { ROLE_PERMISSIONS } from "./permissions";
 /**
  * Récupère les overrides actifs d'un utilisateur
  * @param {string} userId - ID de l'utilisateur
- * @param {string} businessId - ID de la boutique
+ * @param {string} businessId - ID de la boutique (optionnel pour comptables/admins)
  * @returns {Object|null} - Overrides ou null
  */
-export async function getUserOverrides(userId, businessId) {
+export async function getUserOverrides(userId, businessId = null) {
   try {
-    const overrides = await UserPermissionOverrides.findOne({
+    const query = {
       user: userId,
-      business: businessId,
       isActive: true,
       $or: [
         { expiresAt: null },
         { expiresAt: { $gt: new Date() } }
       ]
-    });
+    };
+
+    // Ajouter businessId seulement si fourni (pour gérants)
+    if (businessId) {
+      query.business = businessId;
+    }
+
+    const overrides = await UserPermissionOverrides.findOne(query);
 
     return overrides;
   } catch (error) {
@@ -30,12 +36,12 @@ export async function getUserOverrides(userId, businessId) {
  * Vérifie si un utilisateur a une permission spécifique (avec overrides)
  * @param {string} userId - ID de l'utilisateur
  * @param {string} userRole - Rôle de l'utilisateur
- * @param {string} businessId - ID de la boutique
+ * @param {string} businessId - ID de la boutique (optionnel)
  * @param {string} resource - Ressource (ex: 'products')
  * @param {string} action - Action (ex: 'create')
  * @returns {Promise<boolean>}
  */
-export async function hasPermissionWithOverrides(userId, userRole, businessId, resource, action) {
+export async function hasPermissionWithOverrides(userId, userRole, businessId = null, resource, action) {
   if (!userId || !userRole || !resource || !action) {
     return false;
   }
@@ -52,7 +58,6 @@ export async function hasPermissionWithOverrides(userId, userRole, businessId, r
         return false; // ❌ Permission explicitement retirée
       }
     } else if (typeof removedMap === 'object') {
-      // Support pour objet simple (si pas Map)
       const removedActions = removedMap[resource] || [];
       if (removedActions.includes(action)) {
         return false; // ❌ Permission explicitement retirée
@@ -69,7 +74,6 @@ export async function hasPermissionWithOverrides(userId, userRole, businessId, r
         return true; // ✅ Permission ajoutée via override
       }
     } else if (typeof addedMap === 'object') {
-      // Support pour objet simple (si pas Map)
       const addedActions = addedMap[resource] || [];
       if (addedActions.includes(action)) {
         return true; // ✅ Permission ajoutée via override
@@ -91,11 +95,11 @@ export async function hasPermissionWithOverrides(userId, userRole, businessId, r
  * Vérifie si un utilisateur peut accéder à une ressource (au moins une action)
  * @param {string} userId - ID de l'utilisateur
  * @param {string} userRole - Rôle de l'utilisateur
- * @param {string} businessId - ID de la boutique
+ * @param {string} businessId - ID de la boutique (optionnel)
  * @param {string} resource - Ressource
  * @returns {Promise<boolean>}
  */
-export async function canAccessResourceWithOverrides(userId, userRole, businessId, resource) {
+export async function canAccessResourceWithOverrides(userId, userRole, businessId = null, resource) {
   if (!userId || !userRole || !resource) {
     return false;
   }
@@ -129,10 +133,10 @@ export async function canAccessResourceWithOverrides(userId, userRole, businessI
  * Obtient toutes les permissions effectives d'un utilisateur (rôle + overrides)
  * @param {string} userId - ID de l'utilisateur
  * @param {string} userRole - Rôle de l'utilisateur
- * @param {string} businessId - ID de la boutique
+ * @param {string} businessId - ID de la boutique (optionnel)
  * @returns {Promise<Object>} - Permissions effectives
  */
-export async function getEffectivePermissions(userId, userRole, businessId) {
+export async function getEffectivePermissions(userId, userRole, businessId = null) {
   // Démarrer avec les permissions du rôle
   const rolePermissions = ROLE_PERMISSIONS[userRole] || {};
   const effectivePermissions = { ...rolePermissions };

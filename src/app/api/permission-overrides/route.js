@@ -5,7 +5,6 @@ import UserPermissionOverrides from "@/models/UserPermissionOverrides.model";
 import { withAuth } from "@/utils/withAuth";
 import { NextResponse } from "next/server";
 
-
 // ============================================
 // POST - Créer ou mettre à jour un override
 // ============================================
@@ -23,11 +22,11 @@ export const POST = withAuth(
         expiresAt,
       } = await req.json();
 
-      // Validation
-      if (!userId || !businessId) {
+      // Validation userId
+      if (!userId) {
         return NextResponse.json(
           {
-            message: "userId et businessId sont requis.",
+            message: "userId est requis.",
             success: false,
             error: true,
           },
@@ -60,19 +59,49 @@ export const POST = withAuth(
         );
       }
 
+      // Normaliser businessId (null, undefined, "undefined" → null)
+      const normalizedBusinessId = (businessId && businessId !== "undefined" && businessId !== "null") 
+        ? businessId 
+        : null;
+
+      // Validation businessId UNIQUEMENT pour les gérants
+      if (user.role === "gerant" && !normalizedBusinessId) {
+        return NextResponse.json(
+          {
+            message: "businessId est requis pour un gérant.",
+            success: false,
+            error: true,
+          },
+          { status: 400 }
+        );
+      }
+
+      // Préparer les données
+      const overrideData = {
+        user: userId,
+        addedPermissions: addedPermissions || {},
+        removedPermissions: removedPermissions || {},
+        reason: reason || "",
+        expiresAt: expiresAt ? new Date(expiresAt) : null,
+        createdBy: session.user.id || session.user._id,
+        isActive: true,
+      };
+
+      // Ajouter businessId seulement si valide
+      if (normalizedBusinessId) {
+        overrideData.business = normalizedBusinessId;
+      }
+
+      // Query de recherche
+      const query = { user: userId };
+      if (normalizedBusinessId) {
+        query.business = normalizedBusinessId;
+      }
+
       // Créer ou mettre à jour l'override
       const override = await UserPermissionOverrides.findOneAndUpdate(
-        { user: userId, business: businessId },
-        {
-          user: userId,
-          business: businessId,
-          addedPermissions: addedPermissions || {},
-          removedPermissions: removedPermissions || {},
-          reason: reason || "",
-          expiresAt: expiresAt ? new Date(expiresAt) : null,
-          createdBy: session.user.id || session.user._id,
-          isActive: true,
-        },
+        query,
+        overrideData,
         {
           new: true,
           upsert: true,
@@ -118,10 +147,10 @@ export const GET = withAuth(
       const userId = searchParams.get("userId");
       const businessId = searchParams.get("businessId");
 
-      if (!userId || !businessId) {
+      if (!userId) {
         return NextResponse.json(
           {
-            message: "userId et businessId sont requis.",
+            message: "userId est requis.",
             success: false,
             error: true,
           },
@@ -129,11 +158,47 @@ export const GET = withAuth(
         );
       }
 
-      const override = await UserPermissionOverrides.findOne({
+      // Vérifier que l'utilisateur existe
+      const user = await User.findById(userId);
+      if (!user) {
+        return NextResponse.json(
+          {
+            message: "Utilisateur introuvable.",
+            success: false,
+            error: true,
+          },
+          { status: 404 }
+        );
+      }
+
+      // Normaliser businessId (null, undefined, "undefined" → null)
+      const normalizedBusinessId = (businessId && businessId !== "undefined" && businessId !== "null") 
+        ? businessId 
+        : null;
+
+      // Validation businessId UNIQUEMENT pour les gérants
+      if (user.role === "gerant" && !normalizedBusinessId) {
+        return NextResponse.json(
+          {
+            message: "businessId est requis pour un gérant.",
+            success: false,
+            error: true,
+          },
+          { status: 400 }
+        );
+      }
+
+      // Query de recherche
+      const query = {
         user: userId,
-        business: businessId,
         isActive: true,
-      }).populate("user", "name email role");
+      };
+
+      if (normalizedBusinessId) {
+        query.business = normalizedBusinessId;
+      }
+
+      const override = await UserPermissionOverrides.findOne(query).populate("user", "name email role");
 
       if (!override) {
         return NextResponse.json(
@@ -185,10 +250,10 @@ export const DELETE = withAuth(
       const userId = searchParams.get("userId");
       const businessId = searchParams.get("businessId");
 
-      if (!userId || !businessId) {
+      if (!userId) {
         return NextResponse.json(
           {
-            message: "userId et businessId sont requis.",
+            message: "userId est requis.",
             success: false,
             error: true,
           },
@@ -196,10 +261,43 @@ export const DELETE = withAuth(
         );
       }
 
-      await UserPermissionOverrides.findOneAndDelete({
-        user: userId,
-        business: businessId,
-      });
+      // Vérifier que l'utilisateur existe
+      const user = await User.findById(userId);
+      if (!user) {
+        return NextResponse.json(
+          {
+            message: "Utilisateur introuvable.",
+            success: false,
+            error: true,
+          },
+          { status: 404 }
+        );
+      }
+
+      // Normaliser businessId (null, undefined, "undefined" → null)
+      const normalizedBusinessId = (businessId && businessId !== "undefined" && businessId !== "null") 
+        ? businessId 
+        : null;
+
+      // Validation businessId UNIQUEMENT pour les gérants
+      if (user.role === "gerant" && !normalizedBusinessId) {
+        return NextResponse.json(
+          {
+            message: "businessId est requis pour un gérant.",
+            success: false,
+            error: true,
+          },
+          { status: 400 }
+        );
+      }
+
+      // Query de suppression
+      const query = { user: userId };
+      if (normalizedBusinessId) {
+        query.business = normalizedBusinessId;
+      }
+
+      await UserPermissionOverrides.findOneAndDelete(query);
 
       return NextResponse.json(
         {

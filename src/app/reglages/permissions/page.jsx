@@ -311,6 +311,7 @@ const Page = () => {
   return (
     <>
       <div className="space-y-6 px-5 md:px-10 py-6">
+        {/* HEADER */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={() => router.push("/reglages")} className="shrink-0">
@@ -333,6 +334,7 @@ const Page = () => {
           </div>
         </div>
 
+        {/* STATS CARDS */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Card>
             <CardContent className="flex items-center gap-4 p-4">
@@ -369,6 +371,7 @@ const Page = () => {
           </Card>
         </div>
 
+        {/* FILTRES */}
         <Card>
           <CardContent className="p-4">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
@@ -416,11 +419,13 @@ const Page = () => {
           </CardContent>
         </Card>
 
+        {/* LISTE USERS */}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-lg">Utilisateurs ({filteredUsers.length})</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
+            {/* DESKTOP LISTE */}
             <div className="hidden md:block overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -490,6 +495,7 @@ const Page = () => {
               </Table>
             </div>
 
+            {/* MOBILE LISTE */}
             <div className="md:hidden divide-y">
               {filteredUsers.map((user) => (
                 <div key={user.id} className="p-4 space-y-3">
@@ -544,7 +550,7 @@ const Page = () => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleResetOverrides} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <AlertDialogAction onClick={handleResetOverrides} className="bg-destructive text-white hover:bg-destructive/90">
               Réinitialiser
             </AlertDialogAction>
           </AlertDialogFooter>
