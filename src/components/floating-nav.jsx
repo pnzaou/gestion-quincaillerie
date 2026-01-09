@@ -4,7 +4,9 @@ import { NavLink } from "@/components/nav-link";
 import { Users, Store, History, Menu, X, Settings, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOut, useSession } from "next-auth/react";
-import { useState } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
+
+const STORAGE_KEY = "floatingnav-position";
 
 const navItems = [
   {
@@ -33,8 +35,22 @@ const navItems = [
   },
 ];
 
+const getInitialPosition = () => {
+  if (typeof window === 'undefined') return { x: 24, y: 24 };
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch {}
+  return { x: 24, y: 24 };
+};
+
 const FloatingNav = () => {
   const [isOpen, setIsOpen] = useState(true);
+  const [position, setPosition] = useState(getInitialPosition);
+  const [isDragging, setIsDragging] = useState(false);
+  const hasMoved = useRef(false);
+  const dragStartPos = useRef({ x: 0, y: 0 });
+  const initialPos = useRef({ x: 0, y: 0 });
 
   const { data: session } = useSession();
   const userRole = session?.user?.role;
@@ -43,12 +59,76 @@ const FloatingNav = () => {
     item.roles.includes(userRole)
   );
 
-  if(userRole !== "admin" && userRole !== "comptable"){
+  const handleDragStart = useCallback((clientX, clientY) => {
+    setIsDragging(true);
+    hasMoved.current = false;
+    dragStartPos.current = { x: clientX, y: clientY };
+    initialPos.current = { ...position };
+  }, [position]);
+
+  const handleDragMove = useCallback((clientX, clientY) => {
+    if (!isDragging) return;
+    
+    const deltaX = dragStartPos.current.x - clientX;
+    const deltaY = dragStartPos.current.y - clientY;
+    
+    if (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3) {
+      hasMoved.current = true;
+    }
+    
+    const newX = Math.max(16, Math.min(window.innerWidth - 80, initialPos.current.x + deltaX));
+    const newY = Math.max(16, Math.min(window.innerHeight - 80, initialPos.current.y + deltaY));
+    
+    setPosition({ x: newX, y: newY });
+  }, [isDragging]);
+
+  const handleDragEnd = useCallback(() => {
+    if (isDragging) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(position));
+    }
+    setIsDragging(false);
+  }, [isDragging, position]);
+
+  const handleToggleClick = useCallback(() => {
+    if (!hasMoved.current) {
+      setIsOpen(prev => !prev);
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleMouseMove = (e) => handleDragMove(e.clientX, e.clientY);
+    const handleTouchMove = (e) => {
+      if (e.touches[0]) handleDragMove(e.touches[0].clientX, e.touches[0].clientY);
+    };
+    const handleEnd = () => handleDragEnd();
+
+    if (isDragging) {
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", handleEnd);
+      window.addEventListener("touchmove", handleTouchMove);
+      window.addEventListener("touchend", handleEnd);
+    }
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleEnd);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleEnd);
+    };
+  }, [isDragging, handleDragMove, handleDragEnd]);
+
+  if (userRole !== "admin" && userRole !== "comptable") {
     return null;
   }
 
   return (
-    <div className="fixed bottom-6 right-6 flex flex-col gap-3 z-50">
+    <div 
+      className={cn(
+        "fixed flex flex-col gap-3 z-50",
+        isDragging && "cursor-grabbing select-none"
+      )}
+      style={{ bottom: `${position.y}px`, right: `${position.x}px` }}
+    >
       <div
         className={cn(
           "flex flex-col gap-3 transition-all duration-300 ease-out",
@@ -75,7 +155,6 @@ const FloatingNav = () => {
           >
             <item.icon className="h-5 w-5 transition-transform duration-300 group-hover:rotate-12" />
 
-            {/* Tooltip */}
             <span
               className={cn(
                 "absolute right-full mr-3 px-3 py-1.5 rounded-md",
@@ -91,6 +170,7 @@ const FloatingNav = () => {
             </span>
           </NavLink>
         ))}
+
         {/* Logout button */}
         <button
           onClick={() =>
@@ -112,12 +192,11 @@ const FloatingNav = () => {
               : "opacity-0 translate-y-4 pointer-events-none"
           )}
           style={{
-            transitionDelay: isOpen ? `${navItems.length * 50}ms` : "0ms",
+            transitionDelay: isOpen ? `${filteredItems.length * 50}ms` : "0ms",
           }}
         >
           <LogOut className="h-5 w-5 transition-transform duration-300 group-hover:rotate-12" />
 
-          {/* Tooltip */}
           <span
             className={cn(
               "absolute right-full mr-3 px-3 py-1.5 rounded-md",
@@ -134,9 +213,17 @@ const FloatingNav = () => {
         </button>
       </div>
 
-      {/* Toggle button */}
+      {/* Toggle button - also serves as drag handle */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onMouseDown={(e) => {
+          e.preventDefault();
+          handleDragStart(e.clientX, e.clientY);
+        }}
+        onMouseUp={handleToggleClick}
+        onTouchStart={(e) => {
+          if (e.touches[0]) handleDragStart(e.touches[0].clientX, e.touches[0].clientY);
+        }}
+        onTouchEnd={handleToggleClick}
         className={cn(
           "flex items-center justify-center",
           "w-14 h-14 rounded-full",
@@ -144,7 +231,7 @@ const FloatingNav = () => {
           "shadow-xl border border-primary/20",
           "transition-all duration-300 ease-out",
           "hover:scale-110 hover:shadow-2xl",
-          "active:scale-95"
+          isDragging ? "cursor-grabbing scale-105" : "cursor-grab"
         )}
       >
         <div className="relative w-6 h-6">
