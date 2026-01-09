@@ -45,7 +45,7 @@ const getInitialPosition = () => {
 };
 
 const FloatingNav = () => {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const [position, setPosition] = useState(getInitialPosition);
   const [isDragging, setIsDragging] = useState(false);
   const hasMoved = useRef(false);
