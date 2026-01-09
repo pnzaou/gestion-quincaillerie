@@ -17,9 +17,9 @@ import { hasPermissionWithOverrides } from "@/lib/permissionOverrides";
  * 
  * @example
  * // Vérifier permission avec overrides
- * export const POST = withAuth(handler, { 
+ * export const GET = withAuth(handler, { 
  *   resource: RESOURCES.PRODUCTS, 
- *   action: ACTIONS.CREATE 
+ *   action: ACTIONS.EXPORT 
  * });
  */
 export const withAuth = (handler, options = {}) => {
@@ -67,59 +67,48 @@ export const withAuth = (handler, options = {}) => {
       let authorized = false;
 
       if (shouldCheckOverrides && userId) {
-        // Extraire businessId de la requête si disponible
-        let businessId = null;
+        // ✅ FIX CRITIQUE: businessId UNIQUEMENT depuis session.user
+        // Gérants: session.user.business = ObjectId (leur boutique)
+        // Comptables/Admins: session.user.business = null (pas de boutique)
+        // On IGNORE businessId venant de query/body/params car la source de vérité est la session
+        let businessId = session.user?.business || null;
         
-        try {
-          // Tenter de récupérer businessId depuis le body
-          const bodyClone = req.clone();
-          const body = await bodyClone.json().catch(() => null);
-          businessId = body?.businessId;
-        } catch (e) {
-          // Ignorer erreur
+        // ✅ Normaliser businessId (gérer "undefined" string)
+        if (businessId === "undefined" || businessId === "null") {
+          businessId = null;
         }
 
-        // Si pas dans body, essayer dans searchParams
-        if (!businessId) {
-          const { searchParams } = new URL(req.url);
-          businessId = searchParams.get("businessId");
-        }
-
-        // Si pas dans params, essayer dans context.params
-        if (!businessId && context?.params) {
-          const params = await context.params;
-          businessId = params?.shopId || params?.businessId;
-        }
-
-        if (businessId) {
-          // Vérifier avec overrides (appel DB)
-          if (options.requireAny) {
-            // L'utilisateur doit avoir AU MOINS UNE des permissions
-            for (const action of actions) {
-              const hasAccess = await hasPermissionWithOverrides(userId, userRole, businessId, options.resource, action);
-              if (hasAccess) {
-                authorized = true;
-                break;
-              }
-            }
-          } else {
-            // L'utilisateur doit avoir TOUTES les permissions
-            authorized = true;
-            for (const action of actions) {
-              const hasAccess = await hasPermissionWithOverrides(userId, userRole, businessId, options.resource, action);
-              if (!hasAccess) {
-                authorized = false;
-                break;
-              }
+        // ✅ Vérifier avec overrides (avec ou sans businessId)
+        if (options.requireAny) {
+          // L'utilisateur doit avoir AU MOINS UNE des permissions
+          for (const action of actions) {
+            const hasAccess = await hasPermissionWithOverrides(
+              userId, 
+              userRole, 
+              businessId, // ✅ null pour comptables, ObjectId pour gérants
+              options.resource, 
+              action
+            );
+            if (hasAccess) {
+              authorized = true;
+              break;
             }
           }
         } else {
-          // Pas de businessId trouvé, fallback sur vérification simple (sans overrides)
-          console.warn("businessId non trouvé pour vérification overrides, fallback sur permissions hardcodées");
-          if (options.requireAny) {
-            authorized = hasAnyPermission(userRole, options.resource, actions);
-          } else {
-            authorized = actions.every(action => hasPermission(userRole, options.resource, action));
+          // L'utilisateur doit avoir TOUTES les permissions
+          authorized = true;
+          for (const action of actions) {
+            const hasAccess = await hasPermissionWithOverrides(
+              userId, 
+              userRole, 
+              businessId, // ✅ null pour comptables, ObjectId pour gérants
+              options.resource, 
+              action
+            );
+            if (!hasAccess) {
+              authorized = false;
+              break;
+            }
           }
         }
       } else {
@@ -149,7 +138,6 @@ export const withAuth = (handler, options = {}) => {
     }
 
     // 4. Appeler le handler avec la session
-    // ✅ FIX : Vérifier si context a des params pour déterminer le type de route
     if (context && context.params) {
       // Routes avec params dynamiques ([id], [shopId], etc.)
       return handler(req, context, session);

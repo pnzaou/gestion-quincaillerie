@@ -14,10 +14,17 @@ import * as XLSX from "xlsx";
 export const GET = withAuth(
   async (req, session) => { // ✅ session en paramètre
     try {
+      console.log("=== DEBUG EXPORT ===");
+    console.log("Session user:", {
+      id: session.user.id || session.user._id,
+      role: session.user.role,
+      business: session.user.business
+    });
       await dbConnection();
 
       const { searchParams } = new URL(req.url);
       const businessId = searchParams.get("businessId");
+      console.log("businessId from query:", businessId);
 
       if (!businessId) {
         return NextResponse.json(
