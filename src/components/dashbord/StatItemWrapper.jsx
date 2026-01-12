@@ -3,6 +3,10 @@ import { TrendingUp, Calendar, ChevronLeft, ShoppingCart, Truck, ArrowUpRight, P
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import mongoose from "mongoose";
+import { getServerSession } from "next-auth";
+import authOptions from "@/lib/auth";
+import { RESOURCES, ACTIONS } from "@/lib/permissions";
+import { hasPermissionWithOverrides } from "@/lib/permissionOverrides";
 
 const StatItem = ({
   icon: Icon,
@@ -74,73 +78,190 @@ const StatItem = ({
 const StatItemWrapper = async ({ businessId }) => {
   const objectId = new mongoose.Types.ObjectId(businessId);
   
-  const { salesCount, totalRevenue } = await getTodayStats(objectId);
-  const { totalRevenue: totalMonthRevenue } = await getMonthRevenue(objectId);
-  const { totalRevenue: totalPreviousMonthRevenue } = await getPreviousMonthRevenue(objectId);
-  const { totalRevenue: totalYearRevenue } = await getYearRevenue(objectId);
-  const { outOfStockCount, soonCount } = await getStockAlerts(objectId);
-  const ordersToReceiveCount = await countOrdersToReceive(objectId);
-  const totalDebts = await getTotalDebts(objectId);
+  // ✅ Récupérer session
+  const session = await getServerSession(authOptions);
+  const userId = session?.user?.id || session?.user?._id;
+  const userRole = session?.user?.role;
+  const userBusinessId = session?.user?.business || null;
+
+  // Helper pour vérifier permission dashboard
+  const canViewDashboardStat = async (action) => {
+    return await hasPermissionWithOverrides(
+      userId, 
+      userRole, 
+      userBusinessId, 
+      RESOURCES.DASHBOARD, 
+      action
+    );
+  };
+
+  // ✅ Vérifier permissions pour chaque stat
+  const canViewRevenueToday = await canViewDashboardStat(ACTIONS.VIEW_REVENUE_TODAY);
+  const canViewRevenueMonth = await canViewDashboardStat(ACTIONS.VIEW_REVENUE_MONTH);
+  const canViewRevenuePreviousMonth = await canViewDashboardStat(ACTIONS.VIEW_REVENUE_PREVIOUS_MONTH);
+  const canViewRevenueYear = await canViewDashboardStat(ACTIONS.VIEW_REVENUE_YEAR);
+  const canViewSalesCount = await canViewDashboardStat(ACTIONS.VIEW_SALES_COUNT);
+  const canViewStockAlerts = await canViewDashboardStat(ACTIONS.VIEW_STOCK_ALERTS);
+  const canViewOrdersPending = await canViewDashboardStat(ACTIONS.VIEW_ORDERS_PENDING);
+  const canViewDebtsTotal = await canViewDashboardStat(ACTIONS.VIEW_DEBTS_TOTAL);
+
+  // Charger données selon permissions
+  const todayData = canViewRevenueToday || canViewSalesCount 
+    ? await getTodayStats(objectId) 
+    : { salesCount: 0, totalRevenue: 0 };
+  
+  const monthRevenue = canViewRevenueMonth 
+    ? await getMonthRevenue(objectId) 
+    : { totalRevenue: 0 };
+  
+  const previousMonthRevenue = canViewRevenuePreviousMonth 
+    ? await getPreviousMonthRevenue(objectId) 
+    : { totalRevenue: 0 };
+  
+  const yearRevenue = canViewRevenueYear 
+    ? await getYearRevenue(objectId) 
+    : { totalRevenue: 0 };
+  
+  const stockAlerts = canViewStockAlerts 
+    ? await getStockAlerts(objectId) 
+    : { outOfStockCount: 0, soonCount: 0 };
+  
+  const ordersToReceive = canViewOrdersPending 
+    ? await countOrdersToReceive(objectId) 
+    : 0;
+  
+  const debts = canViewDebtsTotal 
+    ? await getTotalDebts(objectId) 
+    : 0;
+
+  // ✅ Définir les stats avec leurs permissions requises
+  const stats = [
+    {
+      id: 'revenue-today',
+      show: canViewRevenueToday,
+      component: (
+        <StatItem
+          icon={BanknoteArrowUp}
+          label="Chiffre d'affaires du jour"
+          value={todayData.totalRevenue}
+          currency
+        />
+      )
+    },
+    {
+      id: 'revenue-month',
+      show: canViewRevenueMonth,
+      component: (
+        <StatItem
+          icon={TrendingUp}
+          label="Chiffre d'affaires de ce mois"
+          value={monthRevenue.totalRevenue}
+          currency
+        />
+      )
+    },
+    {
+      id: 'revenue-previous-month',
+      show: canViewRevenuePreviousMonth,
+      component: (
+        <StatItem
+          icon={() => (
+            <div className="flex items-center gap-1">
+              <Calendar className="w-5 h-5 text-[#004871]" />
+              <ChevronLeft className="w-4 h-4 text-[#004871]" />
+            </div>
+          )}
+          label="Chiffre d'affaires mois dernier"
+          value={previousMonthRevenue.totalRevenue}
+          currency
+        />
+      )
+    },
+    {
+      id: 'revenue-year',
+      show: canViewRevenueYear,
+      component: (
+        <StatItem
+          icon={Calendar}
+          label="Chiffre d'affaires de l'année"
+          value={yearRevenue.totalRevenue}
+          currency
+        />
+      )
+    },
+    {
+      id: 'sales-count',
+      show: canViewSalesCount,
+      component: (
+        <StatItem
+          icon={ShoppingCart}
+          label="Nombre de ventes du jour"
+          value={todayData.salesCount}
+        />
+      )
+    },
+    {
+      id: 'stock-alerts',
+      show: canViewStockAlerts,
+      component: (
+        <StatItem
+          icon={Package}
+          label="Alertes stock"
+          href={`/shop/${businessId}/dashboard/article/stock`}
+          linkAriaLabel="Accéder au stock"
+          soonCount={stockAlerts.soonCount}
+          outOfStockCount={stockAlerts.outOfStockCount}
+        />
+      )
+    },
+    {
+      id: 'orders-to-receive',
+      show: canViewOrdersPending,
+      component: (
+        <StatItem
+          icon={Truck}
+          label="Commandes à recevoir"
+          value={ordersToReceive}
+          href={`/shop/${businessId}/dashboard/commande/historique?status=confirmed%2Cpartially_received&page=1`}
+          linkAriaLabel="Voir les commandes à recevoir"
+        />
+      )
+    },
+    {
+      id: 'total-debts',
+      show: canViewDebtsTotal,
+      component: (
+        <StatItem
+          icon={BanknoteArrowDown}
+          label="Total des dettes"
+          value={debts}
+          currency
+          linkAriaLabel="Voir le total des dettes"
+          href={`/shop/${businessId}/dashboard/vente/historique-vente?status=pending,partial`}
+        />
+      )
+    },
+  ];
+
+  // ✅ Filtrer les stats visibles
+  const visibleStats = stats.filter(stat => stat.show);
+
+  // Si aucune stat visible
+  if (visibleStats.length === 0) {
+    return (
+      <div className="p-8 text-center text-muted-foreground">
+        <p>Aucune statistique disponible pour votre rôle.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-      <StatItem
-        icon={BanknoteArrowUp}
-        label="Chiffre d'affaires du jour"
-        value={totalRevenue}
-        currency
-      />
-      <StatItem
-        icon={TrendingUp}
-        label="Chiffre d'affaires de ce mois"
-        value={totalMonthRevenue}
-        currency
-      />
-      <StatItem
-        icon={() => (
-          <div className="flex items-center gap-1">
-            <Calendar className="w-5 h-5 text-[#004871]" />
-            <ChevronLeft className="w-4 h-4 text-[#004871]" />
-          </div>
-        )}
-        label="Chiffre d'affaires mois dernier"
-        value={totalPreviousMonthRevenue}
-        currency
-      />
-      <StatItem
-        icon={Calendar}
-        label="Chiffre d'affaires de l'année"
-        value={totalYearRevenue}
-        currency
-      />
-      <StatItem
-        icon={ShoppingCart}
-        label="Nombre de ventes du jour"
-        value={salesCount}
-      />
-      <StatItem
-        icon={Package}
-        label="Alertes stock"
-        href="/produits/rupture"
-        linkAriaLabel="Accéder au stock"
-        soonCount={soonCount}
-        outOfStockCount={outOfStockCount}
-      />
-      <StatItem
-        icon={Truck}
-        label="Commandes à recevoir"
-        value={ordersToReceiveCount}
-        href={`/shop/${businessId}/dashboard/commande/historique?status=confirmed%2Cpartially_received&page=1`}
-        linkAriaLabel="Voir les commandes à recevoir"
-      />
-      <StatItem
-        icon={BanknoteArrowDown}
-        label="Total des dettes"
-        value={totalDebts}
-        currency
-        linkAriaLabel="Voir le total des dettes"
-        href={`/shop/${businessId}/dashboard/vente/historique-vente?status=pending,partial`}
-      />
+      {visibleStats.map(stat => (
+        <div key={stat.id}>
+          {stat.component}
+        </div>
+      ))}
     </div>
   );
 };
