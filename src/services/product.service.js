@@ -4,6 +4,8 @@ import mongoose from "mongoose";
 import { HttpError } from "./errors.service";
 
 export async function validateAndUpdateProductsForSale(items, businessId, session = null) {
+  const updatedProducts = []; // Pour retourner les IDs des produits modifiés
+
   for (const item of items) {
     if (!mongoose.Types.ObjectId.isValid(item.product)) {
       throw new HttpError(400, "Veuillez fournir un ID de produit valide.");
@@ -32,5 +34,14 @@ export async function validateAndUpdateProductsForSale(items, businessId, sessio
     }
 
     await prod.save({ session });
+
+    // ✅ Ajouter à la liste des produits mis à jour
+    updatedProducts.push({
+      productId: item.product,
+      newStock: prod.QteStock,
+      alertThreshold: prod.QteAlerte
+    });
   }
+
+  return updatedProducts; // ✅ Retourner pour vérification stock
 }

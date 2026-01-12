@@ -8,6 +8,7 @@ import { createHistory } from "./history.service";
 import { HttpError } from "./errors.service";
 import { getSaleDescription } from "@/utils/getSaleDescription";
 import { debit } from "./account.service";
+import { checkStockForSaleItems } from "./Stockalert.service";
 
 export async function createSale({ payload, user }) {
   const session = await mongoose.startSession();
@@ -31,7 +32,7 @@ export async function createSale({ payload, user }) {
       : null;
 
     // 3) Vérifier et mettre à jour le stock (avec businessId pour sécurité)
-    await validateAndUpdateProductsForSale(payload.items, businessObjectId, session);
+    const updatedProducts = await validateAndUpdateProductsForSale(payload.items, businessObjectId, session);
 
     // 4) Calculer sommes
     const payments = Array.isArray(payload.payments) ? payload.payments : [];
@@ -50,7 +51,7 @@ export async function createSale({ payload, user }) {
 
     // 6) Créer la vente
     const data = {
-      business: businessObjectId, // ✅ Ajout du business
+      business: businessObjectId,
       reference,
       client: clientId,
       items: payload.items,
@@ -81,7 +82,7 @@ export async function createSale({ payload, user }) {
     // 8) Créer les Payments (avec businessId)
     if (payments.length > 0) {
       const paymentsToCreate = payments.map(p => ({
-        business: businessObjectId, // ✅ Ajout du business
+        business: businessObjectId,
         sale: sale._id,
         amount: Number(p.amount),
         method: p.method
@@ -104,10 +105,19 @@ export async function createSale({ payload, user }) {
       resource: "sale",
       resourceId: sale._id,
       description,
-      businessId: businessObjectId // ✅ Ajout du business
+      businessId: businessObjectId
     }, session);
 
-    // 10) Commit transaction
+    // ✅ 10) Vérifier stock et envoyer alertes (APRÈS commit pour pas bloquer)
+    // On passe la référence de vente pour contexte
+    await checkStockForSaleItems({
+      items: payload.items,
+      businessId: businessObjectId,
+      saleReference: reference,
+      session
+    });
+
+    // 11) Commit transaction
     await session.commitTransaction();
     session.endSession();
 
