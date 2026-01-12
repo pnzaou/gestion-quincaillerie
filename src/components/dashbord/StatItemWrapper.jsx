@@ -130,7 +130,7 @@ const StatItemWrapper = async ({ businessId }) => {
         icon={Truck}
         label="Commandes à recevoir"
         value={ordersToReceiveCount}
-        href="#"
+        href={`/shop/${businessId}/dashboard/commande/historique?status=confirmed%2Cpartially_received&page=1`}
         linkAriaLabel="Voir les commandes à recevoir"
       />
       <StatItem
