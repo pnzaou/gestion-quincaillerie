@@ -18,8 +18,9 @@ const ICON_MAP = {
   "Dashboard": AdjustmentsHorizontalIcon,
   "Catégories": LayoutDashboard,
   "Articles": ListBulletIcon,
-  "Clients": UserGroupIcon,
   "Ventes": BanknotesIcon,
+  "Devis": FileText,
+  "Clients": UserGroupIcon,
   "Commandes": FileText,
   "Fournisseurs": Truck,
 }

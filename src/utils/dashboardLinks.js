@@ -57,13 +57,6 @@ export const NAVIGATION_CONFIG = [
     ],
   },
   {
-    name: "Clients",
-    href: (shopId) => `/shop/${shopId}/dashboard/client`,
-    icon: UserGroupIcon,
-    resource: RESOURCES.CLIENTS,
-    subLinks: [],
-  },
-  {
     name: "Ventes",
     href: (shopId) => `/shop/${shopId}/dashboard/vente`,
     icon: BanknotesIcon,
@@ -80,6 +73,20 @@ export const NAVIGATION_CONFIG = [
         requiredAction: ACTIONS.LIST,
       },
     ],
+  },
+  {
+    name: "Devis",
+    href: (shopId) => `/shop/${shopId}/dashboard/devis`,
+    icon: FileText,
+    resource: RESOURCES.CLIENTS,
+    subLinks: [],
+  },
+  {
+    name: "Clients",
+    href: (shopId) => `/shop/${shopId}/dashboard/client`,
+    icon: UserGroupIcon,
+    resource: RESOURCES.CLIENTS,
+    subLinks: [],
   },
   {
     name: "Commandes",

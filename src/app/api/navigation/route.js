@@ -30,17 +30,22 @@ const NAVIGATION_CONFIG = [
     ],
   },
   {
-    name: "Clients",
-    resource: RESOURCES.CLIENTS,
-    subLinks: [],
-  },
-  {
     name: "Ventes",
     resource: RESOURCES.SALES,
     subLinks: [
       { name: "Effectuer une vente", requiredAction: ACTIONS.CREATE },
       { name: "Historique des ventes", requiredAction: ACTIONS.LIST }
     ],
+  },
+  {
+    name: "Devis",
+    resource: RESOURCES.CLIENTS,
+    subLinks: [],
+  },
+  {
+    name: "Clients",
+    resource: RESOURCES.CLIENTS,
+    subLinks: [],
   },
   {
     name: "Commandes",
