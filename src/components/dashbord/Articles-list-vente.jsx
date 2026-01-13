@@ -14,8 +14,10 @@ import ArticlesHeader from "./ArticlesHeader";
 import { Badge } from "../ui/badge";
 import SaleClientSelector from "./Sale-client-selector";
 import { useSaleStore } from "@/stores/useSaleStore";
+import { useQuoteStore } from "@/stores/useQuoteStore";
 import PanierVente from "./Panier-vente";
 import toast from "react-hot-toast";
+import { QuotePreview, QuotePrint } from "./Quote-Preview";
 
 const tabSize = [8, 12, 32, 64, 100];
 
@@ -29,11 +31,36 @@ const ArticlesListVente = ({
   const shopId = params?.shopId;
   const setShopId = useSaleStore((state) => state.setShopId);
 
+  // ✅ Store devis
+  const quotePreviewOpen = useQuoteStore((state) => state.quotePreviewOpen);
+  const setQuotePreviewOpen = useQuoteStore((state) => state.setQuotePreviewOpen);
+  const currentQuote = useQuoteStore((state) => state.currentQuote);
+  const savedCartForRestore = useQuoteStore((state) => state.savedCartForRestore);
+
   useEffect(() => {
     if (shopId) {
       setShopId(shopId);
     }
   }, [shopId, setShopId]);
+
+  // ✅ Restaurer les stocks locaux quand le dialog se ferme
+  useEffect(() => {
+    if (!quotePreviewOpen && savedCartForRestore.length > 0) {
+      // Restaurer les stocks pour chaque produit du panier sauvegardé
+      setLocalStocks((prev) => {
+        const newStocks = { ...prev };
+        savedCartForRestore.forEach((item) => {
+          if (newStocks[item._id] !== undefined) {
+            newStocks[item._id] += item.quantity;
+          }
+        });
+        return newStocks;
+      });
+      
+      // Réinitialiser le panier sauvegardé
+      useQuoteStore.setState({ savedCartForRestore: [] });
+    }
+  }, [quotePreviewOpen, savedCartForRestore]);
 
   const {
     articles,
@@ -87,6 +114,11 @@ const ArticlesListVente = ({
     updateCartQuantity(article, qty, localStocks, setLocalStocks);
   };
 
+  // ✅ Handler impression devis
+  const handlePrintQuote = () => {
+    window.print();
+  };
+
   return (
     <>
       <div className="space-y-4">
@@ -126,7 +158,7 @@ const ArticlesListVente = ({
 
               return (
                 <Card key={article._id} className="p-3 hover:shadow-lg transition-shadow duration-150">
-                  {/* ✅ Image ou icône Package */}
+                  {/* Image ou icône Package */}
                   <div className="overflow-hidden rounded bg-muted flex items-center justify-center h-40 sm:h-44 md:h-36 lg:h-40">
                     {article.image ? (
                       <img
@@ -212,6 +244,15 @@ const ArticlesListVente = ({
           tabSize={tabSize}
         />
       </div>
+
+      {/* ✅ Preview et Print devis */}
+      <QuotePreview
+        open={quotePreviewOpen}
+        onOpenChange={setQuotePreviewOpen}
+        quote={currentQuote}
+        onPrint={handlePrintQuote}
+      />
+      <QuotePrint quote={currentQuote} />
     </>
   );
 };
