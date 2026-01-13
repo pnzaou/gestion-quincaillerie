@@ -6,7 +6,7 @@ const HistorySchema = new mongoose.Schema({
     actions: {
         type: String,
         required: true,
-        enum: ["read", "create", "update", "delete", "login", "logout", "download"]
+        enum: ["read", "create", "update", "delete", "login", "logout", "download", "convert"]
     },
     resource: { type: String, required: false },
     resourceId: { type: String, required: false },
