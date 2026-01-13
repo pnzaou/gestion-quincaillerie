@@ -24,6 +24,7 @@ import {
   History as HistoryIcon,
   Eye,
   Plus,
+  ArrowRightLeft,
   Pencil,
   Trash2,
   LogIn,
@@ -35,6 +36,7 @@ import {
   CalendarIcon,
   Globe,
   Loader2,
+  FileText
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
@@ -50,6 +52,11 @@ const actionConfig = {
   create: {
     icon: Plus,
     label: "Création",
+    color: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+  },
+  convert: {
+    icon: ArrowRightLeft,
+    label: "Conversion",
     color: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
   },
   update: {
@@ -88,6 +95,7 @@ const resourceIcons = {
   client: User,
   sale: Package,
   order: Package,
+  quote: FileText
 };
 
 const resourceMap = {
@@ -99,6 +107,7 @@ const resourceMap = {
   category: "catégorie",
   supplier: "fournisseur",
   "client-account": "compte client",
+  quote: "devis"
 };
 
 const formatDate = (dateString) => {
