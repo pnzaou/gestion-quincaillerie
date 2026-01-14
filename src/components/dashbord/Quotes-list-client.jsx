@@ -118,10 +118,10 @@ const QuotesListClient = ({
       {/* Loader */}
       {isLoading && <SearchLoader />}
 
-      {/* Tables avec scroll horizontal */}
+      {/* Tables */}
       <div className={`mt-4 ${isLoading ? "opacity-50 pointer-events-none" : ""}`}>
         <div className="inline-block min-w-full align-middle">
-          <div className="rounded-lg bg-gray-50 p-2 md:pt-0 overflow-hidden">
+          <div className="rounded-lg bg-gray-50 p-2 md:pt-0">
             {/* Mobile */}
             <QuotesTableMobile
               quotes={initialQuotes}
@@ -132,7 +132,7 @@ const QuotesListClient = ({
               formatDate={formatDate}
             />
 
-            {/* Desktop avec scroll */}
+            {/* Desktop avec scroll isolé */}
             <QuotesTableDesktop
               quotes={initialQuotes}
               onPreview={handlePreview}
