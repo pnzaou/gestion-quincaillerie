@@ -31,6 +31,7 @@ const QuotesListClient = ({
   const [convertDialogOpen, setConvertDialogOpen] = useState(false);
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
 
+  // ✅ Si pas de statut dans URL, afficher "all"
   const currentStatus = searchParams.get("status") || "all";
 
   const formatDate = (date) => {
@@ -55,6 +56,7 @@ const QuotesListClient = ({
 
   const handleStatusChange = (status) => {
     const params = new URLSearchParams(searchParams);
+    // ✅ Si "all", on supprime le paramètre status pour tout afficher
     if (status === "all") {
       params.delete("status");
     } else {
@@ -92,10 +94,10 @@ const QuotesListClient = ({
     <>
       {/* Filtres */}
       <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <span className="text-sm text-gray-600 whitespace-nowrap">Statut:</span>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-600">Statut:</span>
           <Select value={currentStatus} onValueChange={handleStatusChange}>
-            <SelectTrigger className="w-full sm:w-[180px]">
+            <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Tous les statuts" />
             </SelectTrigger>
             <SelectContent>
@@ -132,7 +134,7 @@ const QuotesListClient = ({
               formatDate={formatDate}
             />
 
-            {/* Desktop avec scroll isolé */}
+            {/* Desktop */}
             <QuotesTableDesktop
               quotes={initialQuotes}
               onPreview={handlePreview}
@@ -156,9 +158,9 @@ const QuotesListClient = ({
               disabled={currentPage <= 1}
             >
               <ChevronLeft className="h-4 w-4 mr-1" />
-              <span className="hidden sm:inline">Précédent</span>
+              Précédent
             </Button>
-            <span className="text-sm text-gray-600 whitespace-nowrap">
+            <span className="text-sm text-gray-600">
               Page {currentPage} sur {totalPages}
             </span>
             <Button
@@ -167,7 +169,7 @@ const QuotesListClient = ({
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage >= totalPages}
             >
-              <span className="hidden sm:inline">Suivant</span>
+              Suivant
               <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
           </div>
