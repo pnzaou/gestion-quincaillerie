@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link";
-import StockitLogo from "../Stockit-logo";
+import StocProxLogo from "../StockProx-logo";
 import NavLinks from "./Nav-links";
 import DisconnectBtn from "./Disconnect-btn";
 import { useState } from "react";
@@ -55,10 +55,10 @@ const SideBar = ({ shopId, session }) => {
                     className="flex h-20 items-center justify-center bg-sky-600 px-4"
                 >
                     {collapsed ? (
-                        <div className="text-white text-2xl font-bold">S</div>
+                        <div className="text-white text-2xl font-bold">SP</div>
                     ) : (
                         <div className="w-32 text-white">
-                            <StockitLogo />
+                            <StocProxLogo />
                         </div>
                     )}
                 </Link>

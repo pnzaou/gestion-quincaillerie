@@ -18,7 +18,7 @@ export const GET = async () => {
                     await resend.emails.send({
                         from: 'Support Quincaillerie <onboarding@resend.dev>',
                         to,
-                        subject: 'Bienvenue sur StockIt',
+                        subject: 'Bienvenue sur StockProx',
                         react: (
                             <AccountCreatedSuccessfully
                                 defaultPassword={defaultPassword}
