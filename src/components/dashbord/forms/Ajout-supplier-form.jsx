@@ -81,7 +81,8 @@ const AjoutSupplierForm = ({ className, initialData = null, ...props }) => {
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} noValidate>
             <div className="space-y-4">
-              <div className="flex gap-4">
+              {/* Ligne 1 - responsive */}
+              <div className="flex flex-col sm:flex-row gap-4">
                 <div className="grid gap-3 flex-1">
                   <Label>
                     Nom
@@ -97,7 +98,9 @@ const AjoutSupplierForm = ({ className, initialData = null, ...props }) => {
                   <Input {...register("adresse")} />
                 </div>
               </div>
-              <div className="flex gap-4">
+
+              {/* Ligne 2 - responsive */}
+              <div className="flex flex-col sm:flex-row gap-4">
                 <div className="grid gap-3 flex-1">
                   <Label>
                     Téléphone
@@ -125,7 +128,9 @@ const AjoutSupplierForm = ({ className, initialData = null, ...props }) => {
                 </div>
               </div>
             </div>
-            <div className="flex flex-col gap-3 mt-10">
+
+            {/* Bouton submit */}
+            <div className="mt-6">
               <Button
                 type="submit"
                 className="w-full bg-[#0084D1] hover:bg-[#0042d1] hover:cursor-pointer"
@@ -133,8 +138,10 @@ const AjoutSupplierForm = ({ className, initialData = null, ...props }) => {
               >
                 {isLoading ? (
                   <>
-                    <span className="w-4 h-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></span>{" "}
-                    {isEdit ? "Mise à jour..." : "Enregistrement..."}
+                    <span className="w-4 h-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></span>
+                    <span className="ml-2">
+                      {isEdit ? "Mise à jour..." : "Enregistrement..."}
+                    </span>
                   </>
                 ) : isEdit ? (
                   "Mettre à jour"
