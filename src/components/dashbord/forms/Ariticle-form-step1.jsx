@@ -7,7 +7,8 @@ import { Controller } from "react-hook-form";
 const AriticleFormStep1 = ({ register, errors, control, cats }) => {
   return (
     <div className="space-y-4">
-      <div className="flex gap-4">
+      {/* Première ligne - responsive */}
+      <div className="flex flex-col sm:flex-row gap-4">
         <div className="grid gap-3 flex-1">
           <Label>
             Nom
@@ -44,7 +45,9 @@ const AriticleFormStep1 = ({ register, errors, control, cats }) => {
           )}
         </div>
       </div>
-      <div className="flex gap-4">
+
+      {/* Deuxième ligne - responsive */}
+      <div className="flex flex-col sm:flex-row gap-4">
         <div className="grid gap-3 flex-1">
           <Label>
             Prix d'Achat
@@ -62,7 +65,7 @@ const AriticleFormStep1 = ({ register, errors, control, cats }) => {
         </div>
         <div className="grid gap-3 flex-1">
           <Label>
-            prixAchat
+            Prix de Vente
             <Required />
           </Label>
           <Input

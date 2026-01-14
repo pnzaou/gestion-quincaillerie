@@ -5,24 +5,34 @@ import { Textarea } from "@/components/ui/textarea";
 const ArticleFormStep3 = ({ register }) => {
   return (
     <div className="space-y-4">
-      <div className="flex gap-2 mb-4">
-        <div className="grid gap-3 flex-1/2">
-          <Label htmlFor="image">Image</Label>
-          <Input
-            id="image"
-            type="file"
-            accept="image/*"
-            {...register("image")}
-          />
-        </div>
+      {/* Image upload */}
+      <div className="grid gap-3 w-full">
+        <Label htmlFor="image">Image</Label>
+        <Input
+          id="image"
+          type="file"
+          accept="image/*"
+          {...register("image")}
+          className="cursor-pointer"
+        />
+        <p className="text-xs text-gray-500">
+          Formats acceptés : JPG, PNG, GIF (Max 5MB)
+        </p>
       </div>
-      <div className="flex gap-2 mb-4">
-        <div className="grid gap-3 flex-1/2">
-          <div className="flex items-center">
-            <Label htmlFor="description">Description</Label>
-          </div>
-          <Textarea id="description" {...register("description")} />
-        </div>
+
+      {/* Description */}
+      <div className="grid gap-3 w-full">
+        <Label htmlFor="description">Description</Label>
+        <Textarea 
+          id="description" 
+          {...register("description")}
+          placeholder="Décrivez votre article..."
+          rows={5}
+          className="resize-none"
+        />
+        <p className="text-xs text-gray-500">
+          Informations complémentaires sur l'article (optionnel)
+        </p>
       </div>
     </div>
   );

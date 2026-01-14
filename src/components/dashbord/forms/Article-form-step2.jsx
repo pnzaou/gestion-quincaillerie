@@ -7,7 +7,8 @@ import Required from "@/components/Required";
 const ArticleFormStep2 = ({ control, fours, register, errors }) => {
   return (
     <div className="space-y-4">
-      <div className="flex gap-4">
+      {/* Première ligne - responsive */}
+      <div className="flex flex-col sm:flex-row gap-4">
         <div className="grid gap-3 flex-1">
           <Label>
             Fournisseur
@@ -48,7 +49,9 @@ const ArticleFormStep2 = ({ control, fours, register, errors }) => {
           )}
         </div>
       </div>
-      <div className="flex gap-4">
+
+      {/* Deuxième ligne - responsive */}
+      <div className="flex flex-col sm:flex-row gap-4">
         <div className="grid gap-3 flex-1">
           <Label>
             Quantité en Stock
@@ -78,7 +81,9 @@ const ArticleFormStep2 = ({ control, fours, register, errors }) => {
           )}
         </div>
       </div>
-      <div className="flex gap-4">
+
+      {/* Troisième ligne - responsive */}
+      <div className="flex flex-col sm:flex-row gap-4">
         <div className="grid gap-3 flex-1">
           <Label>Référence</Label>
           <Input {...register("reference")} />
