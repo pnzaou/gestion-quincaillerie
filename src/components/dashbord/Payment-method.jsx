@@ -48,12 +48,11 @@ const PaymentMethod = () => {
 
   return (
     <div className="space-y-2">
-      {/* Formulaire ajout paiement - responsive */}
-      <div className="flex flex-col sm:flex-row gap-2">
+      {/* Formulaire ajout paiement - toujours empilé verticalement */}
+      <div className="space-y-2">
         <Select
           value={method}
           onValueChange={(v) => setMethod(v)}
-          className="flex-1"
         >
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Mode de paiement" />
@@ -67,7 +66,7 @@ const PaymentMethod = () => {
           </SelectContent>
         </Select>
 
-        <div className="flex gap-2 flex-1">
+        <div className="flex gap-2">
           <Input
             type="number"
             placeholder="Montant"
@@ -88,7 +87,7 @@ const PaymentMethod = () => {
       </div>
 
       {/* Liste des paiements */}
-      <div className="space-y-2">
+      <div className="space-y-2 mt-3">
         {payments.length === 0 && (
           <div className="text-sm text-muted-foreground text-center py-2">
             Aucun paiement ajouté
