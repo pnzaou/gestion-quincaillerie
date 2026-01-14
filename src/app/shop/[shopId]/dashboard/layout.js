@@ -12,15 +12,16 @@ export default async function Layout({ children, params }) {
   }
 
   const { shopId } = await params;
+  
   return (
-    <div className="flex min-h-screen flex-col md:flex-row md:overflow-hidden">
-      <div className="w-full flex-none md:w-64">
-        <SideBar shopId={shopId} session={session} />
-      </div>
-      {/* <div className="flex-grow p-6 md:overflow-y-auto md:p-12">{children}</div> */}
-      <div className="flex-grow px-6 pb-6 pt-2 md:overflow-y-auto md:px-12 md:pb-12 md:pt-4">
-        <DynamicBreadcrumb />
-        {children}
+    <div className="flex min-h-screen">
+      <SideBar shopId={shopId} session={session} />
+      
+      <div className="flex-1 overflow-x-hidden">
+        <div className="px-6 pb-6 pt-2 md:px-12 md:pb-12 md:pt-4">
+          <DynamicBreadcrumb />
+          {children}
+        </div>
       </div>
     </div>
   );
