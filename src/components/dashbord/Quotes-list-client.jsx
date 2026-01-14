@@ -31,7 +31,6 @@ const QuotesListClient = ({
   const [convertDialogOpen, setConvertDialogOpen] = useState(false);
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
 
-  // ✅ Si pas de statut dans URL, afficher "all"
   const currentStatus = searchParams.get("status") || "all";
 
   const formatDate = (date) => {
@@ -56,7 +55,6 @@ const QuotesListClient = ({
 
   const handleStatusChange = (status) => {
     const params = new URLSearchParams(searchParams);
-    // ✅ Si "all", on supprime le paramètre status pour tout afficher
     if (status === "all") {
       params.delete("status");
     } else {
@@ -94,10 +92,10 @@ const QuotesListClient = ({
     <>
       {/* Filtres */}
       <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-600">Statut:</span>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <span className="text-sm text-gray-600 whitespace-nowrap">Statut:</span>
           <Select value={currentStatus} onValueChange={handleStatusChange}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="Tous les statuts" />
             </SelectTrigger>
             <SelectContent>
@@ -120,10 +118,10 @@ const QuotesListClient = ({
       {/* Loader */}
       {isLoading && <SearchLoader />}
 
-      {/* Tables */}
+      {/* Tables avec scroll horizontal */}
       <div className={`mt-4 ${isLoading ? "opacity-50 pointer-events-none" : ""}`}>
         <div className="inline-block min-w-full align-middle">
-          <div className="rounded-lg bg-gray-50 p-2 md:pt-0">
+          <div className="rounded-lg bg-gray-50 p-2 md:pt-0 overflow-hidden">
             {/* Mobile */}
             <QuotesTableMobile
               quotes={initialQuotes}
@@ -134,7 +132,7 @@ const QuotesListClient = ({
               formatDate={formatDate}
             />
 
-            {/* Desktop */}
+            {/* Desktop avec scroll */}
             <QuotesTableDesktop
               quotes={initialQuotes}
               onPreview={handlePreview}
@@ -158,9 +156,9 @@ const QuotesListClient = ({
               disabled={currentPage <= 1}
             >
               <ChevronLeft className="h-4 w-4 mr-1" />
-              Précédent
+              <span className="hidden sm:inline">Précédent</span>
             </Button>
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-gray-600 whitespace-nowrap">
               Page {currentPage} sur {totalPages}
             </span>
             <Button
@@ -169,7 +167,7 @@ const QuotesListClient = ({
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage >= totalPages}
             >
-              Suivant
+              <span className="hidden sm:inline">Suivant</span>
               <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
           </div>
