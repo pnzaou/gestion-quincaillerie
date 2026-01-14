@@ -34,7 +34,6 @@ const SaleClientSelector = () => {
   const handleUpdateNewClient = useSaleStore((state) => state.handleUpdateNewClient);
   const setShopId = useSaleStore((state) => state.setShopId);
 
-  // ✅ Initialiser shopId puis charger les clients
   useEffect(() => {
     if (shopId) {
       setShopId(shopId);
@@ -48,81 +47,87 @@ const SaleClientSelector = () => {
   };
 
   return (
-    <div className="flex items-center gap-2">
-      <Popover open={selectClientOpen} onOpenChange={setSelectClientOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            role="combobox"
-            aria-expanded={selectClientOpen}
-            className={cn(
-              "w-full sm:w-[300px] justify-between",
-              !client && "text-muted-foreground"
-            )}
-          >
-            {client ? (
-              <div className="flex items-center gap-2 overflow-hidden">
-                <span className="truncate">{client.nomComplet}</span>
+    <div className="w-full">
+      {!client ? (
+        // Pas de client sélectionné - Bouton pleine largeur
+        <Popover open={selectClientOpen} onOpenChange={setSelectClientOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={selectClientOpen}
+              className="w-full justify-between h-10"
+            >
+              <div className="flex items-center gap-2">
+                <UserPlus className="w-4 h-4" />
+                <span className="truncate">Sélectionner un client</span>
               </div>
-            ) : (
-              <>
-                <UserPlus className="w-4 h-4 mr-2" />
-                Sélectionner un client
-              </>
-            )}
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-          </Button>
-        </PopoverTrigger>
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
 
-        <PopoverContent className="w-full sm:w-[300px] p-0">
-          <Command>
-            <CommandInput placeholder="Rechercher un client..." />
-            <CommandEmpty>Aucun client trouvé.</CommandEmpty>
-            <CommandGroup className="max-h-[200px] overflow-y-auto">
-              {clientsData?.map((c) => (
-                <CommandItem
-                  key={c._id}
-                  value={c.nomComplet}
-                  onSelect={() => handleSelectClient(c)}
-                  className="cursor-pointer"
-                >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      client?._id === c._id ? "opacity-100" : "opacity-0"
-                    )}
-                  />
-                  <div className="flex-1">
-                    <div className="font-medium">{c.nomComplet}</div>
-                    <div className="text-xs text-muted-foreground">{c.tel}</div>
-                  </div>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </Command>
-          <AddClientPopup />
-        </PopoverContent>
-      </Popover>
-
-      {client && (
-        <div className="flex items-center gap-1 px-3 py-2 bg-secondary rounded-md">
-          <span className="text-sm font-medium">{client.nomComplet}</span>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 ml-2"
-            onClick={handleUpdateNewClient}
-          >
-            <UserPlus className="h-3 w-3" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            onClick={handleDeleteSelectedClient}
-          >
-            <X className="h-3 w-3" />
-          </Button>
+          <PopoverContent className="w-[calc(100vw-2rem)] sm:w-[400px] p-0" align="start">
+            <Command>
+              <CommandInput placeholder="Rechercher un client..." />
+              <CommandEmpty>Aucun client trouvé.</CommandEmpty>
+              <CommandGroup className="max-h-[250px] overflow-y-auto">
+                {clientsData?.map((c) => (
+                  <CommandItem
+                    key={c._id}
+                    value={c.nomComplet}
+                    onSelect={() => handleSelectClient(c)}
+                    className="cursor-pointer"
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        client?._id === c._id ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium truncate">{c.nomComplet}</div>
+                      <div className="text-xs text-muted-foreground truncate">{c.tel}</div>
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </Command>
+            <AddClientPopup />
+          </PopoverContent>
+        </Popover>
+      ) : (
+        // Client sélectionné - Affichage compact
+        <div className="flex items-center gap-2 px-3 py-2 bg-secondary/50 border border-secondary rounded-lg">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <UserPlus className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium truncate">{client.nomComplet}</p>
+                <p className="text-xs text-muted-foreground truncate">{client.tel}</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 hover:bg-blue-100"
+              onClick={handleUpdateNewClient}
+              title="Modifier"
+            >
+              <UserPlus className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 hover:bg-red-100"
+              onClick={handleDeleteSelectedClient}
+              title="Supprimer"
+            >
+              <X className="h-4 w-4 text-red-500" />
+            </Button>
+          </div>
         </div>
       )}
     </div>

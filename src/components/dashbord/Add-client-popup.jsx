@@ -31,7 +31,6 @@ const AddClientPopup = () => {
             return;
         }
 
-        // ✅ Ajouter businessId au client temporaire
         setClient({
             ...newClient,
             businessId: shopId
@@ -50,21 +49,20 @@ const AddClientPopup = () => {
     return (
         <Dialog open={newClientDrawerOpen} onOpenChange={setNewClientDrawerOpen}>
             <DialogTrigger asChild>
-                <Button className="mt-4 w-full bg-[#0084D1] hover:bg-[#0042d1] hover:cursor-pointer text-white font-bold rounded-t-none rounded-b-sm">
+                <Button className="mt-2 w-full bg-[#0084D1] hover:bg-[#0042d1] hover:cursor-pointer text-white font-semibold rounded-t-none">
                     + Nouveau client
                 </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-[500px]">
                 <DialogHeader>
-                    <DialogTitle>
-                        <p className="text-lg font-bold mb-4">
-                            Nouveau client
-                        </p>
+                    <DialogTitle className="text-lg font-bold">
+                        Nouveau client
                     </DialogTitle>
                 </DialogHeader>
-                <div>
-                    <div className="flex gap-4 mb-4">
-                        <div className="grid gap-3 flex-1/2">
+                <div className="space-y-4">
+                    {/* Ligne 1 - responsive */}
+                    <div className="flex flex-col sm:flex-row gap-4">
+                        <div className="grid gap-2 flex-1">
                             <Label htmlFor="nom">Nom complet <Required/></Label>
                             <Input 
                              id="nom"
@@ -73,7 +71,7 @@ const AddClientPopup = () => {
                              onChange={(e) => setNewClient(({...newClient, nomComplet: e.target.value}))}
                             />
                         </div>
-                        <div className="grid gap-3 flex-1/2">
+                        <div className="grid gap-2 flex-1">
                             <Label htmlFor="tel">Téléphone <Required/></Label>
                             <Input 
                              id="tel"
@@ -83,8 +81,10 @@ const AddClientPopup = () => {
                             />
                         </div>
                     </div>
-                    <div className="flex gap-4 mb-10">
-                        <div className="grid gap-3 flex-1/2">
+
+                    {/* Ligne 2 - responsive */}
+                    <div className="flex flex-col sm:flex-row gap-4">
+                        <div className="grid gap-2 flex-1">
                             <Label htmlFor="email">Email</Label>
                             <Input 
                              id="email"
@@ -93,7 +93,7 @@ const AddClientPopup = () => {
                              onChange={(e) => setNewClient(({...newClient, email: e.target.value}))}
                             />
                         </div>
-                        <div className="grid gap-3 flex-1/2">
+                        <div className="grid gap-2 flex-1">
                             <Label htmlFor="adresse">Adresse</Label>
                             <Input 
                              id="adresse"
@@ -103,9 +103,11 @@ const AddClientPopup = () => {
                             />
                         </div>
                     </div>
-                    <div className="flex justify-end gap-4">
+
+                    {/* Bouton */}
+                    <div className="flex justify-end pt-4">
                         <Button 
-                          className="w-full bg-[#0084D1] hover:bg-[#0042d1] hover:cursor-pointer text-white font-bold rounded"
+                          className="w-full sm:w-auto bg-[#0084D1] hover:bg-[#0042d1] hover:cursor-pointer text-white font-semibold"
                           onClick={handleAddClient}
                         >
                             Enregistrer

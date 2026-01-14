@@ -10,12 +10,12 @@ import { useSaleStore } from "@/stores/useSaleStore";
 import { useQuoteStore } from "@/stores/useQuoteStore";
 import { Separator } from "../ui/separator";
 import { Button } from "../ui/button";
-import { FileText } from "lucide-react";
+import { FileText, ShoppingBag } from "lucide-react";
 import toast from "react-hot-toast";
 
 function DetailsVentePanier() {
   const loading = useSaleStore((state) => state.loading);
-  const cart = useSaleStore((state) => state.cart); // ✅ Panier
+  const cart = useSaleStore((state) => state.cart);
   const saleDate = useSaleStore((state) => state.saleDate);
   const setSaleDate = useSaleStore((state) => state.setSaleDate);
   const discount = useSaleStore((state) => state.discount);
@@ -25,20 +25,16 @@ function DetailsVentePanier() {
   const createSale = useSaleStore((state) => state.createSale);
   const paymentsSum = useSaleStore((s) => s.paymentsSum());
 
-  // ✅ Store devis
   const quoteLoading = useQuoteStore((state) => state.loading);
   const createQuote = useQuoteStore((state) => state.createQuote);
 
   const remaining = total - paymentsSum;
 
-  // formate la date pour l'afficher dans l'input YYYY-MM-DD
   const isoDate = saleDate ? format(saleDate, "yyyy-MM-dd") : "";
 
-  // ✅ Handler création devis
   const handleCreateQuote = async () => {
     const state = useSaleStore.getState();
     
-    // ✅ Vérifier que le client est sélectionné
     if (!state.client) {
       toast.error("Veuillez sélectionner un client pour créer un devis");
       return;
@@ -102,33 +98,35 @@ function DetailsVentePanier() {
 
       <Separator />
 
-      <div className="bg-primary/10 p-4 rounded-lg">
+      <div className="bg-primary/10 p-3 sm:p-4 rounded-lg">
         <div className="flex justify-between items-center">
-          <span className="font-semibold text-lg">Total</span>
-          <span className="font-bold text-2xl text-[#0084D1]">
+          <span className="font-semibold text-base sm:text-lg">Total</span>
+          <span className="font-bold text-xl sm:text-2xl text-[#0084D1]">
             {total.toFixed(2)} FCFA
           </span>
         </div>
       </div>
 
-      {/* ✅ Bouton Créer un devis */}
-      <Button
-        className="w-full bg-green-600 hover:bg-green-700 text-white py-6 text-lg font-semibold gap-2"
-        onClick={handleCreateQuote}
-        disabled={quoteLoading || cart.length === 0}
-      >
-        <FileText className="h-5 w-5" />
-        {quoteLoading ? "Création..." : "Créer un devis"}
-      </Button>
+      {/* Boutons - responsive */}
+      <div className="space-y-2 sm:space-y-3">
+        <Button
+          className="w-full bg-green-600 hover:bg-green-700 text-white py-5 sm:py-6 text-base sm:text-lg font-semibold gap-2"
+          onClick={handleCreateQuote}
+          disabled={quoteLoading || cart.length === 0}
+        >
+          <FileText className="h-4 w-4 sm:h-5 sm:w-5" />
+          {quoteLoading ? "Création..." : "Créer un devis"}
+        </Button>
 
-      {/* Bouton Valider la vente */}
-      <Button
-        className="w-full bg-[#0084D1] hover:bg-[#0042d1] text-white py-6 text-lg font-semibold"
-        onClick={createSale}
-        disabled={loading}
-      >
-        {loading ? "Enregistrement..." : "Valider la vente"}
-      </Button>
+        <Button
+          className="w-full bg-[#0084D1] hover:bg-[#0042d1] text-white py-5 sm:py-6 text-base sm:text-lg font-semibold gap-2"
+          onClick={createSale}
+          disabled={loading}
+        >
+          <ShoppingBag className="h-4 w-4 sm:h-5 sm:w-5" />
+          {loading ? "Enregistrement..." : "Valider la vente"}
+        </Button>
+      </div>
     </div>
   );
 }

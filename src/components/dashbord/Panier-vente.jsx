@@ -24,11 +24,12 @@ const PanierVente = ({ localStocks, setLocalStocks }) => {
     <Sheet open={panierDrawerOpen} onOpenChange={setPanierDrawerOpen}>
       <SheetTrigger asChild>
         <div className="relative inline-block">
-          <Button variant="outline" className="px-4 py-2">
-            <ShoppingCart className="mr-1 h-4 w-4" /> Panier
+          <Button variant="outline" className="h-10 px-3 sm:px-4">
+            <ShoppingCart className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Panier</span>
           </Button>
           {cart.length > 0 && (
-            <span className="absolute -top-2 -right-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-blue-500 rounded-full">
+            <span className="absolute -top-2 -right-2 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold leading-none text-white bg-blue-600 rounded-full">
               {cart.reduce((a, c) => a + c.quantity, 0)}
             </span>
           )}
@@ -37,21 +38,21 @@ const PanierVente = ({ localStocks, setLocalStocks }) => {
 
       <SheetContent 
         side="right" 
-        className="w-full sm:max-w-full lg:max-w-7xl overflow-y-auto p-0"
+        className="w-full sm:max-w-2xl lg:max-w-7xl overflow-y-auto p-0"
       >
-        <div className="p-6">
-          <SheetHeader className="mb-6">
-            <SheetTitle className="text-2xl">Récapitulatif de la vente</SheetTitle>
-            <SheetDescription>
+        <div className="p-4 sm:p-6">
+          <SheetHeader className="mb-4 sm:mb-6">
+            <SheetTitle className="text-xl sm:text-2xl">Récapitulatif de la vente</SheetTitle>
+            <SheetDescription className="text-sm">
               {cart.length} article{cart.length > 1 ? "s" : ""} • Total: {useSaleStore.getState().total().toFixed(2)} FCFA
             </SheetDescription>
           </SheetHeader>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* 1. Liste des articles - 4 colonnes */}
-            <div className="lg:col-span-4">
-              <div className="bg-muted/30 rounded-lg p-4">
-                <h3 className="font-semibold mb-4 text-lg">Articles</h3>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
+            {/* Articles - mobile: pleine largeur, desktop: 4 colonnes */}
+            <div className="lg:col-span-4 order-1">
+              <div className="bg-muted/30 rounded-lg p-3 sm:p-4">
+                <h3 className="font-semibold mb-3 sm:mb-4 text-base sm:text-lg">Articles</h3>
                 <ListeArticlesPanier
                   localStocks={localStocks}
                   setLocalStocks={setLocalStocks}
@@ -59,17 +60,17 @@ const PanierVente = ({ localStocks, setLocalStocks }) => {
               </div>
             </div>
 
-            {/* 2. Détails de la vente - 5 colonnes */}
-            <div className="lg:col-span-5">
-              <div className="bg-muted/30 rounded-lg p-4">
-                <h3 className="font-semibold mb-4 text-lg">Détails de la vente</h3>
+            {/* Détails - mobile: 2ème, desktop: 5 colonnes */}
+            <div className="lg:col-span-5 order-3 lg:order-2">
+              <div className="bg-muted/30 rounded-lg p-3 sm:p-4">
+                <h3 className="font-semibold mb-3 sm:mb-4 text-base sm:text-lg">Détails de la vente</h3>
                 <DetailsVentePanier />
               </div>
             </div>
 
-            {/* 3. Infos client - 3 colonnes */}
-            <div className="lg:col-span-3">
-              <div className="bg-muted/30 rounded-lg p-4">
+            {/* Infos client - mobile: 3ème, desktop: 3 colonnes */}
+            <div className="lg:col-span-3 order-2 lg:order-3">
+              <div className="bg-muted/30 rounded-lg p-3 sm:p-4">
                 <InfosClientPanier />
               </div>
             </div>
