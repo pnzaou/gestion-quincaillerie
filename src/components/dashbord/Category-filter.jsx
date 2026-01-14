@@ -49,7 +49,7 @@ export default function CategoryFilter({ selected, toggleCategory }) {
   if (loading) {
     return (
       <div
-        className="w-40 h-10 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse"
+        className="w-full sm:w-[180px] h-10 bg-gray-200 dark:bg-gray-700 rounded-md animate-pulse"
         role="status"
         aria-label="Chargement des catégories"
       />
@@ -62,19 +62,21 @@ export default function CategoryFilter({ selected, toggleCategory }) {
         <Button
           variant="outline"
           role="combobox"
-          className="w-40 justify-between"
+          className="w-full sm:w-[180px] justify-between"
         >
-          {selected.length > 0
-            ? `${selected.length} catégories`
-            : "Toutes les catégories"}
+          <span className="truncate">
+            {selected.length > 0
+              ? `${selected.length} catégorie${selected.length > 1 ? 's' : ''}`
+              : "Toutes les catégories"}
+          </span>
         </Button>
       </PopoverTrigger>
 
-      <PopoverContent className="w-full sm:w-56 p-0">
+      <PopoverContent className="w-[calc(100vw-2rem)] sm:w-[280px] p-0" align="end">
         <Command>
           <CommandInput placeholder="Rechercher..." />
           <CommandEmpty>Aucune catégorie trouvée.</CommandEmpty>
-          <CommandGroup>
+          <CommandGroup className="max-h-[300px] overflow-y-auto">
             {categories.map((cat) => (
               <CommandItem
                 key={cat._id}
@@ -85,7 +87,7 @@ export default function CategoryFilter({ selected, toggleCategory }) {
                   checked={selected.includes(cat._id)}
                   onChange={() => toggleCategory(cat._id)}
                 />
-                {cat.nom}
+                <span className="truncate">{cat.nom}</span>
               </CommandItem>
             ))}
           </CommandGroup>

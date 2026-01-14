@@ -15,15 +15,20 @@ const PageSizeSelect = ({ limit, setLimit, setPage, tabSize }) => {
         setPage(1);
       }}
     >
-      <SelectTrigger className="w-full sm:w-44">
+      <SelectTrigger className="w-full sm:w-[200px]">
         <SelectValue>
-          {limit ? `Articles par page : ${limit}` : "Articles par page"}
+          {/* Version courte sur très petit écran */}
+          <span className="sm:hidden">{limit}/page</span>
+          {/* Version complète sur écran normal */}
+          <span className="hidden sm:inline">
+            {limit ? `Articles par page : ${limit}` : "Articles par page"}
+          </span>
         </SelectValue>
       </SelectTrigger>
       <SelectContent>
         {tabSize.map((size) => (
           <SelectItem key={size} value={String(size)}>
-            {`Articles par page : ${size}`}
+            {`${size} par page`}
           </SelectItem>
         ))}
       </SelectContent>

@@ -24,29 +24,32 @@ const Page = async ({ searchParams, params }) => {
 
   return (
     <div className="flow-root">
-      <div className="mb-6 flex items-center">
-        <div className="flex-1/2">
+      {/* Header amélioré */}
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex-1">
           <h2 className="text-2xl font-bold text-gray-900">Articles</h2>
-          <p className="mt-2 text-sm text-gray-500">Gestion des articles</p>
+          <p className="mt-1 text-sm text-gray-500">Gestion des articles</p>
         </div>
-        <div className="flex-1/2 flex justify-end gap-4">
-          <div className="mb-4 mr-4 md:block">
-            <div>
-              <ExcelExportButton initUrl={`/api/product/export-excel?businessId=${shopId}`} />
-            </div>
-          </div>
-          <div>
-            <Link href={`/shop/${shopId}/dashboard/article/ajouter`} className="w-full">
-              <Button className="hidden md:block bg-[#0084D1] text-white px-4 py-2 rounded hover:bg-[#0042d1] hover:cursor-pointer">
-                Ajouter un article
-              </Button>
-              <Button className="md:hidden rounded-md border p-2 flex items-center justify-center gap-1 bg-[#0084D1] text-white hover:bg-[#0042d1] hover:cursor-pointer">
-                <PlusIcon className="w-5" />
-              </Button>
-            </Link>
-          </div>
+        
+        {/* Actions - responsive */}
+        <div className="flex items-center gap-3 sm:gap-4">
+          <ExcelExportButton 
+            initUrl={`/api/product/export-excel?businessId=${shopId}`} 
+          />
+          
+          <Link href={`/shop/${shopId}/dashboard/article/ajouter`} className="flex-shrink-0">
+            {/* Desktop button */}
+            <Button className="hidden sm:flex bg-[#0084D1] text-white px-4 py-2 rounded hover:bg-[#0042d1] hover:cursor-pointer whitespace-nowrap">
+              Ajouter un article
+            </Button>
+            {/* Mobile button */}
+            <Button className="sm:hidden rounded-md p-2 flex items-center justify-center bg-[#0084D1] text-white hover:bg-[#0042d1] hover:cursor-pointer">
+              <PlusIcon className="w-5 h-5" />
+            </Button>
+          </Link>
         </div>
       </div>
+
       <ArticlesTableAdmin
         initialArt={data}
         currentPage={currentPage}
