@@ -199,79 +199,107 @@ export default function DashboardSkeleton() {
   );
 }
 
-// Skeleton pour les lignes de la table des utilisateurs
+// Skeleton pour les lignes de la table des utilisateurs (Desktop)
 export function UserRowSkeleton() {
   return (
-    <tr className="w-full border-b border-gray-300 last-of-type:border-none animate-pulse [&:first-child>td:first-child]:rounded-tl-lg [&:first-child>td:last-child]:rounded-tr-lg [&:last-child>td:first-child]:rounded-bl-lg [&:last-child>td:last-child]:rounded-br-lg">
+    <tr className="w-full border-b border-gray-200 last-of-type:border-none animate-pulse">
       {/* Prénom */}
-      <td className="whitespace-nowrap px-3 py-3">
-        <div className="h-6 w-24 rounded bg-gray-300"></div>
+      <td className="whitespace-nowrap px-4 py-4">
+        <div className="h-5 w-24 rounded bg-gray-200"></div>
       </td>
       {/* Nom */}
-      <td className="whitespace-nowrap px-3 py-3">
-        <div className="h-6 w-24 rounded bg-gray-300"></div>
+      <td className="whitespace-nowrap px-3 py-4">
+        <div className="h-5 w-24 rounded bg-gray-200"></div>
       </td>
       {/* Email */}
-      <td className="whitespace-nowrap px-3 py-3">
-        <div className="h-6 w-36 rounded bg-gray-300"></div>
+      <td className="whitespace-nowrap px-3 py-4">
+        <div className="h-5 w-40 rounded bg-gray-200"></div>
       </td>
       {/* Rôle */}
-      <td className="whitespace-nowrap px-3 py-3">
-        <div className="h-6 w-20 rounded bg-gray-300"></div>
+      <td className="whitespace-nowrap px-3 py-4">
+        <div className="h-6 w-16 rounded-full bg-gray-200"></div>
+      </td>
+      {/* Boutique */}
+      <td className="whitespace-nowrap px-3 py-4">
+        <div className="h-5 w-28 rounded bg-gray-200"></div>
       </td>
       {/* Statut */}
-      <td className="whitespace-nowrap px-3 py-3">
-        <div className="h-6 w-20 rounded bg-gray-300"></div>
+      <td className="whitespace-nowrap px-3 py-4">
+        <div className="h-6 w-20 rounded-full bg-gray-200"></div>
       </td>
       {/* Actions */}
-      <td className="whitespace-nowrap py-3 pl-6 pr-3">
+      <td className="whitespace-nowrap py-4 pl-6 pr-3">
         <div className="flex justify-end gap-2">
-          <div className="h-[38px] w-[38px] rounded bg-gray-300"></div>
-          <div className="h-[38px] w-[38px] rounded bg-gray-300"></div>
+          <div className="h-9 w-9 rounded bg-gray-200"></div>
+          <div className="h-9 w-9 rounded bg-gray-200"></div>
         </div>
       </td>
     </tr>
-  )
+  );
 }
 
-//Seleton pour les lignes de la table des utilisateurs sur mobile
+// Skeleton pour les cartes utilisateurs sur mobile
 export function UserMobileSkeleton() {
   return (
-    <div className="mb-2 w-full rounded-md bg-white p-4 animate-pulse">
-      {/* Header : Prénom + Statut */}
-      <div className="flex items-center justify-between border-b border-gray-100 pb-4">
-        <div className="h-6 w-24 rounded bg-gray-100" /> {/* Prénom */}
-        <div className="h-6 w-16 rounded bg-gray-100" /> {/* Statut */}
+    <div className="w-full rounded-lg bg-white p-4 shadow-md animate-pulse">
+      {/* Header : Prénom/Nom + Statut */}
+      <div className="flex items-start justify-between border-b pb-3 mb-3">
+        <div className="flex-1 space-y-2">
+          <div className="h-5 w-32 rounded bg-gray-200" /> {/* Nom complet */}
+          <div className="h-4 w-40 rounded bg-gray-200" /> {/* Email */}
+        </div>
+        <div className="h-6 w-20 rounded-full bg-gray-200" /> {/* Statut */}
       </div>
 
-      {/* Corps : Nom, Email, Rôle */}
-      <div className="pt-4 space-y-2">
-        <div className="h-6 w-28 rounded bg-gray-100" /> {/* Nom */}
-        <div className="h-6 w-40 rounded bg-gray-100" /> {/* Email */}
-        <div className="h-6 w-20 rounded bg-gray-100" /> {/* Rôle */}
+      {/* Corps : Rôle + Boutique */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between py-1">
+          <div className="h-4 w-12 rounded bg-gray-200" /> {/* Label Rôle */}
+          <div className="h-4 w-20 rounded bg-gray-200" /> {/* Valeur Rôle */}
+        </div>
+        <div className="flex items-center justify-between py-1">
+          <div className="h-4 w-20 rounded bg-gray-200" /> {/* Label Boutique */}
+          <div className="h-4 w-24 rounded bg-gray-200" /> {/* Valeur Boutique */}
+        </div>
       </div>
 
       {/* Actions */}
-      <div className="mt-4 flex justify-end gap-2">
-        <div className="h-10 w-10 rounded bg-gray-100" />
-        <div className="h-10 w-10 rounded bg-gray-100" />
+      <div className="flex justify-end gap-2 pt-3 border-t mt-3">
+        <div className="h-9 w-9 rounded bg-gray-200" />
+        <div className="h-9 w-9 rounded bg-gray-200" />
       </div>
     </div>
-  )
+  );
 }
 
-// Skeleton pour la table des utilisateurs
+// Skeleton pour la table complète des utilisateurs
 export function UserTableSkeleton() {
   return (
-    <div className="mt-6 flow-root">
-      <div
-        className={`${shimmer} relative animate-pulse mb-6 h-8 w-36 overflow-hidden rounded-md bg-gray-300`}
-      />
-      <div className="inline-block min-w-full align-middle">
-        <div className="rounded-lg bg-gray-50 p-2 md:pt-0">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header Skeleton */}
+        <div className="mb-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 animate-pulse">
+            <div className="w-16 h-16 rounded-full bg-gray-200 flex-shrink-0"></div>
+            <div className="space-y-2">
+              <div className="h-8 w-48 rounded bg-gray-200"></div>
+              <div className="h-4 w-64 rounded bg-gray-200"></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Search Bar + Button Skeleton */}
+        <div className="bg-white p-4 rounded-lg shadow-sm mb-4 animate-pulse">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1 h-10 rounded bg-gray-200"></div>
+            <div className="w-full sm:w-48 h-10 rounded bg-gray-200"></div>
+          </div>
+        </div>
+
+        {/* Table Container */}
+        <div className="rounded-lg bg-gray-50 p-2 md:pt-0 shadow-sm">
           {/* Mobile Version */}
-          <div className="md:hidden space-y-2">
-            <UserMobileSkeleton />
+          <div className="md:hidden space-y-3">
             <UserMobileSkeleton />
             <UserMobileSkeleton />
             <UserMobileSkeleton />
@@ -280,28 +308,44 @@ export function UserTableSkeleton() {
           </div>
 
           {/* Desktop Table Version */}
-          <table className="hidden min-w-full text-gray-900 md:table">
-            <thead className="rounded-lg text-left text-sm font-normal">
-              <tr>
-                <th scope="col" className="px-4 py-5 font-medium sm:pl-6">Prénom</th>
-                <th scope="col" className="px-3 py-5 font-medium">Nom</th>
-                <th scope="col" className="px-3 py-5 font-medium">Email</th>
-                <th scope="col" className="px-3 py-5 font-medium">Rôle</th>
-                <th scope="col" className="px-3 py-5 font-medium">Statut</th>
-                <th scope="col" className="relative pb-4 pl-3 pr-6 pt-2 sm:pr-6">
-                  <span className="sr-only">Actions</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white">
-              <UserRowSkeleton />
-              <UserRowSkeleton />
-              <UserRowSkeleton />
-              <UserRowSkeleton />
-              <UserRowSkeleton />
-              <UserRowSkeleton />
-            </tbody>
-          </table>
+          <div className="hidden md:block overflow-x-auto">
+            <table className="min-w-full text-gray-900 bg-white rounded-lg">
+              <thead className="text-left text-sm font-normal bg-gray-50">
+                <tr>
+                  <th className="px-4 py-5 font-medium">Prénom</th>
+                  <th className="px-3 py-5 font-medium">Nom</th>
+                  <th className="px-3 py-5 font-medium">Email</th>
+                  <th className="px-3 py-5 font-medium">Rôle</th>
+                  <th className="px-3 py-5 font-medium">Boutique</th>
+                  <th className="px-3 py-5 font-medium">Statut</th>
+                  <th className="py-5 pl-6 pr-3 text-right">
+                    <span className="sr-only">Actions</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                <UserRowSkeleton />
+                <UserRowSkeleton />
+                <UserRowSkeleton />
+                <UserRowSkeleton />
+                <UserRowSkeleton />
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Pagination Skeleton */}
+        <div className="mt-6 flex justify-center animate-pulse">
+          <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+            <div className="min-w-[36px] sm:min-w-[40px] h-9 sm:h-10 rounded-md bg-gray-200"></div>
+            <div className="min-w-[36px] sm:min-w-[40px] h-9 sm:h-10 rounded-md bg-gray-200"></div>
+            <div className="min-w-[36px] sm:min-w-[40px] h-9 sm:h-10 rounded-md bg-gray-200"></div>
+            <div className="px-2 sm:px-3 py-1">
+              <span className="text-gray-300">…</span>
+            </div>
+            <div className="min-w-[36px] sm:min-w-[40px] h-9 sm:h-10 rounded-md bg-gray-200"></div>
+            <div className="min-w-[36px] sm:min-w-[40px] h-9 sm:h-10 rounded-md bg-gray-200"></div>
+          </div>
         </div>
       </div>
     </div>

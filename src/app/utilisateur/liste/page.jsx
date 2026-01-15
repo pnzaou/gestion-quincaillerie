@@ -25,27 +25,33 @@ const Page = async ({ searchParams }) => {
   const { data, totalPages, currentPage } = await rep.json();
 
   return (
-    <div className="flow-root md:flex md:flex-col md:items-center md:justify-center md:h-screen">
-      <div className="mb-6 flex items-center gap-2">
-        <div>
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#1166D4]/10 mb-4">
-            <Users className="w-8 h-8 text-[#1166D4]" />
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#1166D4]/10 flex-shrink-0">
+              <Users className="w-8 h-8 text-[#1166D4]" />
+            </div>
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-2">
+                Utilisateurs
+              </h1>
+              <p className="text-sm sm:text-base text-gray-500">
+                Gestion des utilisateurs de la plateforme
+              </p>
+            </div>
           </div>
         </div>
-        <div>
-          <h1 className="text-4xl font-bold text-foreground mb-3">
-            Utilisateurs
-          </h1>
-          <p className="mt-2 text-sm text-gray-500">Gestion des utilisateurs</p>
-        </div>
-      </div>
 
-      <UserTable
-        initialUsers={data}
-        initialTotalPages={totalPages}
-        currentPage={currentPage}
-        search={search1}
-      />
+        {/* Table */}
+        <UserTable
+          initialUsers={data}
+          initialTotalPages={totalPages}
+          currentPage={currentPage}
+          search={search1}
+        />
+      </div>
     </div>
   );
 };
