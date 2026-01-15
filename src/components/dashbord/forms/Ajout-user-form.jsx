@@ -2,18 +2,18 @@
 
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useForm, Controller } from "react-hook-form";
-import { Label } from "../../ui/label";
-import { Input } from "../../ui/input";
-import { Button } from "../../ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../../ui/select";
+} from "@/components/ui/select";
 import {
   Command,
   CommandEmpty,
@@ -60,7 +60,6 @@ const AjoutUserForm = ({ className, initialData = null, ...props }) => {
 
   const selectedRole = watch("role");
 
-  // Récupérer les boutiques depuis la BD
   useEffect(() => {
     const fetchBusinesses = async () => {
       try {
@@ -119,170 +118,174 @@ const AjoutUserForm = ({ className, initialData = null, ...props }) => {
       <Card>
         <CardHeader>
           <CardTitle>
-            {isEdit ? "Modifier l'utilisateur'" : "Ajouter un utilisateur"}
+            {isEdit ? "Modifier l'utilisateur" : "Ajouter un utilisateur"}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} noValidate>
-            <div className="flex gap-2 mb-4">
-              <div className="grid gap-3 flex-1/2">
-                <Label htmlFor="nom">
-                  Nom
-                  <Required />
-                </Label>
-                <Input id="nom" type="text" {...register("nom")} />
-                {errors?.nom && (
-                  <span className="mt-2 text-xs text-red-500">
-                    {errors?.nom.message}
-                  </span>
-                )}
-              </div>
-              <div className="grid gap-3 flex-1/2">
-                <div className="flex items-center">
+            <div className="space-y-4">
+              {/* Ligne 1 - Nom et Prénom */}
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="grid gap-2 flex-1">
+                  <Label htmlFor="nom">
+                    Nom
+                    <Required />
+                  </Label>
+                  <Input id="nom" type="text" {...register("nom")} />
+                  {errors?.nom && (
+                    <span className="text-xs text-red-500">
+                      {errors?.nom.message}
+                    </span>
+                  )}
+                </div>
+                <div className="grid gap-2 flex-1">
                   <Label htmlFor="prenom">
                     Prénom
                     <Required />
                   </Label>
+                  <Input id="prenom" type="text" {...register("prenom")} />
+                  {errors?.prenom && (
+                    <span className="text-xs text-red-500">
+                      {errors?.prenom.message}
+                    </span>
+                  )}
                 </div>
-                <Input id="prenom" type="text" {...register("prenom")} />
-                {errors?.prenom && (
-                  <span className="mt-2 text-xs text-red-500">
-                    {errors?.prenom.message}
-                  </span>
-                )}
               </div>
-            </div>
-            <div className="flex gap-2 mb-4">
-              <div className="grid gap-3 flex-1/2">
-                <Label htmlFor="email">
-                  E-mail
-                  <Required />
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  {...register("email")}
-                />
-                {errors?.email && (
-                  <span className="mt-2 text-xs text-red-500">
-                    {errors?.email.message}
-                  </span>
-                )}
-              </div>
-              <div className="grid gap-3 flex-1/2">
-                <div className="flex items-center">
+
+              {/* Ligne 2 - Email et Mot de passe */}
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="grid gap-2 flex-1">
+                  <Label htmlFor="email">
+                    E-mail
+                    <Required />
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="m@example.com"
+                    {...register("email")}
+                  />
+                  {errors?.email && (
+                    <span className="text-xs text-red-500">
+                      {errors?.email.message}
+                    </span>
+                  )}
+                </div>
+                <div className="grid gap-2 flex-1">
                   <Label htmlFor="password">
                     Mot de passe
                     <Required />
                   </Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    required={!isEdit}
+                    {...register("password")}
+                  />
+                  {errors.password && (
+                    <span className="text-xs text-red-500">
+                      {errors?.password.message}
+                    </span>
+                  )}
                 </div>
-                <Input
-                  id="password"
-                  type="password"
-                  required={!isEdit}
-                  {...register("password")}
-                />
-                {errors.password && (
-                  <span className="mt-2 text-xs text-red-500">
-                    {errors?.password.message}
-                  </span>
-                )}
               </div>
-            </div>
-            <div className="grid gap-3 mb-4">
-              <Label htmlFor="role">
-                Rôle
-                <Required />
-              </Label>
-              <Controller
-                name="role"
-                control={control}
-                render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Rôle" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="gerant">Gérant</SelectItem>
-                      <SelectItem value="comptable">Comptable</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-              {errors?.role && (
-                <span className="mt-2 text-xs text-red-500">
-                  {errors?.role.message}
-                </span>
-              )}
-            </div>
 
-            {/* Champ Boutique conditionnel */}
-            {selectedRole === "gerant" && (
-              <div className="grid gap-3 mb-4">
-                <Label htmlFor="business">
-                  Boutique
+              {/* Ligne 3 - Rôle */}
+              <div className="grid gap-2">
+                <Label htmlFor="role">
+                  Rôle
                   <Required />
                 </Label>
                 <Controller
-                  name="business"
+                  name="role"
                   control={control}
                   render={({ field }) => (
-                    <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          role="combobox"
-                          aria-expanded={openCombobox}
-                          className="w-full justify-between"
-                        >
-                          {field.value
-                            ? businesses.find((b) => b._id === field.value)?.name
-                            : "Sélectionner une boutique..."}
-                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-full p-0">
-                        <Command>
-                          <CommandInput placeholder="Rechercher une boutique..." />
-                          <CommandEmpty>Aucune boutique trouvée.</CommandEmpty>
-                          <CommandGroup>
-                            {businesses.map((business) => (
-                              <CommandItem
-                                key={business._id}
-                                value={business.name}
-                                onSelect={() => {
-                                  field.onChange(business._id);
-                                  setOpenCombobox(false);
-                                }}
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    field.value === business._id
-                                      ? "opacity-100"
-                                      : "opacity-0"
-                                  )}
-                                />
-                                {business.name}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Sélectionner un rôle" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="gerant">Gérant</SelectItem>
+                        <SelectItem value="comptable">Comptable</SelectItem>
+                      </SelectContent>
+                    </Select>
                   )}
                 />
-                {errors?.business && (
-                  <span className="mt-2 text-xs text-red-500">
-                    {errors?.business.message}
+                {errors?.role && (
+                  <span className="text-xs text-red-500">
+                    {errors?.role.message}
                   </span>
                 )}
               </div>
-            )}
 
-            <div className="flex flex-col gap-3">
+              {/* Champ Boutique conditionnel */}
+              {selectedRole === "gerant" && (
+                <div className="grid gap-2">
+                  <Label htmlFor="business">
+                    Boutique
+                    <Required />
+                  </Label>
+                  <Controller
+                    name="business"
+                    control={control}
+                    render={({ field }) => (
+                      <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={openCombobox}
+                            className="w-full justify-between"
+                          >
+                            {field.value
+                              ? businesses.find((b) => b._id === field.value)?.name
+                              : "Sélectionner une boutique..."}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[calc(100vw-2rem)] sm:w-[460px] p-0" align="start">
+                          <Command>
+                            <CommandInput placeholder="Rechercher une boutique..." />
+                            <CommandEmpty>Aucune boutique trouvée.</CommandEmpty>
+                            <CommandGroup className="max-h-[200px] overflow-y-auto">
+                              {businesses.map((business) => (
+                                <CommandItem
+                                  key={business._id}
+                                  value={business.name}
+                                  onSelect={() => {
+                                    field.onChange(business._id);
+                                    setOpenCombobox(false);
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      field.value === business._id
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    )}
+                                  />
+                                  {business.name}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                    )}
+                  />
+                  {errors?.business && (
+                    <span className="text-xs text-red-500">
+                      {errors?.business.message}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Bouton submit */}
+            <div className="mt-6">
               <Button
                 type="submit"
                 className="w-full bg-[#0084D1] hover:bg-[#0042d1] hover:cursor-pointer"
@@ -290,8 +293,10 @@ const AjoutUserForm = ({ className, initialData = null, ...props }) => {
               >
                 {isLoading ? (
                   <>
-                    <span className="w-4 h-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></span>{" "}
-                    {isEdit ? "Mise à jour..." : "Enregistrement..."}
+                    <span className="w-4 h-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></span>
+                    <span className="ml-2">
+                      {isEdit ? "Mise à jour..." : "Enregistrement..."}
+                    </span>
                   </>
                 ) : isEdit ? (
                   "Mettre à jour"

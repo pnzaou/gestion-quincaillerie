@@ -22,17 +22,17 @@ const Page = async ({ params }) => {
     }
 
     return (
-        <div>
-            <div className="mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">Utilisateurs</h2>
-                <p className="mt-2 text-sm text-gray-500">
-                    Modification de l'utilisateur
-                </p>
-            </div>
-            <div className="flex w-full items-center justify-center p-6 md:p-2">
-                <div className="w-full max-w-lg">
-                    <AjoutUserForm initialData={data}/>
+        <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white px-4 sm:px-6 lg:px-8 py-8">
+            <div className="max-w-2xl mx-auto">
+                <div className="mb-8">
+                    <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
+                        Utilisateurs
+                    </h2>
+                    <p className="text-sm sm:text-base text-gray-500">
+                        Modification de l&apos;utilisateur
+                    </p>
                 </div>
+                <AjoutUserForm initialData={data}/>
             </div>
         </div>
     );
