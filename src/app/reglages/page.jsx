@@ -90,12 +90,12 @@ const Page = () => {
   ];
 
   return (
-    <>
-      <div className="max-w-sm md:max-w-2xl lg:max-w-4xl mx-auto space-y-6 py-5">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
         {/* Header */}
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">Réglages</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">Réglages</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Gérez vos préférences et paramètres de l'application
           </p>
         </div>
@@ -103,9 +103,9 @@ const Page = () => {
         {/* Settings Groups */}
         <div className="space-y-6">
           {settingsGroups.map((group, groupIndex) => (
-            <Card key={groupIndex} className="overflow-hidden">
+            <Card key={groupIndex} className="overflow-hidden shadow-sm">
               <CardHeader className="bg-muted/30 pb-3">
-                <CardTitle className="text-lg font-semibold">{group.title}</CardTitle>
+                <CardTitle className="text-lg sm:text-xl font-semibold">{group.title}</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 {group.items.map((item, itemIndex) => (
@@ -114,32 +114,32 @@ const Page = () => {
                     {item.type === "link" ? (
                       <button
                         onClick={item.onClick}
-                        className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors text-left"
+                        className="w-full flex items-center justify-between p-4 sm:p-5 hover:bg-muted/50 transition-colors text-left"
                       >
-                        <div className="flex items-center gap-4">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1166D4]/10">
-                            <item.icon className="h-5 w-5 text-[#1166D4]" />
+                        <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                          <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-[#1166D4]/10 flex-shrink-0">
+                            <item.icon className="h-5 w-5 sm:h-6 sm:w-6 text-[#1166D4]" />
                           </div>
-                          <div className="space-y-0.5">
-                            <p className="font-medium">{item.label}</p>
-                            <p className="text-sm text-muted-foreground">
+                          <div className="space-y-0.5 min-w-0 flex-1">
+                            <p className="font-medium text-sm sm:text-base">{item.label}</p>
+                            <p className="text-xs sm:text-sm text-muted-foreground line-clamp-1">
                               {item.description}
                             </p>
                           </div>
                         </div>
-                        <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                        <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0 ml-2" />
                       </button>
                     ) : (
-                      <div className="flex items-center justify-between p-4">
-                        <div className="flex items-center gap-4">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                            <item.icon className="h-5 w-5 text-primary" />
+                      <div className="flex items-center justify-between p-4 sm:p-5 gap-4">
+                        <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                          <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
+                            <item.icon className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                           </div>
-                          <div className="space-y-0.5">
-                            <Label htmlFor={`toggle-${groupIndex}-${itemIndex}`} className="font-medium cursor-pointer">
+                          <div className="space-y-0.5 min-w-0 flex-1">
+                            <Label htmlFor={`toggle-${groupIndex}-${itemIndex}`} className="font-medium cursor-pointer text-sm sm:text-base">
                               {item.label}
                             </Label>
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-xs sm:text-sm text-muted-foreground line-clamp-1">
                               {item.description}
                             </p>
                           </div>
@@ -148,6 +148,7 @@ const Page = () => {
                           id={`toggle-${groupIndex}-${itemIndex}`}
                           checked={item.value}
                           onCheckedChange={item.onChange}
+                          className="flex-shrink-0"
                         />
                       </div>
                     )}
@@ -159,33 +160,33 @@ const Page = () => {
         </div>
 
         {/* User Profile Card */}
-        <Card>
+        <Card className="shadow-sm">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
               <UserCog className="h-5 w-5" />
               Profil utilisateur
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-xs sm:text-sm">
               Gérez vos informations personnelles
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">Nom d'utilisateur</p>
-                <p className="text-sm text-muted-foreground">admin@example.com</p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-sm sm:text-base">Nom d'utilisateur</p>
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">admin@example.com</p>
               </div>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="w-full sm:w-auto">
                 Modifier
               </Button>
             </div>
             <Separator />
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">Mot de passe</p>
-                <p className="text-sm text-muted-foreground">••••••••</p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-sm sm:text-base">Mot de passe</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">••••••••</p>
               </div>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="w-full sm:w-auto">
                 Changer
               </Button>
             </div>
@@ -193,21 +194,21 @@ const Page = () => {
         </Card>
 
         {/* Danger Zone */}
-        <Card className="border-destructive/50">
+        <Card className="border-destructive/50 shadow-sm">
           <CardHeader>
-            <CardTitle className="text-destructive">Zone de danger</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-destructive text-lg sm:text-xl">Zone de danger</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
               Actions irréversibles sur votre compte
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button variant="destructive" size="sm">
+            <Button variant="destructive" size="sm" className="w-full sm:w-auto">
               Supprimer mon compte
             </Button>
           </CardContent>
         </Card>
       </div>
-    </>
+    </div>
   );
 };
 
