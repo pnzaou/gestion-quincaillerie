@@ -3,6 +3,22 @@
         {
             "path": "/api/cron/welcomeemail",
             "schedule": "*/5 * * * *"
+        },
+        {
+            "path": "/api/cron/clean-expired-reset-password",
+            "schedule": "0 3 * * *"
+        },
+        {
+            "path": "/api/cron/daily-reports",
+            "schedule": "5 0 * * *"
+        },
+        {
+            "path": "/api/cron/weekly-reports",
+            "schedule": "0 1 * * 1"
+        },
+        {
+            "path": "/api/cron/monthly-reports",
+            "schedule": "0 2 1 * *"
         }
     ]
 }

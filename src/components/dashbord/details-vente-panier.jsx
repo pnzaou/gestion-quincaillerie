@@ -1,15 +1,20 @@
 "use client";
 
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
+import { CalendarIcon } from "lucide-react";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
+import { Button } from "../ui/button";
+import { Calendar } from "../ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { cn } from "@/lib/utils";
 import Required from "../Required";
 import SaleStatus from "./Sale-status";
 import PaymentMethod from "./Payment-method";
 import { useSaleStore } from "@/stores/useSaleStore";
 import { useQuoteStore } from "@/stores/useQuoteStore";
 import { Separator } from "../ui/separator";
-import { Button } from "../ui/button";
 import { FileText, ShoppingBag } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -30,8 +35,6 @@ function DetailsVentePanier() {
 
   const remaining = total - paymentsSum;
 
-  const isoDate = saleDate ? format(saleDate, "yyyy-MM-dd") : "";
-
   const handleCreateQuote = async () => {
     const state = useSaleStore.getState();
     
@@ -47,20 +50,30 @@ function DetailsVentePanier() {
     <div className="space-y-4 w-full">
       <div className="space-y-2">
         <Label className="text-sm font-medium">Date de la vente</Label>
-        <Input
-          type="date"
-          value={isoDate}
-          onChange={(e) => {
-            const val = e.target.value;
-            if (!val) {
-              setSaleDate(null);
-              return;
-            }
-            const parsed = parseISO(val);
-            setSaleDate(parsed);
-          }}
-          className="w-full"
-        />
+        <Popover modal={true}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className={cn(
+                "w-full justify-start text-left font-normal",
+                !saleDate && "text-muted-foreground"
+              )}
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {saleDate ? format(saleDate, "PPP", { locale: fr }) : "Sélectionner une date"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={saleDate}
+              onSelect={(date) => {
+                setSaleDate(date);
+              }}
+              initialFocus
+            />
+          </PopoverContent>
+        </Popover>
       </div>
 
       <div className="space-y-2">

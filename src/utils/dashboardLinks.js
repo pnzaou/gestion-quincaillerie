@@ -6,7 +6,7 @@ import {
     BanknotesIcon,
     Cog6ToothIcon
 } from "@heroicons/react/24/outline"
-import { FileText, LayoutDashboard, Truck } from "lucide-react"
+import { FileText, LayoutDashboard, Truck, BarChart3 } from "lucide-react"
 
 /**
  * Configuration des liens de navigation
@@ -78,7 +78,7 @@ export const NAVIGATION_CONFIG = [
     name: "Devis",
     href: (shopId) => `/shop/${shopId}/dashboard/devis`,
     icon: FileText,
-    resource: RESOURCES.CLIENTS,
+    resource: RESOURCES.SALES, // ✅ Utilise SALES (pas QUOTES car pas défini)
     subLinks: [],
   },
   {
@@ -123,6 +123,13 @@ export const NAVIGATION_CONFIG = [
         requiredAction: ACTIONS.LIST,
       },
     ],
+  },
+  {
+    name: "Rapports",
+    href: (shopId) => `/shop/${shopId}/dashboard/rapports`,
+    icon: BarChart3,
+    resource: RESOURCES.REPORTS,
+    subLinks: [],
   },
 ];
 

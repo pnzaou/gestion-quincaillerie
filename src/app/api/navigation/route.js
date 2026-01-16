@@ -63,6 +63,11 @@ const NAVIGATION_CONFIG = [
       { name: "Liste", requiredAction: ACTIONS.LIST }
     ],
   },
+  {
+    name: "Rapports",
+    resource: RESOURCES.REPORTS,
+    subLinks: [],
+  },
 ];
 
 // ============================================

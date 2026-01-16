@@ -11,7 +11,7 @@ import {
   UserGroupIcon,
   BanknotesIcon,
 } from "@heroicons/react/24/outline"
-import { FileText, LayoutDashboard, Truck } from "lucide-react"
+import { BarChart3, FileText, LayoutDashboard, Truck } from "lucide-react"
 
 const ICON_MAP = {
   "Dashboard": AdjustmentsHorizontalIcon,
@@ -22,6 +22,7 @@ const ICON_MAP = {
   "Clients": UserGroupIcon,
   "Commandes": FileText,
   "Fournisseurs": Truck,
+  "Rapports": BarChart3,
 }
 
 const NavLinks = ({ session, shopId, collapsed }) => {
