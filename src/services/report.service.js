@@ -363,9 +363,10 @@ async function calculateFinances(salesData, ordersData) {
     ? (grossProfit / salesData.totalRevenue) * 100 
     : 0;
 
-  const cashReceived = salesData.byStatus.paid.amount + 
-                       salesData.byPaymentMethod.reduce((sum, pm) => sum + pm.amount, 0);
+  // cashReceived = somme réelle des paiements enregistrés
+  const cashReceived = salesData.byPaymentMethod.reduce((sum, pm) => sum + pm.amount, 0);
 
+  // creditSales = montant des ventes pending + partial
   const creditSales = salesData.byStatus.pending.amount + salesData.byStatus.partial.amount;
 
   return {
