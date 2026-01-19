@@ -18,6 +18,7 @@ import { useQuoteStore } from "@/stores/useQuoteStore";
 import PanierVente from "./Panier-vente";
 import toast from "react-hot-toast";
 import { QuotePreview, QuotePrint } from "./Quote-Preview";
+import Image from "next/image";
 
 const tabSize = [8, 12, 32, 64, 100];
 
@@ -159,12 +160,14 @@ const ArticlesListVente = ({
               return (
                 <Card key={article._id} className="p-3 hover:shadow-lg transition-shadow duration-150">
                   {/* Image */}
-                  <div className="overflow-hidden rounded bg-muted flex items-center justify-center h-32 sm:h-40 md:h-36 lg:h-40">
+                  <div className="overflow-hidden rounded bg-muted flex items-center justify-center h-32 sm:h-40 md:h-36 lg:h-40 relative">
                     {article.image ? (
-                      <img
+                      <Image
                         src={article.image}
                         alt={article.nom}
-                        className="w-full h-full object-cover rounded"
+                        fill
+                        sizes="(max-width: 640px) 50vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                        className="object-cover rounded"
                       />
                     ) : (
                       <Package className="w-12 h-12 sm:w-16 sm:h-16 text-muted-foreground" />

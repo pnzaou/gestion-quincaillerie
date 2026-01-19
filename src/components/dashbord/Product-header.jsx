@@ -1,15 +1,19 @@
 import { Badge } from "@/components/ui/badge";
 import { Package } from "lucide-react";
+import Image from "next/image";
 
 export const ProductHeader = ({ product }) => {
   return (
     <div className="flex flex-col md:flex-row gap-6 items-start">
-      <div className="w-full md:w-64 h-64 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+      <div className="w-full md:w-64 h-64 rounded-lg overflow-hidden bg-muted flex items-center justify-center relative">
         {product.image ? (
-          <img
+          <Image
             src={product.image}
             alt={product.nom}
-            className="w-full h-full object-cover"
+            fill
+            sizes="(max-width: 768px) 100vw, 256px"
+            className="object-cover"
+            priority
           />
         ) : (
           <Package className="w-24 h-24 text-muted-foreground" />

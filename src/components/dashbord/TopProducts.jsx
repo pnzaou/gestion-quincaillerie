@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Package, TrendingUp } from 'lucide-react';
+import Image from 'next/image';
  
 const TopProducts = ({ initialData, shopId }) => {
   const [selectedPeriod, setSelectedPeriod] = useState("30");
@@ -127,12 +128,14 @@ const TopProducts = ({ initialData, shopId }) => {
                   className="flex items-center space-x-4 p-3 rounded-lg hover:bg-secondary/50 transition-colors"
                 >
                   <div className="flex-shrink-0">
-                    <div className="w-10 h-10 rounded-full bg-sky-600 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-full bg-sky-600 flex items-center justify-center relative overflow-hidden">
                       {product.productImage ? (
-                        <img
+                        <Image
                           src={product.productImage}
                           alt={product.productName}
-                          className="w-8 h-8 rounded-full object-cover"
+                          width={32}
+                          height={32}
+                          className="rounded-full object-cover"
                         />
                       ) : (
                         <Package className="w-5 h-5 text-white" />

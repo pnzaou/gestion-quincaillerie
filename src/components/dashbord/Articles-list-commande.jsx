@@ -16,6 +16,7 @@ import { Minus, Plus, Package } from "lucide-react";
 import { useOrderStore } from "@/stores/useOrderStore";
 import PanierCommande from "./Panier-commande";
 import toast from "react-hot-toast";
+import Image from "next/image";
 
 const tabSize = [8, 12, 32, 64, 100];
 
@@ -103,12 +104,15 @@ const ArticlesListCommande = ({
                   className="p-3 hover:shadow-lg transition-shadow duration-150"
                 >
                   {/* ✅ Image ou icône Package */}
-                  <div className="overflow-hidden rounded bg-muted flex items-center justify-center h-40 sm:h-44 md:h-36 lg:h-40">
+                  <div className="overflow-hidden rounded bg-muted flex items-center justify-center h-40 sm:h-44 md:h-36 lg:h-40 relative">
                     {article.image ? (
-                      <img
+                      <Image
                         src={article.image}
                         alt={article.nom}
-                        className="w-full h-full object-cover rounded"
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                        className="object-cover rounded"
+                        priority={false}
                       />
                     ) : (
                       <Package className="w-16 h-16 text-muted-foreground" />

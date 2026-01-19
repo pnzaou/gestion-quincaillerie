@@ -2,6 +2,7 @@
 
 import { Package } from "lucide-react";
 import { DeleteArticle, DetailsArticle, UpdateArticle } from "./button-article";
+import Image from "next/image";
 
 const ArticlesTableMobile = ({
   articles,
@@ -17,12 +18,14 @@ const ArticlesTableMobile = ({
           <div className="flex items-center justify-between border-b pb-4">
             <div className="flex items-center gap-4">
               {/* ✅ Image ou icône Package */}
-              <div className="h-12 w-12 rounded bg-muted flex items-center justify-center flex-shrink-0">
+              <div className="h-12 w-12 rounded bg-muted flex items-center justify-center flex-shrink-0 relative overflow-hidden">
                 {art.image ? (
-                  <img
+                  <Image
                     src={art.image}
                     alt={art.nom}
-                    className="h-12 w-12 rounded object-cover"
+                    width={48}
+                    height={48}
+                    className="rounded object-cover"
                   />
                 ) : (
                   <Package className="w-6 h-6 text-muted-foreground" />
