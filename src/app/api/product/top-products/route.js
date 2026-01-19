@@ -1,7 +1,7 @@
 import { getTopProducts } from "@/lib/dashboardData";
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
-const { withAuth } = require("@/utils/withAuth")
+import { withAuth } from "@/utils/withAuth";
 
 export const GET = withAuth(async (req) => {
     try {
