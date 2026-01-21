@@ -1,8 +1,7 @@
 import { getYearlyMonthlyRevenue } from "@/lib/dashboardData";
+import { withAuth } from "@/utils/withAuth";
 import mongoose from "mongoose";
-
-const { withAuth } = require("@/utils/withAuth");
-const { NextResponse } = require("next/server");
+import { NextResponse } from "next/server";
 
 export const GET = withAuth(async (req) => {
     try {
