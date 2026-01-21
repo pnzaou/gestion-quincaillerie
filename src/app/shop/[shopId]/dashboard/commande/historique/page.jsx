@@ -3,6 +3,7 @@ import OrderStatCard from "@/components/dashbord/Order-stat-card";
 import { getOrdersStatistics } from "@/lib/orderStatData";
 import { preparingServerSideRequest } from "@/utils/preparingServerSideRequest";
 import { Package, CheckCircle, Clock, XCircle, TrendingUp, DollarSign } from "lucide-react";
+import { Suspense } from "react"; // ✅ Ajout
 
 const formatCurrency = (amount) => {
   return new Intl.NumberFormat("fr-FR", {
@@ -23,19 +24,15 @@ const Page = async ({ searchParams, params }) => {
   const startDate1 = startDate || "";
   const endDate1 = endDate || "";
 
-  // Récupérer les statistiques
   const stats = await getOrdersStatistics({
     businessId: shopId,
     startDate: startDate1 ? new Date(startDate1) : null,
     endDate: endDate1 ? new Date(endDate1) : null
   });
 
-  console.log("CONSOLES LOGS DES STATS", stats)
-
   const statusParam = status1 ? `&status=${status1}` : "";
   const dateParams = `${startDate1 ? `&startDate=${startDate1}` : ""}${endDate1 ? `&endDate=${endDate1}` : ""}`;
 
-  // Récupérer les commandes
   const rep = await fetch(
     `${protocol}://${host}/api/order?page=${page1}&limit=10&search=${search1}${statusParam}${dateParams}&businessId=${shopId}`,
     {
@@ -45,7 +42,6 @@ const Page = async ({ searchParams, params }) => {
 
   const { data, totalPages, currentPage } = await rep.json();
 
-  // Convertir status en tableau pour le composant
   const initialStatus = status1
     ? status1.split(",").map((s) => s.trim()).filter(Boolean)
     : [];
@@ -130,18 +126,50 @@ const Page = async ({ searchParams, params }) => {
         />
       </div>
 
-      {/* Table des commandes */}
-      <OrderTable
-        initialOrders={data}
-        initialTotalPages={totalPages}
-        currentPage={currentPage}
-        search={search1}
-        initialStatus={initialStatus}
-        initialStartDate={startDate1}
-        initialEndDate={endDate1}
-      />
+      {/* ✅ Table avec Suspense + Skeleton */}
+      <Suspense fallback={<OrderTableSkeleton />}>
+        <OrderTable
+          initialOrders={data}
+          initialTotalPages={totalPages}
+          currentPage={currentPage}
+          search={search1}
+          initialStatus={initialStatus}
+          initialStartDate={startDate1}
+          initialEndDate={endDate1}
+        />
+      </Suspense>
     </div>
   );
 };
+
+// ✅ Skeleton joli pour OrderTable
+function OrderTableSkeleton() {
+  return (
+    <div className="space-y-4">
+      {/* Filtres skeleton */}
+      <div className="flex gap-3">
+        <div className="h-10 w-96 bg-gray-200 rounded animate-pulse"></div>
+        <div className="h-10 w-48 bg-gray-200 rounded animate-pulse"></div>
+        <div className="h-10 w-64 bg-gray-200 rounded animate-pulse"></div>
+      </div>
+
+      {/* Table skeleton */}
+      <div className="rounded-lg bg-gray-50 p-2">
+        <div className="space-y-3">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="h-16 bg-white rounded animate-pulse"></div>
+          ))}
+        </div>
+      </div>
+
+      {/* Pagination skeleton */}
+      <div className="flex justify-center gap-2">
+        <div className="h-10 w-10 bg-gray-200 rounded animate-pulse"></div>
+        <div className="h-10 w-10 bg-gray-200 rounded animate-pulse"></div>
+        <div className="h-10 w-10 bg-gray-200 rounded animate-pulse"></div>
+      </div>
+    </div>
+  );
+}
 
 export default Page;
