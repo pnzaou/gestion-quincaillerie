@@ -1,4 +1,5 @@
 import { ForgottenPasswordChangeForm } from '@/components/forgotten-password-change-form';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import React, { Suspense } from 'react'
 
 const page = () => {

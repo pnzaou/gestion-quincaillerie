@@ -1,8 +1,7 @@
 import { preparingServerSideRequest } from "@/utils/preparingServerSideRequest";
 import ReportsListClient from "@/components/dashbord/Reports-list-client";
 import { Suspense } from "react";
-import { FileText } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 const Page = async ({ searchParams, params }) => {
   const { shopId } = await params;
