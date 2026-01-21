@@ -5,6 +5,7 @@ import { getSalesStatistics } from "@/lib/saleStatData";
 import { preparingServerSideRequest } from "@/utils/preparingServerSideRequest";
 import { AlertCircle, CheckCircle, Clock, DollarSign, ShoppingBag, TrendingUp } from "lucide-react";
 import { getServerSession } from "next-auth";
+import { Suspense } from "react";
 
 const formatCurrency = (amount) => {
   return new Intl.NumberFormat("fr-FR", {
@@ -40,8 +41,8 @@ const Page = async ({ searchParams, params }) => {
     
     const { data, totalPages, currentPage } = await rep.json()
 
-    // Convertir status en tableau pour le composant
     const initialStatus = status1 ? status1.split(',').map(s => s.trim()).filter(Boolean) : []
+    
     return (
       <div className="flow-root">
         <div className="mb-6">
@@ -59,9 +60,7 @@ const Page = async ({ searchParams, params }) => {
             value={formatCurrency(stats.totalRevenue)}
             icon={DollarSign}
             color="#10B981"
-            subtitle={`${stats.totalSales} vente${
-              stats.totalSales > 1 ? "s" : ""
-            }`}
+            subtitle={`${stats.totalSales} vente${stats.totalSales > 1 ? "s" : ""}`}
           />
 
           <SaleStatCard
@@ -69,20 +68,8 @@ const Page = async ({ searchParams, params }) => {
             value={formatCurrency(stats.totalDebt)}
             icon={AlertCircle}
             color="#EF4444"
-            subtitle={`${stats.debtCount} vente${
-              stats.debtCount > 1 ? "s" : ""
-            } impayée${stats.debtCount > 1 ? "s" : ""}`}
+            subtitle={`${stats.debtCount} vente${stats.debtCount > 1 ? "s" : ""} impayée${stats.debtCount > 1 ? "s" : ""}`}
           />
-
-          {/* <SaleStatCard
-            title="Ventes Payées"
-            value={formatCurrency(stats.totalPaid)}
-            icon={CheckCircle}
-            color="#0084D1"
-            subtitle={`${stats.paidCount} vente${
-              stats.paidCount > 1 ? "s" : ""
-            } payée${stats.paidCount > 1 ? "s" : ""}`}
-          /> */}
 
           <SaleStatCard
             title="Montant Moyen"
@@ -91,14 +78,6 @@ const Page = async ({ searchParams, params }) => {
             color="#F59E0B"
             subtitle="Par vente"
           />
-
-          {/* <SaleStatCard
-            title="Ventes en Attente"
-            value={stats.pendingCount}
-            icon={Clock}
-            color="#8B5CF6"
-            subtitle="À traiter"
-          /> */}
 
           <SaleStatCard
             title="Total des Ventes"
@@ -109,15 +88,48 @@ const Page = async ({ searchParams, params }) => {
           />
         </div>
 
-        <SaleTable
-          initialSales={data}
-          initialTotalPages={totalPages}
-          currentPage={currentPage}
-          search={search1}
-          initialStatus={initialStatus}
-        />
+        <Suspense fallback={<SaleTableSkeleton />}>
+          <SaleTable
+            initialSales={data}
+            initialTotalPages={totalPages}
+            currentPage={currentPage}
+            search={search1}
+            initialStatus={initialStatus}
+          />
+        </Suspense>
       </div>
     );
+}
+
+function SaleTableSkeleton() {
+  return (
+    <div className="space-y-4">
+      {/* Filtres skeleton */}
+      <div className="flex justify-between items-center gap-3">
+        <div className="flex gap-3 flex-1">
+          <div className="h-10 w-96 bg-gray-200 rounded animate-pulse"></div>
+          <div className="h-10 w-48 bg-gray-200 rounded animate-pulse"></div>
+        </div>
+        <div className="h-10 w-32 bg-gray-200 rounded animate-pulse"></div>
+      </div>
+
+      {/* Table skeleton */}
+      <div className="rounded-lg bg-gray-50 p-2">
+        <div className="space-y-3">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="h-16 bg-white rounded animate-pulse"></div>
+          ))}
+        </div>
+      </div>
+
+      {/* Pagination skeleton */}
+      <div className="flex justify-center gap-2">
+        <div className="h-10 w-24 bg-gray-200 rounded animate-pulse"></div>
+        <div className="h-10 w-32 bg-gray-200 rounded animate-pulse"></div>
+        <div className="h-10 w-24 bg-gray-200 rounded animate-pulse"></div>
+      </div>
+    </div>
+  );
 }
 
 export default Page;
