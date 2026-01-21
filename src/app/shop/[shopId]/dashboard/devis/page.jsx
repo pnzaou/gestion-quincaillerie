@@ -1,5 +1,6 @@
 import { preparingServerSideRequest } from "@/utils/preparingServerSideRequest";
 import QuotesListClient from "@/components/dashbord/Quotes-list-client";
+import { Suspense } from "react";
 
 const Page = async ({ searchParams, params }) => {
   const { shopId } = await params;
@@ -29,15 +30,45 @@ const Page = async ({ searchParams, params }) => {
         </p>
       </div>
 
-      <QuotesListClient
-        initialQuotes={data}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        total={total}
-        shopId={shopId}
-      />
+      <Suspense fallback={<QuotesListSkeleton />}>
+        <QuotesListClient
+          initialQuotes={data}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          total={total}
+          shopId={shopId}
+        />
+      </Suspense>
     </div>
   );
 };
+
+function QuotesListSkeleton() {
+  return (
+    <div className="space-y-4">
+      {/* Filtre skeleton */}
+      <div className="flex justify-between items-center">
+        <div className="h-10 w-48 bg-gray-200 rounded animate-pulse"></div>
+        <div className="h-6 w-32 bg-gray-200 rounded animate-pulse"></div>
+      </div>
+
+      {/* Table skeleton */}
+      <div className="rounded-lg bg-gray-50 p-2">
+        <div className="space-y-3">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="h-20 bg-white rounded animate-pulse"></div>
+          ))}
+        </div>
+      </div>
+
+      {/* Pagination skeleton */}
+      <div className="flex justify-center gap-2">
+        <div className="h-10 w-24 bg-gray-200 rounded animate-pulse"></div>
+        <div className="h-10 w-32 bg-gray-200 rounded animate-pulse"></div>
+        <div className="h-10 w-24 bg-gray-200 rounded animate-pulse"></div>
+      </div>
+    </div>
+  );
+}
 
 export default Page;
