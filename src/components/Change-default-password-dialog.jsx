@@ -50,7 +50,7 @@ export function ChangeDefaultPasswordDialog() {
     setIsLoading(true);
 
     try {
-      const res = await fetch("/api/user/change-default-password", {
+      const res = await fetch("/api/auth/change-default-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
