@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import {
   Dialog,
@@ -62,17 +62,12 @@ export function ChangeDefaultPasswordDialog() {
       const data = await res.json();
 
       if (res.ok) {
-        toast.success("Mot de passe changé avec succès !");
+        toast.success("Mot de passe changé ! Reconnexion...");
         
-        await update({
-          ...session,
-          user: {
-            ...session.user,
-            isDefaultPasswordChanged: true,
-          },
-        });
-
-        router.refresh();
+        // ✅ Déconnecter et rediriger vers la page de connexion
+        // C'est la meilleure UX : propre et force une nouvelle session
+        await signOut({ redirect: false });
+        router.push("/?passwordChanged=true");
       } else {
         toast.error(data.message || "Erreur lors du changement de mot de passe");
       }
@@ -141,7 +136,11 @@ export function ChangeDefaultPasswordDialog() {
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={isLoading}>
+          <Button 
+            type="submit" 
+            className="w-full bg-blue-600 hover:bg-blue-700" 
+            disabled={isLoading}
+          >
             {isLoading ? "Changement en cours..." : "Changer le mot de passe"}
           </Button>
         </form>
