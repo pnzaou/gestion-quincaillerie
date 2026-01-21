@@ -1,5 +1,8 @@
 import { preparingServerSideRequest } from "@/utils/preparingServerSideRequest";
 import ReportsListClient from "@/components/dashbord/Reports-list-client";
+import { Suspense } from "react";
+import { FileText } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const Page = async ({ searchParams, params }) => {
   const { shopId } = await params;
@@ -31,15 +34,54 @@ const Page = async ({ searchParams, params }) => {
         </p>
       </div>
 
-      <ReportsListClient
-        initialReports={data}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        total={total}
-        shopId={shopId}
-      />
+      <Suspense fallback={<ReportsListSkeleton />}>
+        <ReportsListClient
+          initialReports={data}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          total={total}
+          shopId={shopId}
+        />
+      </Suspense>
     </div>
   );
 };
+
+function ReportsListSkeleton() {
+  return (
+    <div className="space-y-6">
+      {/* Header skeleton */}
+      <div className="flex justify-between items-center">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gray-200 rounded-lg animate-pulse"></div>
+          <div className="h-6 w-32 bg-gray-200 rounded animate-pulse"></div>
+        </div>
+        <div className="h-10 w-40 bg-gray-200 rounded animate-pulse"></div>
+      </div>
+
+      {/* Filtres skeleton */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="h-5 w-24 bg-gray-200 rounded animate-pulse"></div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-4">
+            <div className="flex-1 h-10 bg-gray-200 rounded animate-pulse"></div>
+            <div className="flex-1 h-10 bg-gray-200 rounded animate-pulse"></div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Table skeleton */}
+      <div className="rounded-lg bg-gray-50 p-2">
+        <div className="space-y-3">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="h-24 bg-white rounded animate-pulse"></div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default Page;
