@@ -81,7 +81,7 @@ async function sendStockAlertEmail({
 }) {
   try {
     await resend.emails.send({
-      from: process.env.RESEND_FROM_EMAIL || "notifications@votreapp.com",
+      from: "Support StockProx <onboarding@resend.dev>",
       to: userEmail,
       subject: `${isOutOfStock ? '🚨 Rupture de stock' : '⚠️ Alerte stock'} - ${productName}`,
       react: (
