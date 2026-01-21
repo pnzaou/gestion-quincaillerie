@@ -44,7 +44,8 @@ const authOptions = {
                     name: `${user.prenom} ${user.nom}`, //name est ajouté automatiquement dans la session et le token
                     email: user.email, //email aussi est ajouté automatiquement dans la session et le token
                     role: user.role,
-                    business: user.business?.toString() || null
+                    business: user.business?.toString() || null,
+                    isDefaultPasswordChanged: user.isDefaultPasswordChanged
                 }
             }
         })
@@ -60,6 +61,7 @@ const authOptions = {
                 token.id = user.id;
                 token.role = user.role;
                 token.business = user.business;
+                token.isDefaultPasswordChanged = user.isDefaultPasswordChanged;
             }
             return token
         },
@@ -68,6 +70,7 @@ const authOptions = {
                 session.user.id = token.id;
                 session.user.role = token.role;
                 session.user.business = token.business;
+                session.user.isDefaultPasswordChanged = token.isDefaultPasswordChanged;
             }
             return session
         }

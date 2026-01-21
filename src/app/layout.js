@@ -2,6 +2,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/Providers";
 import ConditionalFloatingNav from "@/components/conditional-floating-nav";
+import { ChangeDefaultPasswordDialog } from "@/components/Change-default-password-dialog";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,6 +28,7 @@ export default function RootLayout({ children }) {
         <Providers>
           {children}
           <ConditionalFloatingNav />
+          <ChangeDefaultPasswordDialog />
         </Providers>
       </body>
     </html>
