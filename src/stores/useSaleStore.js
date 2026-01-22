@@ -8,7 +8,19 @@ export const useSaleStore = create((set, get) => ({
   loading: false,
   shopId: null,
   setShopId: (id) => set({ shopId: id }),
+  
+  invoicePreviewOpen: false,
+  setInvoicePreviewOpen: (isOpen) => set({ invoicePreviewOpen: isOpen }),
 
+  currentSale: null,
+  setCurrentSale: (sale) => set({ currentSale: sale }),
+
+  currentPayments: [],
+  setCurrentPayments: (payments) => set({ currentPayments: payments }),
+
+  printType: null, // 'invoice' ou 'receipt'
+  setPrintType: (type) => set({ printType: type }),
+  
   saleDate: new Date(),
   setSaleDate: (newDate) => set({ saleDate: newDate }),
 
@@ -283,7 +295,16 @@ export const useSaleStore = create((set, get) => ({
         body: JSON.stringify(data),
       });
       if (res.ok) {
+        const result = await res.json();
         toast.success("Vente enregistrée avec succès");
+
+        set({
+          currentSale: result.sale,
+          currentPayments: result.payments || [],
+          invoicePreviewOpen: true,
+          panierDrawerOpen: false,
+        });
+
         set({
           cart: [],
           client: null,
@@ -294,7 +315,7 @@ export const useSaleStore = create((set, get) => ({
           payementMethod: "",
         });
         clearPayments();
-        return;
+        return result.sale;
       } else {
         const errorData = await res.json();
         console.error(errorData);
@@ -305,6 +326,8 @@ export const useSaleStore = create((set, get) => ({
       }
     } catch (error) {
       console.error("Erreur pendant la création de la vente :", error);
+      toast.error("Erreur lors de la création de la vente");
+      return null;
     } finally {
       set({ loading: false });
     }

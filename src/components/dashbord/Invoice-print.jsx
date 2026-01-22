@@ -22,7 +22,7 @@ export const InvoicePrint = ({ sale, payments }) => {
   const totalPaid = payments.reduce((sum, payment) => sum + payment.amount, 0);
 
   return (
-    <div className="invoice-print">
+    <div className="sale-invoice-print">
       <style>{`
         @media print {
           @page {
@@ -37,10 +37,10 @@ export const InvoicePrint = ({ sale, payments }) => {
           * {
             visibility: hidden;
           }
-          .invoice-print, .invoice-print * {
+          .sale-invoice-print, .sale-invoice-print * {
             visibility: visible !important;
           }
-          .invoice-print {
+          .sale-invoice-print {
             position: absolute;
             left: 0;
             top: 0;
@@ -52,7 +52,7 @@ export const InvoicePrint = ({ sale, payments }) => {
           }
         }
         @media screen {
-          .invoice-print {
+          .sale-invoice-print {
             display: none;
           }
         }

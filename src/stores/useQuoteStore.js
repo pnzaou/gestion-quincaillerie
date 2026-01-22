@@ -69,6 +69,7 @@ export const useQuoteStore = create((set, get) => ({
         saleStore.cart = [];
         saleStore.client = null;
         saleStore.discount = 0;
+        saleStore.panierDrawerOpen = false;
         
         // Ouvrir preview
         set({ 

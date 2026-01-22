@@ -19,6 +19,9 @@ import PanierVente from "./Panier-vente";
 import toast from "react-hot-toast";
 import { QuotePreview, QuotePrint } from "./Quote-Preview";
 import Image from "next/image";
+import { SalePreviewDialog } from "./Sale-preview-dialog";
+import { InvoicePrint } from "./Invoice-print";
+import { ReceiptPrint } from "./Receipt-print";
 
 const tabSize = [8, 12, 32, 64, 100];
 
@@ -77,7 +80,13 @@ const ArticlesListVente = ({
   const addToCart = useSaleStore((state) => state.addToCart);
   const removeFromCart = useSaleStore((state) => state.removeFromCart);
   const updateCartQuantity = useSaleStore((state) => state.updateCartQuantity);
+  const invoicePreviewOpen = useSaleStore((state) => state.invoicePreviewOpen);
+  const setInvoicePreviewOpen = useSaleStore((state) => state.setInvoicePreviewOpen);
+  const currentSale = useSaleStore((state) => state.currentSale);
+  const currentPayments = useSaleStore((state) => state.currentPayments);
 
+  const [printMode, setPrintMode] = useState(null);
+  const [quotePrintMode, setQuotePrintMode] = useState(false);
   const [localStocks, setLocalStocks] = useState(() =>
     Object.fromEntries(initialArt.map((a) => [a._id, a.QteStock]))
   );
@@ -112,12 +121,16 @@ const ArticlesListVente = ({
   };
 
   const handlePrintQuote = () => {
-    window.print();
+    setQuotePrintMode(true); 
+    setTimeout(() => {
+      window.print();
+      setQuotePrintMode(false);
+    }, 300);
   };
 
   return (
     <>
-      <div className="space-y-4">
+      <div className={printMode || quotePrintMode ? "hidden" : "space-y-4"}>
         {/* ✅ Header sticky amélioré pour mobile */}
         <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-3">
           <div className="space-y-3">
@@ -251,13 +264,31 @@ const ArticlesListVente = ({
         />
       </div>
 
+      <SalePreviewDialog
+        open={invoicePreviewOpen}
+        onOpenChange={setInvoicePreviewOpen}
+        sale={currentSale}
+        payments={currentPayments}
+        onPrintModeChange={setPrintMode}
+      />
+
+      {printMode === "invoice" && currentSale && (
+        <InvoicePrint sale={currentSale} payments={currentPayments} />
+      )}
+      {printMode === "receipt" && currentSale && (
+        <ReceiptPrint sale={currentSale} payments={currentPayments} />
+      )}
+
       <QuotePreview
         open={quotePreviewOpen}
         onOpenChange={setQuotePreviewOpen}
         quote={currentQuote}
         onPrint={handlePrintQuote}
       />
-      <QuotePrint quote={currentQuote} />
+
+      {quotePrintMode && currentQuote && (
+        <QuotePrint quote={currentQuote} />
+      )}
     </>
   );
 };

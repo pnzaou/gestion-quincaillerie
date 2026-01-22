@@ -9,6 +9,7 @@ import { validateSalePayload } from "@/dtos/sale.dto";
 import { createSale } from "@/services/sale.service";
 import { HttpError } from "@/services/errors.service";
 import mongoose from "mongoose";
+import Payment from "@/models/Payment.model";
 
 // ============================================
 // POST - Créer une vente
@@ -46,12 +47,24 @@ export const POST = withAuth(
     // ✅ Plus besoin de getServerSession
     try {
       const sale = await createSale({ payload, user: session.user });
+
+      const completeSale = await Sale.findById(sale._id)
+        .populate({ path: "client", model: "Client" })
+        .populate("vendeur", "nom prenom email")
+        .populate({ path: "items.product", model: "Product" })
+        .lean();
+
+      const payments = await Payment.find({ sale: sale._id })
+        .sort({ createdAt: 1 })
+        .lean();
+      
       return NextResponse.json(
         {
           message: "Vente enregistrée avec succès.",
           success: true,
           error: false,
-          data: sale,
+          sale: completeSale,
+          payments,
         },
         { status: 201 }
       );
