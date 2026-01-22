@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import SettingsUserProfileCard from "@/components/Settings-user-profile-card";
 
 
 const Page = () => {
@@ -160,38 +161,7 @@ const Page = () => {
         </div>
 
         {/* User Profile Card */}
-        <Card className="shadow-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-              <UserCog className="h-5 w-5" />
-              Profil utilisateur
-            </CardTitle>
-            <CardDescription className="text-xs sm:text-sm">
-              Gérez vos informations personnelles
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="min-w-0 flex-1">
-                <p className="font-medium text-sm sm:text-base">Nom d'utilisateur</p>
-                <p className="text-xs sm:text-sm text-muted-foreground truncate">admin@example.com</p>
-              </div>
-              <Button variant="outline" size="sm" className="w-full sm:w-auto">
-                Modifier
-              </Button>
-            </div>
-            <Separator />
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="min-w-0 flex-1">
-                <p className="font-medium text-sm sm:text-base">Mot de passe</p>
-                <p className="text-xs sm:text-sm text-muted-foreground">••••••••</p>
-              </div>
-              <Button variant="outline" size="sm" className="w-full sm:w-auto">
-                Changer
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <SettingsUserProfileCard/>
 
         {/* Danger Zone */}
         <Card className="border-destructive/50 shadow-sm">
