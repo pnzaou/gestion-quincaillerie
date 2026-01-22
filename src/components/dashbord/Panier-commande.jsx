@@ -103,7 +103,7 @@ const PanierCommande = () => {
             {/* Date de livraison attendue */}
             <div className="space-y-2">
               <Label className="text-sm font-medium">Date de livraison attendue (optionnel)</Label>
-              <Popover>
+              <Popover modal={true}>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
