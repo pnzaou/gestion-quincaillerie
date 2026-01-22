@@ -32,7 +32,7 @@ export function ChangeDefaultPasswordDialog() {
     formState: { errors, isValid, isSubmitting },
   } = useForm({
     mode: "onChange",
-    resolver: yupResolver(changeDefaultPasswordSchemaù),
+    resolver: yupResolver(changeDefaultPasswordSchema),
     defaultValues: {
       currentPassword: "",
       newPassword: "",
