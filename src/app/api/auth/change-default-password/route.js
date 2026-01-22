@@ -4,6 +4,8 @@ import User from "@/models/User.model";
 import bcrypt from "bcryptjs";
 import { withAuth } from "@/utils/withAuth"; // ✅ Import
 
+const mdpRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/
+
 async function handler(request, session) { // ✅ Reçoit la session
   try {
     await dbConnection();
@@ -17,6 +19,13 @@ async function handler(request, session) { // ✅ Reçoit la session
       return NextResponse.json(
         { message: "Données manquantes" },
         { status: 400 }
+      );
+    }
+
+    if (!mdpRegex.test(newPassword)) {
+      return NextResponse.json(
+        { message: "Veuillez saisir un nouveau mot de passe valid" },
+        { status: 400 },
       );
     }
 
@@ -35,7 +44,7 @@ async function handler(request, session) { // ✅ Reçoit la session
     if (!isPasswordValid) {
       return NextResponse.json(
         { message: "Mot de passe actuel incorrect" },
-        { status: 401 }
+        { status: 400 }
       );
     }
 
@@ -61,4 +70,4 @@ async function handler(request, session) { // ✅ Reçoit la session
 }
 
 // ✅ Exporte avec withAuth (vérifie juste l'authentification)
-export const POST = withAuth(handler);
+export const PATCH = withAuth(handler);

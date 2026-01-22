@@ -51,7 +51,7 @@ export function ChangeDefaultPasswordDialog() {
 
     try {
       const res = await fetch("/api/auth/change-default-password", {
-        method: "POST",
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           currentPassword: formData.currentPassword,
@@ -64,9 +64,7 @@ export function ChangeDefaultPasswordDialog() {
       if (res.ok) {
         toast.success("Mot de passe changé ! Reconnexion...");
         
-        // ✅ Déconnecter et rediriger vers la page de connexion
-        // C'est la meilleure UX : propre et force une nouvelle session
-        await signOut({ redirect: false });
+        await signOut({ callbackUrl: "/", redirect: true });
         router.push("/?passwordChanged=true");
       } else {
         toast.error(data.message || "Erreur lors du changement de mot de passe");

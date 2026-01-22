@@ -1,3 +1,7 @@
+"use client"
+
+import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -14,10 +18,13 @@ import { Label } from "@/components/ui/label"
 import { changePasswordSchema } from "@/schemas"
 import { yupResolver } from "@hookform/resolvers/yup"
 import { useForm } from "react-hook-form"
+import toast from "react-hot-toast"
+import { signOut } from "next-auth/react";
 
 export default function ChangePasswordDialog() {
 
- const { register, handleSubmit, formState: { errors, isValid, isSubmitting } } = useForm({
+ const [showPassword, setShowPassword] = useState(false);
+ const { register, reset, handleSubmit, formState: { errors, isValid, isSubmitting } } = useForm({
     mode: "onChange",
     defaultValues: {
         oldPassword: "",
@@ -27,14 +34,35 @@ export default function ChangePasswordDialog() {
     resolver: yupResolver(changePasswordSchema)
  })
 
- const onSubmit = (data) => console.log(data)
+ const onSubmit = async (data) => {
+    try {
+        const res = await fetch("/api/auth/reset-password", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+
+        const data1 = await res.json();
+
+        if (res.ok) {
+          reset()
+          toast.success("Mot de passe modifié avec succès.");
+          await signOut({ callbackUrl: "/", redirect: true });
+        } else {
+          toast.error(
+            data1.message || "Erreur lors du changement de mot de passe",
+          );
+        }
+    } catch (error) {
+      console.error(error);
+      toast.error("Une erreur s'est produite");
+    }
+ }
 
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline">
-          Changer
-        </Button>
+        <Button variant="outline">Changer</Button>
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-[425px]">
@@ -50,11 +78,24 @@ export default function ChangePasswordDialog() {
           <div className="grid gap-4">
             <div className="grid gap-3">
               <Label htmlFor="oldPassword">Ancien mot de passe</Label>
-              <Input
-                id="oldPassword"
-                type="password"
-                {...register("oldPassword")}
-              />
+
+              <div className="relative">
+                <Input
+                  id="oldPassword"
+                  type={showPassword ? "text" : "password"}
+                  {...register("oldPassword")}
+                  className="pr-10"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute inset-y-0 right-3 flex items-center text-gray-500"
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+
               {errors.oldPassword && (
                 <p className="text-red-500 text-sm">
                   {errors.oldPassword.message}
@@ -64,11 +105,16 @@ export default function ChangePasswordDialog() {
 
             <div className="grid gap-3">
               <Label htmlFor="newPassword">Nouveau mot de passe</Label>
-              <Input
-                id="newPassword"
-                type="password"
-                {...register("newPassword")}
-              />
+
+              <div className="relative">
+                <Input
+                  id="newPassword"
+                  type={showPassword ? "text" : "password"}
+                  {...register("newPassword")}
+                  className="pr-10"
+                />
+              </div>
+
               {errors.newPassword && (
                 <p className="text-red-500 text-sm">
                   {errors.newPassword.message}
@@ -80,11 +126,16 @@ export default function ChangePasswordDialog() {
               <Label htmlFor="confirmNewPassword">
                 Confirmer le mot de passe
               </Label>
-              <Input
-                id="confirmNewPassword"
-                type="password"
-                {...register("confirmNewPassword")}
-              />
+
+              <div className="relative">
+                <Input
+                  id="confirmNewPassword"
+                  type={showPassword ? "text" : "password"}
+                  {...register("confirmNewPassword")}
+                  className="pr-10"
+                />
+              </div>
+
               {errors.confirmNewPassword && (
                 <p className="text-red-500 text-sm">
                   {errors.confirmNewPassword.message}
@@ -99,7 +150,11 @@ export default function ChangePasswordDialog() {
                 Cancel
               </Button>
             </DialogClose>
-            <Button type="submit" disabled={!isValid || isSubmitting}>
+            <Button
+              type="submit"
+              disabled={!isValid || isSubmitting}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
               {isSubmitting ? "Enregistrement..." : "Enregistré"}
             </Button>
           </DialogFooter>
