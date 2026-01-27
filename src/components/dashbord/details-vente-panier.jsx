@@ -111,9 +111,26 @@ function DetailsVentePanier() {
 
       <Separator />
 
-      <div className="bg-primary/10 p-3 sm:p-4 rounded-lg">
-        <div className="flex justify-between items-center">
-          <span className="font-semibold text-base sm:text-lg">Total</span>
+      {/* ✅ NOUVELLE VERSION AVEC DÉTAILS DE LA REMISE */}
+      <div className="bg-primary/10 p-3 sm:p-4 rounded-lg space-y-2">
+        {discount > 0 && (
+          <div className="flex justify-between items-center text-sm text-muted-foreground">
+            <span>Sous-total</span>
+            <span className="line-through">
+              {(total / (1 - discount / 100)).toFixed(2)} FCFA
+            </span>
+          </div>
+        )}
+        {discount > 0 && (
+          <div className="flex justify-between items-center text-sm text-green-600">
+            <span>Remise ({discount}%)</span>
+            <span>
+              -{((total / (1 - discount / 100)) - total).toFixed(2)} FCFA
+            </span>
+          </div>
+        )}
+        <div className="flex justify-between items-center pt-2 border-t">
+          <span className="font-semibold text-base sm:text-lg">Total à payer</span>
           <span className="font-bold text-xl sm:text-2xl text-[#0084D1]">
             {total.toFixed(2)} FCFA
           </span>

@@ -122,8 +122,21 @@ const PaymentMethod = () => {
         })}
       </div>
 
-      <div className="text-sm font-semibold pt-2 border-t">
-        Somme paiements : {paymentsSum.toFixed(2)} FCFA
+      <div className="text-sm font-semibold pt-2 border-t space-y-1">
+        <div className="flex justify-between">
+          <span>Somme paiements :</span>
+          <span>{paymentsSum.toFixed(2)} FCFA</span>
+        </div>
+        <div className="flex justify-between text-muted-foreground">
+          <span>Total vente :</span>
+          <span>{useSaleStore.getState().total().toFixed(2)} FCFA</span>
+        </div>
+        {paymentsSum !== useSaleStore.getState().total() && (
+          <div className="flex justify-between text-yellow-600 text-xs">
+            <span>Différence :</span>
+            <span>{(useSaleStore.getState().total() - paymentsSum).toFixed(2)} FCFA</span>
+          </div>
+        )}
       </div>
     </div>
   );

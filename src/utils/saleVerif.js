@@ -11,11 +11,18 @@ export const saleVerif = (cart, saleStatus, payments, total, client) => {
     throw new SaleValidationError("STATUT_VENTE_MANQUANT");
   }
 
-  const paymentsSum = Array.isArray(payments) ? payments.reduce((s,p) => s + Number(p.amount || 0), 0) : 0;
+  const paymentsSum = Array.isArray(payments) 
+    ? payments.reduce((s, p) => s + Number(p.amount || 0), 0) 
+    : 0;
 
-  // Paid => paymentsSum === total
-  if (saleStatus === "paid" && paymentsSum !== total) {
-    toast.error("Le total des paiements doit être égal au total de la vente (statut reglé).");
+  // ✅ Fonction helper pour comparer avec tolérance d'arrondi
+  const isEqual = (a, b, tolerance = 0.01) => Math.abs(a - b) < tolerance;
+
+  // Paid => paymentsSum === total (avec tolérance)
+  if (saleStatus === "paid" && !isEqual(paymentsSum, total)) {
+    toast.error(
+      `Le total des paiements (${paymentsSum.toFixed(2)} FCFA) doit être égal au total de la vente (${total.toFixed(2)} FCFA).`
+    );
     throw new SaleValidationError("PAIEMENT_TOTAL_MISMATCH");
   }
 
@@ -38,7 +45,7 @@ export const saleVerif = (cart, saleStatus, payments, total, client) => {
   }
 
   // Somme des paiements ne doit pas dépasser total
-  if (paymentsSum > total) {
+  if (paymentsSum > total + 0.01) { // ✅ Tolérance d'arrondi
     toast.error("La somme des paiements dépasse le total.");
     throw new SaleValidationError("PAYMENTS_EXCEED_TOTAL");
   }
