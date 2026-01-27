@@ -12,7 +12,6 @@ export function validateSalePayload(raw) {
       product: i.product,
       quantity: Number(i.quantity),
       price: Number(i.price)
-      // ❌ saleType supprimé
     })) : [],
 
     dateExacte: raw.dateExacte ? new Date(raw.dateExacte) : new Date(),
@@ -51,6 +50,9 @@ export function validateSalePayload(raw) {
     .filter(p => p.method === "account")
     .reduce((s, p) => s + p.amount, 0);
 
+  // ✅ Fonction helper pour comparer avec tolérance d'arrondi
+  const isEqual = (a, b, tolerance = 0.01) => Math.abs(a - b) < tolerance;
+
   // Validation businessId
   if (!payload.businessId) {
     errors.push("businessId est obligatoire.");
@@ -76,7 +78,8 @@ export function validateSalePayload(raw) {
     if (!Number.isFinite(p.amount) || p.amount <= 0) errors.push(`payments[${i}].amount doit être > 0.`);
   }
 
-  if (payload.paymentsSum > payload.total) {
+  // ✅ Utiliser tolérance d'arrondi pour les comparaisons
+  if (payload.paymentsSum > payload.total + 0.01) {
     errors.push("La somme des paiements dépasse le total.");
   }
 
@@ -84,15 +87,19 @@ export function validateSalePayload(raw) {
     errors.push("Client requis si paiement depuis le compte (method: 'account').");
   }
 
-  if (payload.status === "paid" && payload.paymentsSum !== payload.total) {
-    errors.push("Pour status 'paid', la somme des paiements doit être égale au total.");
+  // ✅ Comparaison avec tolérance pour status 'paid'
+  if (payload.status === "paid" && !isEqual(payload.paymentsSum, payload.total)) {
+    errors.push(
+      `Pour status 'paid', la somme des paiements (${payload.paymentsSum.toFixed(2)}) doit être égale au total (${payload.total.toFixed(2)}).`
+    );
   }
 
   if (payload.status === "partial" && !(payload.paymentsSum > 0 && payload.paymentsSum < payload.total)) {
     errors.push("Pour status 'partial', il doit exister au moins un paiement > 0 et < total.");
   }
 
-  if (payload.status === "pending" && payload.paymentsSum !== 0) {
+  // ✅ Comparaison avec tolérance pour status 'pending'
+  if (payload.status === "pending" && !isEqual(payload.paymentsSum, 0)) {
     errors.push("Pour status 'pending', aucun paiement immédiat attendu (paymentsSum doit être 0).");
   }
 
