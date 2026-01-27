@@ -42,12 +42,20 @@ export async function createSale({ payload, user }) {
       .reduce((s, p) => s + Number(p.amount), 0);
 
     const total = Number(payload.total);
-    const amountDue = Math.max(0, total - paymentsSum);
+    
+    // ✅ Arrondir à 2 décimales pour éviter les problèmes de précision flottante
+    const amountDue = Math.max(0, Math.round((total - paymentsSum) * 100) / 100);
 
-    // 5) Déterminer status final
+    // ✅ Fonction helper pour comparaison avec tolérance d'arrondi
+    const isEqual = (a, b, tolerance = 0.01) => Math.abs(a - b) < tolerance;
+
+    // 5) Déterminer status final avec tolérance d'arrondi
     let finalStatus = payload.status;
-    if (amountDue === 0) finalStatus = "paid";
-    else if (paymentsSum > 0) finalStatus = "partial";
+    if (isEqual(amountDue, 0)) {
+      finalStatus = "paid";
+    } else if (paymentsSum > 0) {
+      finalStatus = "partial";
+    }
 
     // 6) Créer la vente
     const data = {
