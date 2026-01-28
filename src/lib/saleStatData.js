@@ -1,5 +1,6 @@
 import Sale from "@/models/Sale.model";
 import mongoose from "mongoose";
+import dbConnection from "./db";
 
 /**
  * Récupère les statistiques des ventes
@@ -12,6 +13,7 @@ import mongoose from "mongoose";
  * @returns {Promise<Object>} Statistiques des ventes
  */
 export async function getSalesStatistics({ userId, role, businessId, startDate, endDate } = {}) {
+  await dbConnection();
   // ✅ Vérification businessId obligatoire
   if (!businessId) {
     throw new Error("businessId est obligatoire pour getSalesStatistics");
