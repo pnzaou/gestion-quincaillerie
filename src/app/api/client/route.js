@@ -11,15 +11,21 @@ import { NextResponse } from "next/server";
 // POST - Créer un client
 // ============================================
 export const POST = withAuth(
-  async (req, session) => { // ✅ session en paramètre
+  async (req, session) => {
     await dbConnection();
     const mongoSession = await mongoose.startSession();
     mongoSession.startTransaction();
     try {
-      // ✅ Plus besoin de getServerSession
       const { name, id: userId } = session.user;
 
-      const { nomComplet = "", tel = "", email = "", adresse = "", businessId } = await req.json();
+      const body = await req.json();
+      
+      // ✅ Extraction sécurisée avec gestion de null
+      const nomComplet = body.nomComplet?.trim() || "";
+      const tel = body.tel?.trim() || "";
+      const email = body.email?.trim() || "";
+      const adresse = body.adresse?.trim() || "";
+      const businessId = body.businessId;
 
       // Validation businessId
       if (!businessId) {
@@ -35,7 +41,7 @@ export const POST = withAuth(
         );
       }
 
-      if (!nomComplet.trim() || !tel.trim()) {
+      if (!nomComplet || !tel) {
         await mongoSession.abortTransaction();
         mongoSession.endSession();
         return NextResponse.json(
@@ -50,10 +56,10 @@ export const POST = withAuth(
 
       const businessObjectId = new mongoose.Types.ObjectId(businessId);
 
-      // Vérifier email unique par boutique
-      if (email && email.trim()) {
+      // Vérifier email unique par boutique (seulement si fourni)
+      if (email) {
         const existingEmail = await Client.findOne({
-          email: email.trim(),
+          email: email,
           business: businessObjectId,
         }).session(mongoSession);
 
@@ -73,7 +79,7 @@ export const POST = withAuth(
 
       // Vérifier téléphone unique par boutique
       const existingTel = await Client.findOne({
-        tel: tel.trim(),
+        tel: tel,
         business: businessObjectId,
       }).session(mongoSession);
 
@@ -91,14 +97,15 @@ export const POST = withAuth(
       }
 
       const clientData = {
-        nomComplet: nomComplet.trim(),
-        tel: tel.trim(),
-        adresse: adresse.trim() || "",
+        nomComplet: nomComplet,
+        tel: tel,
+        adresse: adresse || "",
         business: businessObjectId,
       };
 
-      if (email && email.trim()) {
-        clientData.email = email.trim();
+      // Ajouter email seulement s'il est fourni
+      if (email) {
+        clientData.email = email;
       }
 
       const [newClient] = await Client.create([clientData], { session: mongoSession });
@@ -145,7 +152,7 @@ export const POST = withAuth(
     }
   },
   {
-    resource: RESOURCES.CLIENTS, // ✅ Flexible
+    resource: RESOURCES.CLIENTS,
     action: ACTIONS.CREATE,
   }
 );
