@@ -127,7 +127,7 @@ function DetailsVentePanier() {
               size="sm"
               variant={discountMode === "percentage" ? "default" : "outline"}
               onClick={() => setDiscountMode("percentage")}
-              className="h-8 text-xs"
+              className="h-8 text-white text-xs bg-blue-600"
             >
               % Remise
             </Button>
@@ -136,7 +136,7 @@ function DetailsVentePanier() {
               size="sm"
               variant={discountMode === "amount" ? "default" : "outline"}
               onClick={() => setDiscountMode("amount")}
-              className="h-8 text-xs"
+              className="h-8 text-white text-xs bg-blue-600"
             >
               Montant final
             </Button>
