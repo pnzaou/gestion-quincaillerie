@@ -17,6 +17,7 @@ import { useQuoteStore } from "@/stores/useQuoteStore";
 import { Separator } from "../ui/separator";
 import { FileText, ShoppingBag } from "lucide-react";
 import toast from "react-hot-toast";
+import { useState } from "react";
 
 function DetailsVentePanier() {
   const loading = useSaleStore((state) => state.loading);
@@ -33,6 +34,15 @@ function DetailsVentePanier() {
   const quoteLoading = useQuoteStore((state) => state.loading);
   const createQuote = useQuoteStore((state) => state.createQuote);
 
+  // ✅ Calcul du sous-total (avant remise)
+  const subtotal = cart.reduce((sum, item) => {
+    return sum + item.prixVente * item.quantity;
+  }, 0);
+
+  // ✅ État local pour basculer entre % et montant
+  const [discountMode, setDiscountMode] = useState("percentage"); // "percentage" ou "amount"
+  const [customAmount, setCustomAmount] = useState(subtotal);
+
   const remaining = total - paymentsSum;
 
   const handleCreateQuote = async () => {
@@ -44,6 +54,37 @@ function DetailsVentePanier() {
     }
     
     await createQuote(state);
+  };
+
+  // ✅ Quand on change le montant personnalisé
+  const handleCustomAmountChange = (value) => {
+    const amount = parseFloat(value) || 0;
+    
+    if (amount < 0) return;
+    if (amount > subtotal) {
+      toast.error(`Le montant ne peut pas dépasser ${subtotal.toFixed(2)} FCFA`);
+      return;
+    }
+
+    setCustomAmount(amount);
+    
+    // Calculer le % de remise correspondant
+    const discountPercent = ((subtotal - amount) / subtotal) * 100;
+    setDiscount(discountPercent);
+  };
+
+  // ✅ Quand on change le pourcentage
+  const handleDiscountPercentChange = (value) => {
+    const percent = parseFloat(value) || 0;
+    
+    if (percent < 0) return;
+    if (percent > 100) return;
+
+    setDiscount(percent);
+    
+    // Calculer le montant correspondant
+    const amount = subtotal * (1 - percent / 100);
+    setCustomAmount(amount);
   };
 
   return (
@@ -76,16 +117,78 @@ function DetailsVentePanier() {
         </Popover>
       </div>
 
-      <div className="space-y-2">
-        <Label className="text-sm font-medium">Remise %</Label>
-        <Input
-          type="number"
-          value={discount}
-          onChange={(e) => setDiscount(Number(e.target.value))}
-          min={0}
-          step={0.01}
-          max={100}
-        />
+      {/* ✅ NOUVELLE SECTION REMISE AMÉLIORÉE */}
+      <div className="space-y-3 border rounded-lg p-3 bg-muted/30">
+        <div className="flex items-center justify-between">
+          <Label className="text-sm font-medium">Mode de remise</Label>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant={discountMode === "percentage" ? "default" : "outline"}
+              onClick={() => setDiscountMode("percentage")}
+              className="h-8 text-xs"
+            >
+              % Remise
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={discountMode === "amount" ? "default" : "outline"}
+              onClick={() => setDiscountMode("amount")}
+              className="h-8 text-xs"
+            >
+              Montant final
+            </Button>
+          </div>
+        </div>
+
+        {discountMode === "percentage" ? (
+          <div className="space-y-2">
+            <Label className="text-sm text-muted-foreground">Pourcentage de remise</Label>
+            <div className="relative">
+              <Input
+                type="number"
+                value={discount}
+                onChange={(e) => handleDiscountPercentChange(e.target.value)}
+                min={0}
+                step={0.01}
+                max={100}
+                className="pr-8"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                %
+              </span>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <Label className="text-sm text-muted-foreground">Montant final à payer</Label>
+            <div className="relative">
+              <Input
+                type="number"
+                value={customAmount}
+                onChange={(e) => handleCustomAmountChange(e.target.value)}
+                min={0}
+                step={1}
+                max={subtotal}
+                className="pr-16"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">
+                FCFA
+              </span>
+            </div>
+          </div>
+        )}
+
+        {discount > 0 && (
+          <div className="text-xs text-muted-foreground bg-blue-50 dark:bg-blue-950 p-2 rounded">
+            {discountMode === "percentage" 
+              ? `Montant final: ${customAmount.toFixed(2)} FCFA`
+              : `Remise appliquée: ${discount.toFixed(2)}%`
+            }
+          </div>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -111,24 +214,24 @@ function DetailsVentePanier() {
 
       <Separator />
 
-      {/* ✅ NOUVELLE VERSION AVEC DÉTAILS DE LA REMISE */}
+      {/* ✅ RÉCAPITULATIF DÉTAILLÉ */}
       <div className="bg-primary/10 p-3 sm:p-4 rounded-lg space-y-2">
-        {discount > 0 && (
-          <div className="flex justify-between items-center text-sm text-muted-foreground">
-            <span>Sous-total</span>
-            <span className="line-through">
-              {(total / (1 - discount / 100)).toFixed(2)} FCFA
-            </span>
-          </div>
-        )}
+        <div className="flex justify-between items-center text-sm">
+          <span className="text-muted-foreground">Sous-total</span>
+          <span className={discount > 0 ? "line-through text-muted-foreground" : "font-medium"}>
+            {subtotal.toFixed(2)} FCFA
+          </span>
+        </div>
+        
         {discount > 0 && (
           <div className="flex justify-between items-center text-sm text-green-600">
-            <span>Remise ({discount}%)</span>
+            <span>Remise ({discount.toFixed(2)}%)</span>
             <span>
-              -{((total / (1 - discount / 100)) - total).toFixed(2)} FCFA
+              -{(subtotal - total).toFixed(2)} FCFA
             </span>
           </div>
         )}
+        
         <div className="flex justify-between items-center pt-2 border-t">
           <span className="font-semibold text-base sm:text-lg">Total à payer</span>
           <span className="font-bold text-xl sm:text-2xl text-[#0084D1]">
