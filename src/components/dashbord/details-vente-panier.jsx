@@ -125,18 +125,26 @@ function DetailsVentePanier() {
             <Button
               type="button"
               size="sm"
-              variant={discountMode === "percentage" ? "default" : "outline"}
               onClick={() => setDiscountMode("percentage")}
-              className="h-8 text-white text-xs bg-blue-600"
+              className={cn(
+                "h-8 text-xs",
+                discountMode === "percentage"
+                  ? "bg-[#0084D1] hover:bg-[#0042d1] text-white"
+                  : "bg-transparent hover:bg-muted text-foreground border"
+              )}
             >
               % Remise
             </Button>
             <Button
               type="button"
               size="sm"
-              variant={discountMode === "amount" ? "default" : "outline"}
               onClick={() => setDiscountMode("amount")}
-              className="h-8 text-white text-xs bg-blue-600"
+              className={cn(
+                "h-8 text-xs",
+                discountMode === "amount"
+                  ? "bg-[#0084D1] hover:bg-[#0042d1] text-white"
+                  : "bg-transparent hover:bg-muted text-foreground border"
+              )}
             >
               Montant final
             </Button>
