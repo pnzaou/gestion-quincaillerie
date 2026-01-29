@@ -76,6 +76,179 @@ export const GET = withAuth(
 );
 
 // ============================================
+// PUT - Modifier un client
+// ============================================
+export const PUT = withAuth(
+  async (req, context, session) => {
+    await dbConnection();
+    const mongoSession = await mongoose.startSession();
+    mongoSession.startTransaction();
+
+    try {
+      const { name, id: userId } = session.user;
+      const { id } = await context.params;
+
+      if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+        await mongoSession.abortTransaction();
+        mongoSession.endSession();
+        return NextResponse.json(
+          {
+            message: "Veuillez fournir un ID valide",
+            success: false,
+            error: true,
+          },
+          { status: 400 }
+        );
+      }
+
+      const { nomComplet, tel, email, adresse } = await req.json();
+
+      // Validation des champs obligatoires
+      if (!nomComplet?.trim() || !tel?.trim()) {
+        await mongoSession.abortTransaction();
+        mongoSession.endSession();
+        return NextResponse.json(
+          {
+            message: "Le nom et le numéro de téléphone du client sont obligatoires.",
+            success: false,
+            error: true,
+          },
+          { status: 400 }
+        );
+      }
+
+      // Récupérer le client existant
+      const existingClient = await Client.findById(id).session(mongoSession);
+      if (!existingClient) {
+        await mongoSession.abortTransaction();
+        mongoSession.endSession();
+        return NextResponse.json(
+          {
+            message: "Client introuvable",
+            success: false,
+            error: true,
+          },
+          { status: 404 }
+        );
+      }
+
+      const businessObjectId = existingClient.business;
+
+      // Vérifier l'unicité de l'email (si fourni et différent de l'actuel)
+      if (email && email.trim() && email.trim() !== existingClient.email) {
+        const emailExists = await Client.findOne({
+          email: email.trim(),
+          business: businessObjectId,
+          _id: { $ne: id },
+        }).session(mongoSession);
+
+        if (emailExists) {
+          await mongoSession.abortTransaction();
+          mongoSession.endSession();
+          return NextResponse.json(
+            {
+              message: "Cet email est déjà utilisé par un autre client dans cette boutique.",
+              success: false,
+              error: true,
+            },
+            { status: 400 }
+          );
+        }
+      }
+
+      // Vérifier l'unicité du téléphone (si différent de l'actuel)
+      if (tel.trim() !== existingClient.tel) {
+        const telExists = await Client.findOne({
+          tel: tel.trim(),
+          business: businessObjectId,
+          _id: { $ne: id },
+        }).session(mongoSession);
+
+        if (telExists) {
+          await mongoSession.abortTransaction();
+          mongoSession.endSession();
+          return NextResponse.json(
+            {
+              message: "Ce numéro de téléphone est déjà utilisé par un autre client dans cette boutique.",
+              success: false,
+              error: true,
+            },
+            { status: 400 }
+          );
+        }
+      }
+
+      // Préparer les données de mise à jour
+      const updateData = {
+        nomComplet: nomComplet.trim(),
+        tel: tel.trim(),
+        adresse: adresse?.trim() || "",
+      };
+
+      // Gérer l'email (peut être null)
+      if (email && email.trim()) {
+        updateData.email = email.trim();
+      } else {
+        updateData.email = undefined; // Pour le retirer si vide
+      }
+
+      // Mettre à jour le client
+      const updatedClient = await Client.findByIdAndUpdate(
+        id,
+        updateData,
+        { new: true, session: mongoSession }
+      );
+
+      // Créer l'historique
+      await History.create(
+        [
+          {
+            user: userId,
+            actions: "update",
+            resource: "client",
+            description: `${name} a modifié le client ${updatedClient.nomComplet}.`,
+            resourceId: id,
+            business: businessObjectId,
+          },
+        ],
+        { session: mongoSession }
+      );
+
+      await mongoSession.commitTransaction();
+      mongoSession.endSession();
+
+      return NextResponse.json(
+        {
+          message: "Client modifié avec succès.",
+          success: true,
+          error: false,
+          client: updatedClient,
+        },
+        { status: 200 }
+      );
+    } catch (error) {
+      await mongoSession.abortTransaction();
+      mongoSession.endSession();
+      console.error("Erreur lors de la modification du client:", error);
+
+      return NextResponse.json(
+        {
+          message: "Erreur! Veuillez réessayer.",
+          success: false,
+          error: true,
+        },
+        { status: 500 }
+      );
+    }
+  },
+  {
+    resource: RESOURCES.CLIENTS,
+    action: ACTIONS.UPDATE,
+  }
+);
+
+
+// ============================================
 // DELETE - Supprimer client (avec vérifications)
 // ============================================
 export const DELETE = withAuth(
