@@ -1,10 +1,12 @@
 import Order from "@/models/Order.model";
 import mongoose from "mongoose";
+import dbConnection from "./db";
 
 /**
  * Récupère les statistiques des commandes par boutique
  */
 export async function getOrdersStatistics({ businessId, startDate, endDate } = {}) {
+  await dbConnection();
   if (!businessId) {
     throw new Error("businessId est obligatoire pour getOrdersStatistics");
   }
