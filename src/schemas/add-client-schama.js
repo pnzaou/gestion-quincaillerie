@@ -1,4 +1,4 @@
-// À ajouter dans votre fichier schemas.js existant
+import * as yup from "yup"
 
 export const addClientSchema = yup.object().shape({
   nomComplet: yup.string().trim().required("Le nom complet est obligatoire!"),
