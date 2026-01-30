@@ -11,26 +11,19 @@ const computeStats = async (start, end, businessId) => {
     await dbConnection()
 
     const [res] = await Sale.aggregate([
-      // 1) on filtre sur la date ET la boutique
       {
         $match: {
           dateExacte: { $gte: start, $lt: end },
           business: businessId
         }
       },
-      // 2) on branche en 3 facettes
       {
         $facet: {
-          // a) nombre total de ventes (tous statuts)
           salesCount: [{ $count: "count" }],
-
-          // b) revenue des ventes fully paid
           paid: [
             { $match: { status: "paid" } },
             { $group: { _id: null, sum: { $sum: "$total" } } }
           ],
-
-          // c) revenue venant de paiements partiels
           partial: [
             { $match: { status: "partial" } },
             {
@@ -51,12 +44,13 @@ const computeStats = async (start, end, businessId) => {
     const salesCount = res.salesCount[0]?.count || 0
     const paidRevenue = res.paid[0]?.sum || 0
     const partialRevenue = res.partial[0]?.sum || 0
+    const totalRevenue = paidRevenue + partialRevenue
 
     return {
       salesCount,
-      paidRevenue,
-      partialRevenue,
-      totalRevenue: paidRevenue + partialRevenue,
+      paidRevenue: parseFloat(paidRevenue.toFixed(2)),
+      partialRevenue: parseFloat(partialRevenue.toFixed(2)),
+      totalRevenue: parseFloat(totalRevenue.toFixed(2)),
     };
 
   } catch (error) {
@@ -228,7 +222,9 @@ const computeStatsForMonthRange = async (start, end, businessId) => {
 
   const paidSum = res.paid?.[0]?.sum || 0
   const partialPaymentsSum = res.partial?.[0]?.sum || 0
-  return paidSum + partialPaymentsSum
+  const total = paidSum + partialPaymentsSum
+  
+  return parseFloat(total.toFixed(2))
 }
 
 export const getYearlyMonthlyRevenue = async (businessId, year = new Date().getFullYear()) => {
@@ -261,7 +257,7 @@ export const getYearlyMonthlyRevenue = async (businessId, year = new Date().getF
       year,
       months,
       revenues,
-      total
+      total: parseFloat(total.toFixed(2))
     }
   } catch (error) {
     console.error("Erreur getYearlyMonthlyRevenue:", error)
@@ -319,7 +315,8 @@ export const getTotalDebts = async (businessId) => {
       },
     ]);
 
-    return res?.totalDebts || 0;
+    const totalDebts = res?.totalDebts || 0;
+    return parseFloat(totalDebts.toFixed(2));
   } catch (error) {
     console.error("Erreur getTotalDebts:", error);
     return 0;
