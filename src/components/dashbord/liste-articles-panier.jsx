@@ -15,19 +15,23 @@ const ListeArticlesPanier = ({ localStocks, setLocalStocks }) => {
   // ✅ Gestion de la saisie directe de quantité
   const handleQuantityChange = (item, newQuantity) => {
     const qty = parseInt(newQuantity) || 0;
+
+    const roundedQty = Math.round(qty * 100) / 100;
+
     const maxStock = localStocks[item._id] ?? item.QteStock;
     const currentCartQty = item.quantity || 0;
     
     // Quantité disponible = stock actuel + quantité déjà dans le panier
     const availableStock = maxStock + currentCartQty;
+
+    if (roundedQty < 0) return;
     
-    if (qty < 0) return;
-    if (qty > availableStock) {
-      toast.error(`Stock insuffisant. Maximum: ${availableStock}`);
-      return;
+    const newStock = availableStock - roundedQty;
+    if (newStock < 0) {
+      toast.warning(`⚠️ Stock négatif : ${newStock.toFixed(2)}`, { duration: 2000 });
     }
 
-    updateCartQuantity(item, qty, localStocks, setLocalStocks);
+    updateCartQuantity(item, roundedQty, localStocks, setLocalStocks);
   };
 
   return (
@@ -65,6 +69,7 @@ const ListeArticlesPanier = ({ localStocks, setLocalStocks }) => {
               <Input
                 type="number"
                 min="0"
+                step="0.5"
                 value={item.quantity}
                 onChange={(e) => handleQuantityChange(item, e.target.value)}
                 className="text-center h-8 w-14 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"

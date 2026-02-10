@@ -4,7 +4,7 @@ import mongoose from "mongoose";
 import { HttpError } from "./errors.service";
 
 export async function validateAndUpdateProductsForSale(items, businessId, session = null) {
-  const updatedProducts = []; // Pour retourner les IDs des produits modifiés
+  const updatedProducts = [];
 
   for (const item of items) {
     if (!mongoose.Types.ObjectId.isValid(item.product)) {
@@ -16,26 +16,23 @@ export async function validateAndUpdateProductsForSale(items, businessId, sessio
       throw new HttpError(400, `Produit introuvable pour l'ID ${item.product} dans cette boutique.`);
     }
 
-    if (prod.QteStock < item.quantity) {
-      throw new HttpError(
-        400, 
-        `Stock insuffisant pour le produit : ${prod.nom}. Disponible: ${prod.QteStock}, Demandé: ${item.quantity}`
-      );
-    }
+    // ✅ Arrondir la quantité à 2 décimales
+    const quantity = Math.round(item.quantity * 100) / 100;
+    const currentStock = Math.round(prod.QteStock * 100) / 100;
 
-    prod.QteStock -= item.quantity;
+    // ✅ Calculer le nouveau stock (peut être négatif)
+    const newStock = Math.round((currentStock - quantity) * 100) / 100;
+    prod.QteStock = newStock;
 
-    if (prod.QteStock === 0) {
+    // ✅ Mettre à jour le statut selon le stock
+    if (prod.QteStock <= 0) {
       prod.statut = "En rupture";
-    }
-
-    if (prod.QteStock < 0) {
-      throw new HttpError(400, `Quantité en stock insuffisante pour le produit : ${prod.nom}`);
+    } else {
+      prod.statut = "En stock";
     }
 
     await prod.save({ session });
 
-    // ✅ Ajouter à la liste des produits mis à jour
     updatedProducts.push({
       productId: item.product,
       newStock: prod.QteStock,
@@ -43,5 +40,5 @@ export async function validateAndUpdateProductsForSale(items, businessId, sessio
     });
   }
 
-  return updatedProducts; // ✅ Retourner pour vérification stock
+  return updatedProducts;
 }

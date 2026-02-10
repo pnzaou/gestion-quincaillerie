@@ -77,19 +77,29 @@ async function sendStockAlertEmail({
   currentStock, 
   alertThreshold, 
   businessName, 
-  isOutOfStock 
+  isOutOfStock,
+  isNegativeStock 
 }) {
   try {
+    let subject;
+    if (isNegativeStock) {
+      subject = `🔴 Stock négatif - ${productName}`;
+    } else if (isOutOfStock) {
+      subject = `🚨 Rupture de stock - ${productName}`;
+    } else {
+      subject = `⚠️ Alerte stock - ${productName}`;
+    }
+
     await resend.emails.send({
       from: "Support StockProx <onboarding@resend.dev>",
       to: userEmail,
-      subject: `${isOutOfStock ? '🚨 Rupture de stock' : '⚠️ Alerte stock'} - ${productName}`,
+      subject,
       react: (
         <StockAlert
           alertThreshold={alertThreshold}
           businessName={businessName}
           currentStock={currentStock}
-          isOutOfStock={isOutOfStock}
+          isOutOfStock={isOutOfStock || isNegativeStock}
           productName={productName}
           stockUrl={`${process.env.NEXT_PUBLIC_APP_URL}/shop/dashboard/article/stock`}
           userName={userName}
@@ -126,11 +136,14 @@ export async function checkStockAndNotify({
 
     const currentStock = product.QteStock;
     const alertThreshold = product.QteAlerte;
-    const isOutOfStock = currentStock === 0;
-    const isLowStock = !isOutOfStock && currentStock <= alertThreshold && alertThreshold > 0;
+
+    // ✅ Trois états possibles :
+    const isNegativeStock = currentStock < 0; // Stock négatif (priorité max)
+    const isOutOfStock = currentStock === 0; // Rupture exacte
+    const isLowStock = currentStock > 0 && currentStock <= alertThreshold && alertThreshold > 0; // Stock faible
 
     // Rien à signaler
-    if (!isOutOfStock && !isLowStock) {
+    if (!isNegativeStock && !isOutOfStock && !isLowStock) {
       return;
     }
 
@@ -143,14 +156,26 @@ export async function checkStockAndNotify({
     }
 
     const businessName = product.business?.name || "Votre boutique";
-    const notificationType = isOutOfStock ? "stock_out" : "low_stock";
-    const priority = isOutOfStock ? "urgent" : "high";
-    const title = isOutOfStock 
-      ? `🚨 Rupture de stock : ${product.nom}` 
-      : `⚠️ Stock faible : ${product.nom}`;
-    const message = isOutOfStock
-      ? `Le produit "${product.nom}" est en rupture de stock (0 unités restantes).`
-      : `Le produit "${product.nom}" a atteint le seuil d'alerte (${currentStock}/${alertThreshold} unités).`;
+
+    // ✅ Déterminer le type, la priorité, le titre et le message selon la situation
+    let notificationType, priority, title, message;
+
+    if (isNegativeStock) {
+      notificationType = "negative_stock";
+      priority = "urgent";
+      title = `🔴 Stock négatif : ${product.nom}`;
+      message = `Le produit "${product.nom}" est en stock négatif (${currentStock} unités). Réapprovisionnement urgent nécessaire.`;
+    } else if (isOutOfStock) {
+      notificationType = "stock_out";
+      priority = "urgent";
+      title = `🚨 Rupture de stock : ${product.nom}`;
+      message = `Le produit "${product.nom}" est en rupture de stock (0 unités restantes).`;
+    } else {
+      notificationType = "low_stock";
+      priority = "high";
+      title = `⚠️ Stock faible : ${product.nom}`;
+      message = `Le produit "${product.nom}" a atteint le seuil d'alerte (${currentStock}/${alertThreshold} unités).`;
+    }
 
     // Créer notifications et envoyer emails pour chaque utilisateur
     const notificationPromises = users.map(async (user) => {
@@ -178,7 +203,8 @@ export async function checkStockAndNotify({
         currentStock,
         alertThreshold,
         businessName,
-        isOutOfStock
+        isOutOfStock: isOutOfStock || isNegativeStock,
+        isNegativeStock
       });
     });
 

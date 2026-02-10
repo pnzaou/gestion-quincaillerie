@@ -94,21 +94,23 @@ export const useSaleStore = create((set, get) => ({
   cart: [],
   
   addToCart: (item, localStocks, setLocalStocks) => {
-    const currentStock = localStocks[item._id] ?? item.QteStock;
-
-    if (currentStock <= 0) {
-      return;
-    }
+    // ✅ SUPPRIMÉ : La vérification qui bloquait à 0
+    // const currentStock = localStocks[item._id] ?? item.QteStock;
+    // if (currentStock <= 0) {
+    //   return;
+    // }
 
     set((state) => {
       const exists = state.cart.find((i) => i._id === item._id);
       
       if (exists) {
+        // ✅ Arrondir à 2 décimales
+        const newQuantity = Math.round((exists.quantity + 1) * 100) / 100;
         return {
           ...state,
           cart: state.cart.map((i) =>
             i._id === item._id
-              ? { ...i, quantity: i.quantity + 1 }
+              ? { ...i, quantity: newQuantity }
               : i
           ),
         };
@@ -120,9 +122,10 @@ export const useSaleStore = create((set, get) => ({
       };
     });
 
+    // ✅ Le stock peut devenir négatif
     setLocalStocks((prev) => ({
       ...prev,
-      [item._id]: prev[item._id] - 1,
+      [item._id]: Math.round((prev[item._id] - 1) * 100) / 100,
     }));
   },
   
@@ -134,31 +137,38 @@ export const useSaleStore = create((set, get) => ({
       return;
     }
 
-    set((state) => ({
-      ...state,
-      cart: state.cart
-        .map((i) => 
-          i._id === itemId
-            ? { ...i, quantity: i.quantity - 1 }
-            : i
-        )
-        .filter((i) => i.quantity > 0),
-    }));
+    set((state) => {
+      const newQuantity = Math.round((item.quantity - 1) * 100) / 100;
+      
+      return {
+        ...state,
+        cart: state.cart
+          .map((i) => 
+            i._id === itemId
+              ? { ...i, quantity: newQuantity }
+              : i
+          )
+          .filter((i) => i.quantity > 0),
+      };
+    });
 
     setLocalStocks((prev) => ({
       ...prev,
-      [itemId]: prev[itemId] + 1,
+      [itemId]: Math.round((prev[itemId] + 1) * 100) / 100,
     }));
   },
 
-  // ✅ NOUVEAU - Mise à jour directe de la quantité
   updateCartQuantity: (item, newQuantity, localStocks, setLocalStocks) => {
     const cart = get().cart;
     const existingItem = cart.find((i) => i._id === item._id);
     const oldQuantity = existingItem?.quantity || 0;
-    const quantityDiff = newQuantity - oldQuantity;
+    
+    // ✅ Arrondir les quantités à 2 décimales
+    const roundedNewQty = Math.round(newQuantity * 100) / 100;
+    const roundedOldQty = Math.round(oldQuantity * 100) / 100;
+    const quantityDiff = roundedNewQty - roundedOldQty;
 
-    if (newQuantity === 0) {
+    if (roundedNewQty === 0) {
       // Retirer complètement du panier
       set((state) => ({
         ...state,
@@ -167,7 +177,7 @@ export const useSaleStore = create((set, get) => ({
 
       setLocalStocks((prev) => ({
         ...prev,
-        [item._id]: prev[item._id] + oldQuantity,
+        [item._id]: Math.round((prev[item._id] + roundedOldQty) * 100) / 100,
       }));
       return;
     }
@@ -178,7 +188,7 @@ export const useSaleStore = create((set, get) => ({
         ...state,
         cart: state.cart.map((i) =>
           i._id === item._id
-            ? { ...i, quantity: newQuantity }
+            ? { ...i, quantity: roundedNewQty }
             : i
         ),
       }));
@@ -186,14 +196,14 @@ export const useSaleStore = create((set, get) => ({
       // Ajouter au panier
       set((state) => ({
         ...state,
-        cart: [...state.cart, { ...item, quantity: newQuantity }],
+        cart: [...state.cart, { ...item, quantity: roundedNewQty }],
       }));
     }
 
-    // Ajuster le stock local
+    // ✅ Le stock local peut devenir négatif
     setLocalStocks((prev) => ({
       ...prev,
-      [item._id]: prev[item._id] - quantityDiff,
+      [item._id]: Math.round((prev[item._id] - quantityDiff) * 100) / 100,
     }));
   },
 
@@ -206,13 +216,14 @@ export const useSaleStore = create((set, get) => ({
   total: () => {
     const cart = get().cart;
     const discount = get().discount;
-    return (
-      cart.reduce((sum, item) => {
-        const prix = item.prixVente;
-        return sum + prix * item.quantity;
-      }, 0) *
-      (1 - discount / 100)
-    );
+    
+    const subtotal = cart.reduce((sum, item) => {
+      const prix = item.prixVente;
+      return sum + (prix * item.quantity);
+    }, 0);
+    
+    // ✅ Arrondir le total final à 2 décimales
+    return Math.round(subtotal * (1 - discount / 100) * 100) / 100;
   },
 
   amountPaid: 0,
@@ -263,7 +274,9 @@ export const useSaleStore = create((set, get) => ({
       clearPayments,
       shopId
     } = get();
-    const total = get().total();
+    
+    // ✅ Arrondir le total
+    const total = Math.round(get().total() * 100) / 100;
 
     if (!shopId) {
       toast.error("ID de boutique manquant");
@@ -273,20 +286,25 @@ export const useSaleStore = create((set, get) => ({
 
     try {
       saleVerif(cart, saleStatus, payments, total, client);
+      
       const data = {
         businessId: shopId,
         items: cart.map((item) => ({
           product: item._id,
-          quantity: item.quantity,
-          price: item.prixVente
+          quantity: Math.round(item.quantity * 100) / 100, // ✅ Arrondir
+          price: Math.round(item.prixVente * 100) / 100 // ✅ Arrondir
         })),
         dateExacte: saleDate,
-        remise: discount,
+        remise: Math.round(discount * 100) / 100, // ✅ Arrondir
         total,
         client,
         status: saleStatus,
-        payments,
+        payments: payments.map(p => ({
+          method: p.method,
+          amount: Math.round(p.amount * 100) / 100 // ✅ Arrondir
+        })),
       };
+      
       const res = await fetch("/api/sale", {
         method: "POST",
         headers: {
@@ -294,6 +312,7 @@ export const useSaleStore = create((set, get) => ({
         },
         body: JSON.stringify(data),
       });
+      
       if (res.ok) {
         const result = await res.json();
         toast.success("Vente enregistrée avec succès");

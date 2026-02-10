@@ -104,20 +104,26 @@ const ArticlesListVente = ({
   }, [articles]);
 
   const handleQuantityChange = (article, newQuantity) => {
-    const qty = parseInt(newQuantity) || 0;
+    const qty = parseFloat(newQuantity) || 0;
+
+    const roundedQty = Math.round(qty * 100) / 100;
+
     const maxStock = localStocks[article._id] ?? article.QteStock;
     const inCart = cart.find((i) => i._id === article._id);
     const currentCartQty = inCart?.quantity || 0;
     
     const availableStock = maxStock + currentCartQty;
-    
-    if (qty < 0) return;
-    if (qty > availableStock) {
-      toast.error(`Stock insuffisant. Maximum: ${availableStock}`);
-      return;
-    }
 
-    updateCartQuantity(article, qty, localStocks, setLocalStocks);
+    if (roundedQty < 0) return;
+    
+    const newStock = availableStock - roundedQty;
+  if (newStock < 0) {
+    toast.warning(`⚠️ Stock négatif : ${newStock.toFixed(2)}. La vente sera quand même enregistrée.`, {
+      duration: 3000
+    });
+  }
+
+    updateCartQuantity(article, roundedQty, localStocks, setLocalStocks);
   };
 
   const handlePrintQuote = () => {
@@ -171,7 +177,10 @@ const ArticlesListVente = ({
               const inCart = cart.find((i) => i._id === article._id);
 
               return (
-                <Card key={article._id} className="p-3 hover:shadow-lg transition-shadow duration-150">
+                <Card
+                  key={article._id}
+                  className="p-3 hover:shadow-lg transition-shadow duration-150"
+                >
                   {/* Image */}
                   <div className="overflow-hidden rounded bg-muted flex items-center justify-center h-32 sm:h-40 md:h-36 lg:h-40 relative">
                     {article.image ? (
@@ -190,7 +199,7 @@ const ArticlesListVente = ({
                   <CardTitle className="mt-3 text-sm sm:text-base truncate">
                     {article.nom}
                   </CardTitle>
-                  
+
                   <CardContent className="flex flex-col space-y-3 mt-2 p-0">
                     <div className="text-center">
                       <span className="text-base sm:text-lg text-black font-semibold">
@@ -201,15 +210,15 @@ const ArticlesListVente = ({
                     <div className="text-sm text-center">
                       <Badge
                         className={cn(
-                          'text-xs font-semibold',
-                          article.QteStock > 10
-                            ? 'bg-green-100 text-green-800'
-                            : article.QteStock > 0
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-red-100 text-red-800'
+                          "text-xs font-semibold",
+                          (localStocks[article._id] ?? article.QteStock) > 10
+                            ? "bg-green-100 text-green-800"
+                            : (localStocks[article._id] ?? article.QteStock) > 0
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-red-100 text-red-800", // ✅ Rouge si <= 0 (inclus négatif)
                         )}
                       >
-                        {localStocks[article._id] ?? article.QteStock} en stock
+                        {(localStocks[article._id] ?? article.QteStock).toFixed(2,)}{" "}en stock
                       </Badge>
                     </div>
 
@@ -217,7 +226,9 @@ const ArticlesListVente = ({
                       <Button
                         size="icon"
                         variant="ghost"
-                        onClick={() => removeFromCart(article._id, setLocalStocks)}
+                        onClick={() =>
+                          removeFromCart(article._id, setLocalStocks)
+                        }
                         disabled={!inCart}
                         className="border rounded-full w-8 h-8 sm:w-9 sm:h-9 text-red-600 hover:bg-red-50 flex-shrink-0"
                         aria-label={`Retirer ${article.nom}`}
@@ -228,15 +239,20 @@ const ArticlesListVente = ({
                       <Input
                         type="number"
                         min="0"
+                        step="0.5"
                         value={inCart?.quantity ?? 0}
-                        onChange={(e) => handleQuantityChange(article, e.target.value)}
+                        onChange={(e) =>
+                          handleQuantityChange(article, e.target.value)
+                        }
                         className="text-center h-8 sm:h-9 w-12 sm:w-16 text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
 
                       <Button
                         size="icon"
                         variant="ghost"
-                        onClick={() => addToCart(article, localStocks, setLocalStocks)}
+                        onClick={() =>
+                          addToCart(article, localStocks, setLocalStocks)
+                        }
                         className="border rounded-full w-8 h-8 sm:w-9 sm:h-9 text-green-600 hover:bg-green-50 flex-shrink-0"
                         aria-label={`Ajouter ${article.nom}`}
                       >
