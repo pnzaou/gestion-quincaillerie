@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 const productSchema = new mongoose.Schema({
     business: { type: mongoose.Schema.Types.ObjectId, ref: "Business", required: true },
+    globalReference: { type: String, required: false, trim: true, uppercase: true, },
     nom: { type: String, required: true },
     prixAchat: { type: Number, required: true },
     prixVente: { type: Number, required: true },
@@ -19,7 +20,7 @@ const productSchema = new mongoose.Schema({
     timestamps: true
 })
 
-// ✅ NOUVEAU : Middleware pour arrondir avant sauvegarde
+// ✅ Middleware pour arrondir avant sauvegarde
 productSchema.pre('save', function(next) {
   this.QteInitial = Math.round(this.QteInitial * 100) / 100;
   this.QteStock = Math.round(this.QteStock * 100) / 100;
@@ -32,6 +33,18 @@ productSchema.pre('save', function(next) {
 
 // Index unique pour nom par boutique
 productSchema.index({ nom: 1, business: 1 }, { unique: true })
+
+// ✅ NOUVEAU : Index unique pour globalReference (si fournie)
+productSchema.index(
+    { globalReference: 1 }, 
+    { 
+        unique: true, 
+        sparse: true,
+        partialFilterExpression: { 
+            globalReference: { $type: "string", $ne: "" } 
+        }
+    }
+)
 
 // Index unique partiel pour reference par boutique (si fournie)
 productSchema.index(

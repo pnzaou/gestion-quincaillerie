@@ -5,6 +5,8 @@ import { generateOrderReference } from "./generateOrderReference.service";
 import { createHistory } from "./history.service";
 import { HttpError } from "./errors.service";
 import PurchaseHistory from "@/models/PurchaseHistory.model";
+import { receiveTransferFromOrder } from "./stockTransfer.service";
+import StockTransfer from "@/models/StockTransfer.model";
 
 /**
  * Créer une commande
@@ -43,8 +45,8 @@ export async function createOrder({ payload, user }) {
       supplier: payload.supplier || null,
       items: payload.items.map((item) => ({
         product: item.product,
-        quantity: item.quantity,
-        estimatedPrice: item.price, // ✅ Changé de "price" à "estimatedPrice"
+        quantity: Math.round(item.quantity * 100) / 100, // ✅ Arrondir
+        estimatedPrice: Math.round(item.price * 100) / 100, // ✅ Arrondir
         actualPrice: null,
         receivedQuantity: 0,
         status: "pending",
@@ -55,7 +57,7 @@ export async function createOrder({ payload, user }) {
       expectedDelivery: payload.expectedDelivery || null,
       createdBy: user?.id,
       notes: payload.notes || "",
-      estimatedTotal: payload.total, // ✅ Changé de "total" à "estimatedTotal"
+      estimatedTotal: Math.round(payload.total * 100) / 100, // ✅ Arrondir
       actualTotal: 0,
       priceVariance: 0,
     };
@@ -63,7 +65,7 @@ export async function createOrder({ payload, user }) {
     const [order] = await Order.create([data], { session });
 
     // 4) Créer l'historique
-    const description = `Commande ${reference} créée pour un montant de ${payload.total} FCFA. ${payload.items.length} article(s).`;
+    const description = `Commande ${reference} créée pour un montant de ${payload.total.toFixed(2)} FCFA. ${payload.items.length} article(s).`;
     
     await createHistory({
       userId: user?.id,
@@ -89,6 +91,7 @@ export async function createOrder({ payload, user }) {
 
 /**
  * Recevoir une commande (complète ou partielle)
+ * ✅ MODIFIÉ pour gérer les transferts inter-boutiques
  */
 export async function receiveOrder({ orderId, items, user, businessId }) {
   const session = await mongoose.startSession();
@@ -108,9 +111,20 @@ export async function receiveOrder({ orderId, items, user, businessId }) {
       throw new HttpError(400, `Impossible de recevoir une commande avec le statut ${order.status}`);
     }
 
-    // items = [{ productId, receivedQuantity, actualPrice }]
+    // ✅ Vérifier si c'est un transfert DÈS LE DÉBUT
+    const isTransferOrder = await StockTransfer.exists({ 
+      destinationOrder: order._id 
+    }).session(session);
+
     let allReceived = true;
-    let actualTotal = order.actualTotal || 0;
+    let actualTotal;
+
+    // ✅ Si transfert, actualTotal est déjà correct
+    if (isTransferOrder && order.actualTotal > 0) {
+      actualTotal = order.actualTotal;
+    } else {
+      actualTotal = order.actualTotal || 0;
+    }
 
     for (const receivedItem of items) {
       const orderItem = order.items.find(
@@ -121,36 +135,33 @@ export async function receiveOrder({ orderId, items, user, businessId }) {
         throw new HttpError(404, `Produit ${receivedItem.productId} non trouvé dans la commande`);
       }
 
-      // Vérifier la quantité
-      const newReceivedQty = orderItem.receivedQuantity + receivedItem.receivedQuantity;
+      const roundedReceivedQty = Math.round(receivedItem.receivedQuantity * 100) / 100;
+      const roundedActualPrice = Math.round(receivedItem.actualPrice * 100) / 100;
+
+      const newReceivedQty = Math.round((orderItem.receivedQuantity + roundedReceivedQty) * 100) / 100;
       
       if (newReceivedQty > orderItem.quantity) {
         throw new HttpError(400, `Quantité reçue dépasse la quantité commandée pour le produit ${receivedItem.productId}`);
       }
 
-      // Valider le prix réel
-      if (!receivedItem.actualPrice || receivedItem.actualPrice <= 0) {
+      if (!roundedActualPrice || roundedActualPrice <= 0) {
         throw new HttpError(400, `Prix réel invalide pour le produit ${receivedItem.productId}`);
       }
 
-      // Mettre à jour la quantité reçue
       orderItem.receivedQuantity = newReceivedQty;
 
-      // Ajouter à l'historique des réceptions de cet item
       orderItem.receptions.push({
         date: new Date(),
-        quantity: receivedItem.receivedQuantity,
-        actualPrice: receivedItem.actualPrice,
+        quantity: roundedReceivedQty,
+        actualPrice: roundedActualPrice,
         receivedBy: user?.id,
         notes: receivedItem.notes || ""
       });
 
-      // Calculer le prix réel moyen pour cet item
       const totalQtyReceived = orderItem.receptions.reduce((sum, r) => sum + r.quantity, 0);
       const totalCost = orderItem.receptions.reduce((sum, r) => sum + (r.quantity * r.actualPrice), 0);
-      orderItem.actualPrice = totalCost / totalQtyReceived;
+      orderItem.actualPrice = Math.round((totalCost / totalQtyReceived) * 100) / 100;
 
-      // Mettre à jour le statut de l'item
       if (newReceivedQty === orderItem.quantity) {
         orderItem.status = 'received';
       } else if (newReceivedQty > 0) {
@@ -160,24 +171,32 @@ export async function receiveOrder({ orderId, items, user, businessId }) {
         allReceived = false;
       }
 
-      // Mettre à jour le total réel de la commande
-      actualTotal += receivedItem.receivedQuantity * receivedItem.actualPrice;
+      // ✅ Si ce n'est PAS un transfert, on calcule actualTotal normalement
+      if (!isTransferOrder) {
+        actualTotal += roundedReceivedQty * roundedActualPrice;
+      }
 
-      // ✅ Créer l'historique d'achat
-      await PurchaseHistory.create([{
-        business: businessId,
-        product: receivedItem.productId,
-        order: order._id,
-        supplier: order.supplier,
-        quantity: receivedItem.receivedQuantity,
-        unitPrice: receivedItem.actualPrice,
-        totalCost: receivedItem.receivedQuantity * receivedItem.actualPrice,
-        receivedDate: new Date(),
-        receivedBy: user?.id,
-        notes: receivedItem.notes || ""
-      }], { session });
+      // Créer PurchaseHistory seulement si pas un transfert
+      const purchaseCost = Math.round((roundedReceivedQty * roundedActualPrice) * 100) / 100;
 
-      // Mettre à jour le stock du produit
+      if (!isTransferOrder) {
+        await PurchaseHistory.create([{
+          business: businessId,
+          product: receivedItem.productId,
+          source: 'order',
+          order: order._id,
+          transfer: null,
+          supplier: order.supplier,
+          quantity: roundedReceivedQty,
+          unitPrice: roundedActualPrice,
+          totalCost: purchaseCost,
+          receivedDate: new Date(),
+          receivedBy: user?.id,
+          notes: receivedItem.notes || ""
+        }], { session });
+      }
+
+      // Mettre à jour le stock
       const product = await Product.findOne({
         _id: receivedItem.productId,
         business: businessId
@@ -187,10 +206,9 @@ export async function receiveOrder({ orderId, items, user, businessId }) {
         throw new HttpError(404, `Produit ${receivedItem.productId} introuvable`);
       }
 
-      product.QteStock += receivedItem.receivedQuantity;
-      product.QteInitial += receivedItem.receivedQuantity;
+      product.QteStock = Math.round((product.QteStock + roundedReceivedQty) * 100) / 100;
+      product.QteInitial = Math.round((product.QteInitial + roundedReceivedQty) * 100) / 100;
 
-      // Mettre à jour le statut du produit
       if (product.QteStock > 0) {
         product.statut = "En stock";
       }
@@ -198,11 +216,13 @@ export async function receiveOrder({ orderId, items, user, businessId }) {
       await product.save({ session });
     }
 
-    // Mettre à jour les totaux de la commande
-    order.actualTotal = actualTotal;
-    order.priceVariance = actualTotal - order.estimatedTotal;
+    // ✅ Mettre à jour les totaux seulement si pas un transfert
+    if (!isTransferOrder) {
+      order.actualTotal = Math.round(actualTotal * 100) / 100;
+      order.priceVariance = Math.round((order.actualTotal - order.estimatedTotal) * 100) / 100;
+    }
+    // Si c'est un transfert, actualTotal et priceVariance sont déjà corrects
 
-    // Vérifier si tous les items sont reçus
     const allItemsReceived = order.items.every(item => item.status === 'received');
     
     if (allItemsReceived) {
@@ -213,6 +233,9 @@ export async function receiveOrder({ orderId, items, user, businessId }) {
     }
 
     await order.save({ session });
+
+    // Si c'est un transfert, marquer comme reçu
+    await receiveTransferFromOrder(order._id, user?.id, session);
 
     // Créer l'historique
     const priceVarianceText = order.priceVariance !== 0 

@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Calendar, TrendingUp, TrendingDown } from "lucide-react";
+import { Calendar, TrendingUp, TrendingDown, ArrowRightLeft } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 export const ProductPriceHistoryDialog = ({ open, onOpenChange, productId, businessId }) => {
   const [history, setHistory] = useState([]);
@@ -46,10 +47,37 @@ export const ProductPriceHistoryDialog = ({ open, onOpenChange, productId, busin
     }).format(new Date(date));
   };
 
+  // ✅ Fonction pour obtenir le badge de source
+  const getSourceBadge = (item) => {
+    if (item.isOutgoing || item.source === 'transfer_out') {
+      return (
+        <Badge className="bg-orange-100 text-orange-800 gap-1">
+          <ArrowRightLeft className="w-3 h-3" />
+          Transfert sortant
+        </Badge>
+      );
+    }
+    
+    if (item.source === 'transfer') {
+      return <Badge className="bg-blue-100 text-blue-800">Transfert entrant</Badge>;
+    }
+    
+    if (item.notes?.includes("Stock initial") || item.notes?.includes("migration")) {
+      return <Badge className="bg-gray-100 text-gray-800">Stock initial</Badge>;
+    }
+    
+    return <Badge className="bg-green-100 text-green-800">Commande</Badge>;
+  };
+
   if (!open) return null;
 
-  const latestPrice = history[0]?.unitPrice || 0;
-  const previousPrice = history[1]?.unitPrice || latestPrice;
+  // ✅ Calculer le prix actuel (dernière entrée, pas sortie)
+  const latestPurchase = history.find(h => !h.isOutgoing && h.source !== 'transfer_out');
+  const latestPrice = latestPurchase?.unitPrice || 0;
+  
+  const previousPurchases = history.filter(h => !h.isOutgoing && h.source !== 'transfer_out');
+  const previousPrice = previousPurchases[1]?.unitPrice || latestPrice;
+  
   const priceChange = latestPrice - previousPrice;
   const priceChangePercent = previousPrice > 0 ? ((priceChange / previousPrice) * 100).toFixed(1) : 0;
 
@@ -59,7 +87,7 @@ export const ProductPriceHistoryDialog = ({ open, onOpenChange, productId, busin
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Calendar className="w-5 h-5 text-primary" />
-            Historique des prix d'achat
+            Historique des mouvements d'achat
           </DialogTitle>
         </DialogHeader>
 
@@ -75,7 +103,7 @@ export const ProductPriceHistoryDialog = ({ open, onOpenChange, productId, busin
                   <p className="text-sm text-muted-foreground">Prix d'achat actuel</p>
                   <p className="text-2xl font-bold text-foreground">{formatCurrency(latestPrice)}</p>
                 </div>
-                {history.length > 1 && priceChange !== 0 && (
+                {previousPurchases.length > 1 && priceChange !== 0 && (
                   <div className={`flex items-center gap-2 ${priceChange > 0 ? 'text-red-600' : 'text-green-600'}`}>
                     {priceChange > 0 ? <TrendingUp className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />}
                     <div className="text-right">
@@ -94,25 +122,35 @@ export const ProductPriceHistoryDialog = ({ open, onOpenChange, productId, busin
                   <TableHead className="text-right">Prix unitaire</TableHead>
                   <TableHead className="text-right">Quantité</TableHead>
                   <TableHead className="text-right">Total</TableHead>
-                  <TableHead>Source</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Notes</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {history.map((item, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{formatDate(item.receivedDate)}</TableCell>
-                    <TableCell className="text-right font-medium">
-                      {formatCurrency(item.unitPrice)}
-                    </TableCell>
-                    <TableCell className="text-right">{item.quantity}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(item.totalCost)}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {item.notes === "Stock initial" || item.notes === "Stock initial (migration)" 
-                        ? "Stock initial" 
-                        : "Commande"}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {history.map((item, index) => {
+                  const isOutgoing = item.isOutgoing || item.source === 'transfer_out';
+                  
+                  return (
+                    <TableRow key={index} className={isOutgoing ? 'bg-orange-50' : ''}>
+                      <TableCell>{formatDate(item.receivedDate)}</TableCell>
+                      <TableCell className="text-right font-medium">
+                        {formatCurrency(Math.abs(item.unitPrice))}
+                      </TableCell>
+                      <TableCell className={`text-right font-semibold ${isOutgoing ? 'text-orange-600' : ''}`}>
+                        {isOutgoing && '-'}{Math.abs(item.quantity)}
+                      </TableCell>
+                      <TableCell className={`text-right font-semibold ${isOutgoing ? 'text-orange-600' : ''}`}>
+                        {isOutgoing && '-'}{formatCurrency(Math.abs(item.totalCost))}
+                      </TableCell>
+                      <TableCell>
+                        {getSourceBadge(item)}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground max-w-xs truncate">
+                        {item.notes || '-'}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </>

@@ -2,6 +2,7 @@ import Sale from "@/models/Sale.model"
 import dbConnection from "./db"
 import Product from "@/models/Product.model"
 import PurchaseHistory from "@/models/PurchaseHistory.model"
+import mongoose from "mongoose"
 
 /**
  * Récupère les détails d'un produit par son ID
@@ -28,16 +29,42 @@ export const getProductById = async (productId) => {
 
 /**
  * Calcule le coût d'achat RÉEL total d'un produit
- * Basé sur les achats historiques (PurchaseHistory)
+ * ✅ CORRIGÉ : Exclut les quantités transférées vers d'autres boutiques
  */
 export const getTotalRealCost = async (productId, businessId) => {
   try {
     await dbConnection()
+    
+    // 1️⃣ Coût total des achats (commandes + transferts reçus)
     const purchases = await PurchaseHistory.find({
       business: businessId,
       product: productId
     })
-    return purchases.reduce((sum, p) => sum + p.totalCost, 0)
+    const totalPurchasedCost = purchases.reduce((sum, p) => sum + p.totalCost, 0)
+    
+    // 2️⃣ Récupérer les transferts SORTANTS avec leur prix RÉEL
+    const StockTransfer = (await import("@/models/StockTransfer.model")).default
+    
+    const outgoingTransfers = await StockTransfer.find({
+      sourceBusiness: new mongoose.Types.ObjectId(businessId),
+      status: { $in: ['validated', 'received'] },
+      'items.sourceProductId': new mongoose.Types.ObjectId(productId)
+    })
+    
+    // 3️⃣ Calculer le coût des transferts avec leur PRIX RÉEL
+    let transferredCost = 0
+    for (const transfer of outgoingTransfers) {
+      for (const item of transfer.items) {
+        if (item.sourceProductId.toString() === productId.toString()) {
+          // ✅ Utiliser le prix réel du transfert (transferPrice)
+          transferredCost += item.quantity * item.transferPrice
+        }
+      }
+    }
+    
+    // 4️⃣ Coût réel = Ce qu'on a acheté - Ce qu'on a transféré (au prix réel)
+    return Math.round((totalPurchasedCost - transferredCost) * 100) / 100
+    
   } catch (error) {
     console.error("Erreur getTotalRealCost:", error)
     return 0
@@ -45,16 +72,41 @@ export const getTotalRealCost = async (productId, businessId) => {
 }
 
 /**
- * Calcule la quantité totale achetée (pour vérification)
+ * Calcule la quantité totale achetée NETTE (après transferts sortants)
  */
 export const getTotalQuantityPurchased = async (productId, businessId) => {
   try {
     await dbConnection()
+    
+    // Quantité totale achetée
     const purchases = await PurchaseHistory.find({
       business: businessId,
       product: productId
     })
-    return purchases.reduce((sum, p) => sum + p.quantity, 0)
+    const totalPurchased = purchases.reduce((sum, p) => sum + p.quantity, 0)
+    
+    // Quantité transférée sortante
+    const StockTransfer = (await import("@/models/StockTransfer.model")).default
+    
+    const outgoingTransfers = await StockTransfer.find({
+      sourceBusiness: new mongoose.Types.ObjectId(businessId),
+      status: { $in: ['validated', 'received'] },
+      'items.sourceProductId': new mongoose.Types.ObjectId(productId)
+    })
+    
+    let transferredQty = 0
+    for (const transfer of outgoingTransfers) {
+      for (const item of transfer.items) {
+        if (item.sourceProductId.toString() === productId.toString()) {
+          transferredQty += item.quantity
+        }
+      }
+    }
+    
+    // ✅ Quantité nette = Achetée - Transférée
+    // Dans ton cas : 106 - 50 = 56 unités
+    return Math.round((totalPurchased - transferredQty) * 100) / 100
+    
   } catch (error) {
     console.error("Erreur getTotalQuantityPurchased:", error)
     return 0
@@ -69,7 +121,7 @@ export const getAveragePurchasePrice = async (productId, businessId) => {
     const totalCost = await getTotalRealCost(productId, businessId)
     const totalQty = await getTotalQuantityPurchased(productId, businessId)
     if (totalQty === 0) return 0
-    return totalCost / totalQty
+    return Math.round((totalCost / totalQty) * 100) / 100
   } catch (error) {
     console.error("Erreur getAveragePurchasePrice:", error)
     return 0
@@ -89,14 +141,12 @@ export const getTotalDepense = async (productId, businessId) => {
 export const getTotalAttendu = (product) => {
   if (!product) return 0
   
-  const prixVente = product.prixVente // ✅ Renommé
+  const prixVente = product.prixVente
   return product.QteInitial * prixVente
 }
 
 /**
  * Calcule le montant qu'on a déjà gagné grâce à ce produit
- * Filtré par boutique
- * ✅ CORRIGÉ : Gère correctement les ventes partielles multi-produits
  */
 export const getTotalVendu = async (productId, businessId) => {
   try {
@@ -183,8 +233,8 @@ export const getTotalVendu = async (productId, businessId) => {
 }
 
 /**
- * Calcule la marge RÉELLE basée sur les coûts d'achat réels
- * ✅ Utilise PurchaseHistory pour le coût réel
+ * Calcule la marge RÉELLE
+ * ✅ CORRIGÉ : Exclut les transferts sortants
  */
 export const getMarge = async (product) => {
   if (!product) return 0
@@ -193,17 +243,35 @@ export const getMarge = async (product) => {
     // Total vendu (paiements reçus)
     const totalVendu = await getTotalVendu(product._id, product.business)
     
-    // Quantité vendue
-    const qteVendue = product.QteInitial - product.QteStock
+    // ✅ Quantité transférée
+    const StockTransfer = (await import("@/models/StockTransfer.model")).default
     
-    // Coût d'achat RÉEL moyen (depuis PurchaseHistory)
+    const outgoingTransfers = await StockTransfer.find({
+      sourceBusiness: product.business,
+      status: { $in: ['validated', 'received'] },
+      'items.sourceProductId': product._id
+    })
+    
+    let transferredQty = 0
+    for (const transfer of outgoingTransfers) {
+      for (const item of transfer.items) {
+        if (item.sourceProductId.toString() === product._id.toString()) {
+          transferredQty += item.quantity
+        }
+      }
+    }
+    
+    // ✅ Quantité VRAIMENT vendue (pas transférée)
+    const qteVendue = product.QteInitial - product.QteStock - transferredQty
+    
+    // Coût d'achat RÉEL moyen
     const avgPurchasePrice = await getAveragePurchasePrice(product._id, product.business)
     
-    // Coût total des produits vendus (COGS - Cost of Goods Sold)
+    // Coût total des produits vendus
     const cogs = qteVendue * avgPurchasePrice
     
     // Marge = Revenus - Coûts
-    return totalVendu - cogs
+    return Math.round((totalVendu - cogs) * 100) / 100
     
   } catch (error) {
     console.error("Erreur getMarge:", error)

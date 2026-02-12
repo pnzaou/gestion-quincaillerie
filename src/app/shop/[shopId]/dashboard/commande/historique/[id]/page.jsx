@@ -49,6 +49,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { OrderPrint } from "@/components/dashbord/Order-print";
 import { OrderPreview } from "@/components/dashbord/Order-preview";
+import { TransferButton } from "@/components/dashbord/TransferButton";
+import { TransfersSection } from "@/components/dashbord/Transfers-section";
 
 const Page = () => {
   const params = useParams();
@@ -58,6 +60,7 @@ const Page = () => {
 
   const [isLoading, setIsLoading] = useState(true);
   const [order, setOrder] = useState(null);
+  const [businesses, setBusinesses] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
   const [receiveDialogOpen, setReceiveDialogOpen] = useState(false);
   const [receivingItems, setReceivingItems] = useState({});
@@ -65,6 +68,20 @@ const Page = () => {
   const [loading, setLoading] = useState(false);
   const [printMode, setPrintMode] = useState(null);
   const [showOrderPreview, setShowOrderPreview] = useState(false);
+
+  // Fonction pour charger les boutiques
+  const fetchBusinesses = useCallback(async () => {
+    try {
+      const res = await fetch('/api/business/business-for-transfer');
+      const data = await res.json();
+      
+      if (res.ok) {
+        setBusinesses(data.data || []);
+      }
+    } catch (error) {
+      console.error("Erreur chargement boutiques:", error);
+    }
+  }, []);
 
   // Fonction pour charger les données de la commande
   const fetchOrder = useCallback(async () => {
@@ -90,7 +107,8 @@ const Page = () => {
 
   useEffect(() => {
     fetchOrder();
-  }, [fetchOrder]);
+    fetchBusinesses();
+  }, [fetchOrder, fetchBusinesses]);
 
   const handleToggleItem = (productId, checked) => {
     if (checked) {
@@ -360,6 +378,14 @@ const Page = () => {
                 <Printer className="w-4 h-4" />
                 Bon de commande
               </Button>
+
+              {order.status === "completed" && (
+                <TransferButton
+                  order={order}
+                  businesses={businesses}
+                  currentBusinessId={shopId}
+                />
+              )}
             </div>
           </div>
 
@@ -410,8 +436,8 @@ const Page = () => {
                                 item.receivedQuantity === item.quantity
                                   ? "default"
                                   : item.receivedQuantity > 0
-                                  ? "secondary"
-                                  : "outline"
+                                    ? "secondary"
+                                    : "outline"
                               }
                             >
                               {item.receivedQuantity}
@@ -421,14 +447,14 @@ const Page = () => {
                             {formatCurrency(
                               order.status === "completed" && item.actualPrice
                                 ? item.actualPrice
-                                : item.estimatedPrice
+                                : item.estimatedPrice,
                             )}
                           </TableCell>
                           <TableCell className="text-right font-medium">
                             {formatCurrency(
                               order.status === "completed" && item.actualPrice
                                 ? item.actualPrice * item.quantity
-                                : item.estimatedPrice * item.quantity
+                                : item.estimatedPrice * item.quantity,
                             )}
                           </TableCell>
                           <TableCell className="text-center">
@@ -502,6 +528,10 @@ const Page = () => {
                   </div>
                 </CardContent>
               </Card>
+
+              {order.status === "completed" && (
+                <TransfersSection orderId={order._id} shopId={shopId} />
+              )}
             </div>
 
             {/* Right Column */}
@@ -642,7 +672,7 @@ const Page = () => {
                       <div className="font-medium">
                         {order.items.reduce(
                           (sum, item) => sum + item.quantity,
-                          0
+                          0,
                         )}{" "}
                         articles
                       </div>
@@ -709,7 +739,7 @@ const Page = () => {
                             onChange={(e) =>
                               handleQuantityChange(
                                 item.product._id,
-                                e.target.value
+                                e.target.value,
                               )
                             }
                             className="w-full"

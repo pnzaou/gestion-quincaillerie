@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import dbConnection from "@/lib/db";
 import PurchaseHistory from "@/models/PurchaseHistory.model";
+import StockTransfer from "@/models/StockTransfer.model";
 import { withAuth } from "@/utils/withAuth";
 import mongoose from "mongoose";
 
@@ -26,19 +27,62 @@ export const GET = withAuth(async (req, { params }) => {
       );
     }
 
-    // Récupérer l'historique des achats
-    const history = await PurchaseHistory.find({
+    // 1️⃣ Récupérer l'historique des achats (entrées)
+    const purchases = await PurchaseHistory.find({
       product: id,
       business: businessId
     })
       .sort({ receivedDate: -1 })
       .lean();
 
+    // 2️⃣ Récupérer les transferts SORTANTS (sorties)
+    const outgoingTransfers = await StockTransfer.find({
+      sourceBusiness: new mongoose.Types.ObjectId(businessId),
+      status: { $in: ['validated', 'received'] },
+      'items.sourceProductId': new mongoose.Types.ObjectId(id)
+    })
+      .populate('destinationBusiness', 'name')
+      .sort({ transferDate: -1 })
+      .lean();
+
+    // 3️⃣ Transformer les transferts sortants en format d'historique
+    const transferHistoryItems = [];
+    
+    for (const transfer of outgoingTransfers) {
+      for (const item of transfer.items) {
+        if (item.sourceProductId.toString() === id.toString()) {
+          transferHistoryItems.push({
+            receivedDate: transfer.transferDate,
+            unitPrice: item.transferPrice,
+            quantity: -item.quantity, // ✅ NÉGATIF pour indiquer une sortie
+            totalCost: -(item.quantity * item.transferPrice), // ✅ NÉGATIF
+            source: 'transfer_out', // ✅ Nouveau type
+            notes: `Transfert vers ${transfer.destinationBusiness?.name || 'autre boutique'} - ${transfer.reference}`,
+            transferReference: transfer.reference,
+            destinationBusiness: transfer.destinationBusiness?.name
+          });
+        }
+      }
+    }
+
+    // 4️⃣ Combiner et trier par date (plus récent en premier)
+    const combinedHistory = [
+      ...purchases.map(p => ({
+        ...p,
+        source: p.source || 'order', // Pour compatibilité avec ancien code
+        isOutgoing: false
+      })),
+      ...transferHistoryItems.map(t => ({
+        ...t,
+        isOutgoing: true
+      }))
+    ].sort((a, b) => new Date(b.receivedDate) - new Date(a.receivedDate));
+
     return NextResponse.json({
       message: "Historique récupéré",
       success: true,
       error: false,
-      history
+      history: combinedHistory
     });
 
   } catch (error) {
