@@ -143,6 +143,7 @@ const AjoutArticleForm = ({
               prevStep={prevStep}
               step={step}
               handleNext={handleNext}
+              onSubmit={handleSubmit(onSubmit)}
             />
           </form>
         </CardContent>

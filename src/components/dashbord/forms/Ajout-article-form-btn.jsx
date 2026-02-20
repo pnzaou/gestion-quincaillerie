@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 
-const AjoutArticleFormBtn = ({ step, prevStep, isLoading, isEdit, handleNext }) => {
+const AjoutArticleFormBtn = ({ step, prevStep, isLoading, isEdit, handleNext, onSubmit }) => {
   return (
     <div className="flex flex-col-reverse sm:flex-row justify-between gap-3 sm:gap-0 mt-6">
       {step > 1 && (
@@ -14,8 +14,8 @@ const AjoutArticleFormBtn = ({ step, prevStep, isLoading, isEdit, handleNext }) 
         </Button>
       )}
       <Button
-        type={step === 3 ? "submit" : "button"}
-        onClick={step < 3 ? handleNext : undefined}
+        type="button"
+        onClick={step === 3 ? onSubmit : handleNext}
         disabled={isLoading}
         className="bg-[#0084D1] hover:bg-[#0042d1] hover:cursor-pointer w-full sm:w-auto ml-auto"
       >
@@ -27,11 +27,7 @@ const AjoutArticleFormBtn = ({ step, prevStep, isLoading, isEdit, handleNext }) 
             </span>
           </>
         ) : step === 3 ? (
-          isEdit ? (
-            "Modifier"
-          ) : (
-            "Enregistrer"
-          )
+          isEdit ? "Modifier" : "Enregistrer"
         ) : (
           "Continuer"
         )}
