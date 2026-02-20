@@ -5,7 +5,6 @@ import Product from "@/models/Product.model";
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import cloudinary from "@/lib/cloudinary";
-import authOptions from "@/lib/auth";
 import History from "@/models/History.model";
 
 // ============================================
