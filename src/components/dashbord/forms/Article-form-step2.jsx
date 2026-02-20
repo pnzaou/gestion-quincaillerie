@@ -7,6 +7,7 @@ import Required from "@/components/Required";
 const ArticleFormStep2 = ({ control, fours, register, errors }) => {
   return (
     <div className="space-y-4">
+      {/* Première ligne - responsive */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="grid gap-3 flex-1">
           <Label>
@@ -16,6 +17,7 @@ const ArticleFormStep2 = ({ control, fours, register, errors }) => {
           <Controller
             control={control}
             name="supplier_id"
+            rules={{ required: false }}
             render={({ field }) => (
               <FormCombox
                 value={field.value}
@@ -28,6 +30,9 @@ const ArticleFormStep2 = ({ control, fours, register, errors }) => {
               />
             )}
           />
+          {errors.supplier_id && (
+            <p className="text-sm text-red-500">{errors.supplier_id.message}</p>
+          )}
         </div>
         <div className="grid gap-3 flex-1">
           <Label>
@@ -45,6 +50,7 @@ const ArticleFormStep2 = ({ control, fours, register, errors }) => {
         </div>
       </div>
 
+      {/* Deuxième ligne - responsive */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="grid gap-3 flex-1">
           <Label>
@@ -76,6 +82,7 @@ const ArticleFormStep2 = ({ control, fours, register, errors }) => {
         </div>
       </div>
 
+      {/* Troisième ligne - responsive */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="grid gap-3 flex-1">
           <Label>Référence</Label>

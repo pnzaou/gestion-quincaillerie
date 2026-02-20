@@ -38,7 +38,6 @@ const AjoutArticleForm = ({
     trigger,
   } = useForm({
     resolver: yupResolver(articleSchema),
-    mode: "onTouched",
   });
 
   const isEdit = Boolean(initialData);
