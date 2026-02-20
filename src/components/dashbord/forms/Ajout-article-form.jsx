@@ -14,7 +14,7 @@ import ArticleFormStep2 from "./Article-form-step2";
 import ArticleFormStep3 from "./Article-form-step3";
 import AjoutArticleFormBtn from "./Ajout-article-form-btn";
 import { setInitialValue } from "@/utils/setInitialValue";
-import { articleSchema } from "@/utils/articleSchema";
+import { articleSchema } from "@/schemas";
 
 const AjoutArticleForm = ({
   className,
