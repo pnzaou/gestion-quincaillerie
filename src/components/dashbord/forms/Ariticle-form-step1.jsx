@@ -9,14 +9,20 @@ const AriticleFormStep1 = ({ register, errors, control, cats }) => {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="grid gap-3 flex-1">
-          <Label>Nom <Required /></Label>
+          <Label>
+            Nom
+            <Required />
+          </Label>
           <Input {...register("nom")} />
           {errors.nom && (
             <p className="text-sm text-red-500">{errors.nom.message}</p>
           )}
         </div>
         <div className="grid gap-3 flex-1">
-          <Label>Catégorie <Required /></Label>
+          <Label>
+            Catégorie
+            <Required />
+          </Label>
           <Controller
             control={control}
             name="category_id"
@@ -24,7 +30,10 @@ const AriticleFormStep1 = ({ register, errors, control, cats }) => {
               <FormCombox
                 value={field.value}
                 onChange={field.onChange}
-                options={cats.map((cat) => ({ value: cat._id, label: cat.nom }))}
+                options={cats.map((cat) => ({
+                  value: cat._id,
+                  label: cat.nom,
+                }))}
                 placeholder="Sélectionner une catégorie"
               />
             )}
@@ -37,15 +46,31 @@ const AriticleFormStep1 = ({ register, errors, control, cats }) => {
 
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="grid gap-3 flex-1">
-          <Label>Prix d'Achat <Required /></Label>
-          <Input type="number" step="0.01" min="0.01" {...register("prixAchat")} />
+          <Label>
+            Prix d'Achat
+            <Required />
+          </Label>
+          <Input
+            type="number"
+            step="0.01"
+            min="0.01"
+            {...register("prixAchat")}
+          />
           {errors.prixAchat && (
             <p className="text-sm text-red-500">{errors.prixAchat.message}</p>
           )}
         </div>
         <div className="grid gap-3 flex-1">
-          <Label>Prix de Vente <Required /></Label>
-          <Input type="number" step="0.01" min="0.01" {...register("prixVente")} />
+          <Label>
+            Prix de Vente
+            <Required />
+          </Label>
+          <Input
+            type="number"
+            step="0.01"
+            min="0.01"
+            {...register("prixVente")}
+          />
           {errors.prixVente && (
             <p className="text-sm text-red-500">{errors.prixVente.message}</p>
           )}

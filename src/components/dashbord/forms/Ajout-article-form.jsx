@@ -49,18 +49,8 @@ const AjoutArticleForm = ({
     }
   }, [initialData, setValue, isEdit]);
 
-  // Champs à valider par step
-  const stepFields = {
-    1: ["nom", "category_id", "prixAchat", "prixVente"],
-    2: ["QteInitial", "QteStock", "QteAlerte"],
-    3: [],
-  };
-
   const onSubmit = async (formData) => {
-    // Valide uniquement les champs du step courant avant d'avancer
     if (step < 3) {
-      const isValid = await trigger(stepFields[step]);
-      if (!isValid) return;
       setStep((prev) => prev + 1);
       return;
     }
@@ -78,7 +68,9 @@ const AjoutArticleForm = ({
 
       const rep = await fetch(url, {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(data),
       });
 
@@ -114,7 +106,9 @@ const AjoutArticleForm = ({
           <form
             onSubmit={handleSubmit(onSubmit)}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && step < 3) e.preventDefault();
+              if (e.key === "Enter" && step < 3) {
+                e.preventDefault();
+              }
             }}
             encType="multipart/form-data"
             noValidate
@@ -127,6 +121,7 @@ const AjoutArticleForm = ({
                 register={register}
               />
             )}
+
             {step === 2 && (
               <ArticleFormStep2
                 control={control}
@@ -135,6 +130,7 @@ const AjoutArticleForm = ({
                 register={register}
               />
             )}
+
             {step === 3 && <ArticleFormStep3 register={register} />}
 
             <AjoutArticleFormBtn
