@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 
-const AjoutArticleFormBtn = ({ step, prevStep, isLoading, isEdit }) => {
+const AjoutArticleFormBtn = ({ step, prevStep, isLoading, isEdit, handleNext }) => {
   return (
     <div className="flex flex-col-reverse sm:flex-row justify-between gap-3 sm:gap-0 mt-6">
       {step > 1 && (
@@ -14,7 +14,8 @@ const AjoutArticleFormBtn = ({ step, prevStep, isLoading, isEdit }) => {
         </Button>
       )}
       <Button
-        type="submit"
+        type={step === 3 ? "submit" : "button"}
+        onClick={step < 3 ? handleNext : undefined}
         disabled={isLoading}
         className="bg-[#0084D1] hover:bg-[#0042d1] hover:cursor-pointer w-full sm:w-auto ml-auto"
       >

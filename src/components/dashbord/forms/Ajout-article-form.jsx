@@ -16,6 +16,11 @@ import AjoutArticleFormBtn from "./Ajout-article-form-btn";
 import { setInitialValue } from "@/utils/setInitialValue";
 import { articleSchema } from "@/schemas";
 
+const stepFields = {
+  1: ["nom", "category_id", "prixAchat", "prixVente"],
+  2: ["supplier_id", "QteInitial", "QteStock", "QteAlerte"],
+};
+
 const AjoutArticleForm = ({
   className,
   cats,
@@ -48,12 +53,12 @@ const AjoutArticleForm = ({
     }
   }, [initialData, setValue, isEdit]);
 
-  const onSubmit = async (formData) => {
-    if (step < 3) {
-      setStep((prev) => prev + 1);
-      return;
-    }
+  const handleNext = async () => {
+    const valid = await trigger(stepFields[step]);
+    if (valid) setStep((prev) => prev + 1);
+  };
 
+  const onSubmit = async (formData) => {
     setIsLoading(true);
     try {
       const url = isEdit ? `/api/product/${initialData._id}` : "/api/product";
@@ -137,6 +142,7 @@ const AjoutArticleForm = ({
               isEdit={isEdit}
               prevStep={prevStep}
               step={step}
+              handleNext={handleNext}
             />
           </form>
         </CardContent>
